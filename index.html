@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxi Dispatch - Modern Panel</title>
+    <!-- Përdorim fontin Inter për një pamje moderne -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 1. Rregullimet Bazë */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #f1f5f9; /* Ngjyrë e lehtë gri për sfondin */
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 2. Sidebar (Meni në të majtë) */
+        .sidebar {
+            width: 250px;
+            background-color: #0f172a; /* Blu e errët moderne */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            padding: 0 20px 30px 20px;
+            color: #38bdf8; /* Blu e ndritshme për logon */
+            border-bottom: 1px solid #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .nav-item {
+            padding: 15px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #1e293b;
+            color: #ffffff;
+            border-left: 4px solid #38bdf8;
+        }
+
+        /* 3. Main Content (Zona kryesore) */
+        .main-content {
+            flex: 1;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        /* Topbar (Shiriti i sipërm) */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .stat-value.green { color: #16a34a; }
+
+        /* 4. Dashboard Grid (Harta dhe Tabela) */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+
+        /* Harta */
+        .map-container {
+            background: #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: centerpx;
+            justify-content: center;
+             color: #64748b;
+            font-weight: 600;
+            border: 2px dashed #cbd5e1;
+            position: relative;
+            min-height: 400px;
+        }
+
+        .map-container span {
+            font-size: 14px;
+        }
+
+        /* Tabela e Porosive */
+        .orders-container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .orders-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .orders-header h2 {
+            font-size: 18px;
+            color: #0f172a;
+        }
+
+        .btn-new {
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-new:hover {
+            background-color: #15803d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+        }
+
+        /* Statuset me ngjyra */
+        .status {
+            padding: 410px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-new { background: #dcfce7; color: #16a34a; }
+        .status-pending { background: #fef9c3; color: #ca8a04; }
+        .status-delay { background: #fee2e2; color: #dc2626; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">🚕 TaxiDispatch Pro</div>
+        <a href="#" class="nav-item active">📊 Monitor</a>
+        <a href="#" class="nav-item">📋 Porositë</a>
+        <a href="#" class="nav-item">🚗 Shoferët</a>
+        <a href="#" class="nav-item">🗺️ Zonat</a>
+        <a href="#" class="nav-item">⚙️ Cilësimet</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-label">Taksi Online</span>
+                    <span class="stat-value green">12</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Porosi në Pritje</span>
+                    <span class="stat-value">4</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Koha</span>
+                    <span class="stat-value">19:04</span>
+                </div>
+            </div>
+            <button class="btn-new">+ Shto Porosi</button>
+        </header>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            
+            <!-- Harta (Placeholder) -->
+            <div class="map-container">
+                <span>🗺️ Harta do të shfaqet këtu (Mapbox / OpenStreetMap)</span>
+                <span style="font-size: 12px; margin-top: 10px; color: #94a3b8;">Zonat dhe taksitë do të shfaqen në kohë reale</span>
+            </div>
+
+            <!-- Tabela e Porosive -->
+            <div class="orders-container">
+                <div class="orders-header">
+                    <h2>Porositë Aktive</h2>
+                    <span style="font-size: 12px; color: #64748b;">Përditësuar: Tani</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Telefoni</th>
+                            <th>Adresa</th>
+                            <th>Statusi</th>
+                            <th>Taksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>+383 45 123 456</td>
+                            <td>GRANDI</td>
+                            <td><span class="status status-new">E Re</span></td>
+                            <td>Auto</td>
+                        </tr>
+                        <tr>
+                            <td>+383 49 987 654</td>
+                            <td>NEWBORN</td>
+                            <td><span class="status status-pending">Në Pritje</span></td>
+                            <td>Nr. 12</td>
+                        </tr>
+                        <tr>
+                            <td>+383 44 555 222</td>
+                            <td>Rr. UÇK</td>
+                            <td><span class="status status-delay">Vonesë</span></td>
+                            <td>Nr. 5</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </main>
+
+</body>
+</html>
