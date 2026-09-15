@@ -66,7 +66,6 @@
 
         <div class="dispatch-layout">
 
-            <!-- LEFT: Calls + Map -->
             <div class="col-left">
                 <section class="panel panel-calls" id="panel-calls">
                     <div class="panel-header">
@@ -106,7 +105,6 @@
                 </section>
             </div>
 
-            <!-- CENTER: Forma e Porosisë -->
             <div class="col-center">
                 <section class="panel panel-new-order" id="panel-new-order">
                     <div class="panel-header">
@@ -240,7 +238,6 @@
                 </section>
             </div>
 
-            <!-- RIGHT: Waiting + Orders + Preorders -->
             <div class="col-right">
                 <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
@@ -313,7 +310,6 @@
         </div>
     </main>
 
-    <!-- MODAL: DETAJET -->
     <div class="modal-overlay" id="modal-order-detail">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -325,7 +321,6 @@
         </div>
     </div>
 
-    <!-- MODAL: MANUAL ASSIGN -->
     <div class="modal-overlay" id="modal-manual-assign">
         <div class="modal">
             <div class="modal-header">
@@ -347,7 +342,6 @@
         </div>
     </div>
 
-    <!-- MODAL: LOGIN -->
     <div class="modal-overlay" id="modal-login">
         <div class="modal">
             <div class="modal-header">
@@ -372,7 +366,6 @@
         </div>
     </div>
 
-    <!-- MODAL: OPERATOR STATS -->
     <div class="modal-overlay" id="modal-operator-stats">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -389,9 +382,7 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- FIREBASE SDK                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -399,9 +390,7 @@
     <!-- FIREBASE CONFIG -->
     <script src="firebase-config.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- CORE MODULES                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE MODULES -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -409,22 +398,17 @@
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SERVICES                                                -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
+    <script src="js/services/orders-bridge.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- EXISTING MODULES                                        -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- EXISTING MODULES -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="data.js"></script>
     <script src="script.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- INIT: FIREBASE + LOGIN + ORDERS                         -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- INIT: FIREBASE + LOGIN + ORDERS -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (!window.TaxiFirebase) {
@@ -440,22 +424,25 @@
                 window.TaxiOrders.subscribe();
             }
 
-            // 3. Monitoro statusin e login-it
+            // 3. Aktivizo bridge
+            setTimeout(() => {
+                if (window.TaxiOrdersBridge) {
+                    window.TaxiOrdersBridge.init();
+                }
+            }, 500);
+
+            // 4. Monitoro login-in
             if (window.TaxiAuth) {
                 window.TaxiAuth.onAuthChange((user) => {
                     if (user) {
                         console.log('👤 User aktiv:', user.email);
-                        const railUser = document.getElementById('rail-user');
-                        if (railUser) {
-                            railUser.textContent = user.email.slice(0, 2).toUpperCase();
-                        }
                     } else {
                         console.log('👤 Asnjë user aktiv');
                     }
                 });
             }
 
-            // 4. Butoni i LOGIN
+            // 5. Butoni LOGIN
             const btnLogin = document.getElementById('btn-do-login');
             if (btnLogin) {
                 const newBtn = btnLogin.cloneNode(true);
@@ -484,11 +471,8 @@
                         document.getElementById('modal-login')?.classList.remove('active');
 
                         const railUser = document.getElementById('rail-user');
-                        if (railUser) {
-                            railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
-                        }
+                        if (railUser) railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
 
-                        // Toast
                         if (typeof showToast === 'function') {
                             showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
                         }
@@ -513,7 +497,7 @@
                 });
             }
 
-            // 5. Butoni i LOGOUT
+            // 6. Butoni LOGOUT
             const btnLogout = document.getElementById('btn-logout');
             if (btnLogout) {
                 btnLogout.addEventListener('click', async () => {
