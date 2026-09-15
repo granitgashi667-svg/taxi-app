@@ -383,13 +383,24 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- CORE MODULES (NEW)                                      -->
+    <!-- FIREBASE SDK                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- FIREBASE CONFIG -->
+    <script src="firebase-config.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE MODULES                                            -->
     <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- EXISTING MODULES                                        -->
@@ -397,5 +408,16 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="data.js"></script>
     <script src="script.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- INIT FIREBASE                                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.TaxiFirebase) {
+                window.TaxiFirebase.init();
+            }
+        });
+    </script>
 </body>
 </html>
