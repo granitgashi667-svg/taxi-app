@@ -171,13 +171,14 @@
 
                             <button type="button" class="btn-toggle-termin" id="btn-toggle-termin">
                                 <i class="fa-solid fa-calendar-plus"></i>
-                                <span>LANO TERMIN</span>
+                                <span>REZERVIM ME TERMIN</span>
+                                <small>Opsionale</small>
                             </button>
 
                             <div class="termin-options" id="termin-options">
                                 <div class="termin-header">
                                     <i class="fa-solid fa-calendar-clock"></i>
-                                    <span>Detajet e Terminit</span>
+                                    <span>Rezervim i planifikuar</span>
                                     <button type="button" class="termin-close" id="btn-close-termin">&times;</button>
                                 </div>
                                 <div class="form-row-2">
@@ -190,19 +191,28 @@
                                         <input type="time" id="termin-time" class="input-field">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
-                                    <select id="termin-repeat" class="input-field">
-                                        <option value="none">Vetëm një herë</option>
-                                        <option value="daily">Çdo ditë (1 muaj)</option>
-                                        <option value="weekdays">Ditë pune — Hënë-Premte (1 muaj)</option>
-                                        <option value="weekly">Çdo javë (1 muaj)</option>
-                                        <option value="monthly">Çdo muaj</option>
-                                    </select>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-bolt"></i> Aktivizo para</label>
+                                        <div class="input-with-suffix">
+                                            <input type="number" id="termin-lead" class="input-field" min="1" max="3000" step="1" value="15">
+                                            <span>min</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
+                                        <select id="termin-repeat" class="input-field">
+                                            <option value="none">Vetëm një herë</option>
+                                            <option value="daily">Çdo ditë (1 muaj)</option>
+                                            <option value="weekdays">Ditë pune — Hënë-Premte (1 muaj)</option>
+                                            <option value="weekly">Çdo javë (1 muaj)</option>
+                                            <option value="monthly">Çdo muaj</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="termin-info">
-                                    <i class="fa-solid fa-info-circle"></i>
-                                    Terminet shfaqen te <strong>ME TERMIN</strong> dhe aktivizohen vetë në orën e caktuar.
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    Porosia aktivizohet automatikisht në <strong>pritje</strong> ${'lead'} minuta para terminit. Mund ta ndryshosh nga 1 deri në 3000 minuta.
                                 </div>
                             </div>
 
@@ -228,7 +238,10 @@
                         </form>
                     </div>
                 </section>
+            </div>
 
+            <!-- RIGHT: Waiting + Orders + Preorders -->
+            <div class="col-right">
                 <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
                         <div class="panel-header-title">
@@ -244,16 +257,13 @@
                     <div class="panel-body waiting-body">
                         <table class="orders-table compact">
                             <thead>
-                                <tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Pritja</th><th>Veprimet</th></tr>
+                                <tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th></tr>
                             </thead>
                             <tbody id="waiting-tbody"></tbody>
                         </table>
                     </div>
                 </section>
-            </div>
 
-            <!-- RIGHT: Orders + Preorders -->
-            <div class="col-right">
                 <section class="panel panel-orders" id="panel-orders">
                     <div class="panel-header">
                         <div class="panel-header-title">
