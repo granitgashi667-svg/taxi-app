@@ -39,7 +39,7 @@
         <div class="rail-bottom">
             <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri"><i class="fa-solid fa-volume-high"></i></button>
             <button class="rail-item" id="btn-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-            <div class="rail-user" id="rail-user" title="Login">GD</div>
+            <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">GD</div>
         </div>
     </aside>
 
@@ -411,27 +411,37 @@
     <!-- INIT: FIREBASE + LOGIN + ORDERS -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (!window.TaxiFirebase) {
-                console.error('❌ TaxiFirebase nuk u ngarkua');
-                return;
-            }
-
             // 1. Inicializo Firebase
-            window.TaxiFirebase.init();
+            if (window.TaxiFirebase) {
+                window.TaxiFirebase.init();
 
-            // 2. Dëgjo porositë live nga Firestore
-            if (window.TaxiOrders) {
-                window.TaxiOrders.subscribe();
+                // Dëgjo porositë live nga Firestore
+                if (window.TaxiOrders) {
+                    window.TaxiOrders.subscribe();
+                }
+
+                // Aktivizo bridge
+                setTimeout(() => {
+                    if (window.TaxiOrdersBridge) {
+                        window.TaxiOrdersBridge.init();
+                    }
+                }, 500);
             }
 
-            // 3. Aktivizo bridge
-            setTimeout(() => {
-                if (window.TaxiOrdersBridge) {
-                    window.TaxiOrdersBridge.init();
-                }
-            }, 500);
+            // 2. HAP MODALIN E LOGIN-IT kur klikohet GD
+            const railUser = document.getElementById('rail-user');
+            if (railUser) {
+                railUser.addEventListener('click', () => {
+                    const modal = document.getElementById('modal-login');
+                    if (modal) {
+                        modal.classList.add('active');
+                        setTimeout(() => document.getElementById('login-email')?.focus(), 200);
+                    }
+                });
+                console.log('✅ Klik GD → Login aktivizuar');
+            }
 
-            // 4. Monitoro login-in
+            // 3. Monitoro login-in
             if (window.TaxiAuth) {
                 window.TaxiAuth.onAuthChange((user) => {
                     if (user) {
@@ -442,7 +452,7 @@
                 });
             }
 
-            // 5. Butoni LOGIN
+            // 4. Butoni LOGIN
             const btnLogin = document.getElementById('btn-do-login');
             if (btnLogin) {
                 const newBtn = btnLogin.cloneNode(true);
@@ -497,7 +507,7 @@
                 });
             }
 
-            // 6. Butoni LOGOUT
+            // 5. Butoni LOGOUT
             const btnLogout = document.getElementById('btn-logout');
             if (btnLogout) {
                 btnLogout.addEventListener('click', async () => {
@@ -509,6 +519,20 @@
                     }
                 });
             }
+
+            // 6. Butonat e modal-close
+            document.querySelectorAll('[data-close]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById(btn.dataset.close)?.classList.remove('active');
+                });
+            });
+
+            // 7. Klik jashtë modalit → mbyll
+            document.querySelectorAll('.modal-overlay').forEach(ov => {
+                ov.addEventListener('click', (e) => {
+                    if (e.target === ov) ov.classList.remove('active');
+                });
+            });
 
             console.log('🚀 Init komplet përfundoi');
         });
