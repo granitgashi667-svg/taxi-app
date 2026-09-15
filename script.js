@@ -741,4 +741,126 @@ function setText(id, value) {
 // ═══ TOAST ═══
 function showToast(type, title, message) {
     const container = document.getElementById('toast-container');
-    if (!container) return
+    if (!container) return;
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info}"></i>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(400px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+// ═══ SIMULIM THIRRJESH ═══
+function startCallSimulation() {
+    setTimeout(() => generateIncomingCall(), 5000);
+    AppState.callInterval = setInterval(() => {
+        if (AppState.incomingCalls.length < 3) generateIncomingCall();
+    }, 25000);
+}
+
+function generateIncomingCall() {
+    const phones = ['+383 44 111 001', '+383 44 222 002', '+383 49 333 003', '+383 45 444 004', '+383 44 555 005'];
+    const names = ['Klient i Ri', 'Ardit Krasniqi', 'Blerim Hoxha', 'Driton Berisha', 'Endrit Morina'];
+    const addresses = ['Grand Hotel Prishtina', 'Newborn Monument', 'Rr. UÇK Dardani', 'Dardania', 'Albi Mall'];
+    const idx = Math.floor(Math.random() * phones.length);
+
+    const call = {
+        id: Date.now(),
+        phone: phones[idx],
+        name: Math.random() > 0.4 ? names[idx] : '',
+        lastAddress: Math.random() > 0.5 ? addresses[Math.floor(Math.random() * addresses.length)] : '',
+        time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+        ringing: true
+    };
+    AppState.incomingCalls.push(call);
+    renderIncomingCalls();
+    setTimeout(() => { call.ringing = false; renderIncomingCalls(); }, 5000);
+}
+
+// ═══ SIMULIM ORDERS ═══
+function startOrderSimulation() {
+    // Vetura lëvizin
+    setInterval(() => {
+        AppState.vehicleMarkers.forEach((marker, driverId) => {
+            const driver = AppState.drivers.find(d => d.id === driverId);
+            if (!driver || driver.mode === 'inactive') return;
+            const pos = marker.getLatLng();
+            const newLat = pos.lat + (Math.random() - 0.5) * 0.0015;
+            const newLng = pos.lng + (Math.random() - 0.5) * 0.0015;
+            marker.setLatLng([newLat, newLng]);
+            driver.lat = newLat;
+            driver.lng = newLng;
+        });
+    }, 4000);
+
+    // Update waiting times
+    setInterval(() => {
+        if (AppState.waitingOrders.length > 0) renderWaitingOrders();
+    }, 10000);
+
+    // Ndryshimi i statuseve
+    setInterval(() => {
+        AppState.drivers.forEach(driver => {
+            if (driver.mode === 'taximeter' || driver.mode === 'fixed') {
+                if (Math.random() > 0.7) {
+                    driver.mode = 'free';
+                    driver.status = 'available';
+                    updateVehicleMarker(driver.id);
+                    updateStats();
+                }
+            } else if (driver.mode === 'free') {
+                if (Math.random() > 0.85) {
+                    driver.mode = Math.random() > 0.5 ? 'taximeter' : 'fixed';
+                    driver.status = 'busy';
+                    updateVehicleMarker(driver.id);
+                    updateStats();
+                }
+            }
+        });
+    }, 15000);
+
+    // Porosi të re në pritje
+    setInterval(() => {
+        if (AppState.waitingOrders.length < 5 && Math.random() > 0.5) {
+            const phones = ['+383 44 666 777', '+383 45 888 999', '+383 49 111 222'];
+            const pickups = ['Grand Hotel Prishtina', 'Newborn Monument', 'Rr. UÇK Dardani', 'Hotel Sirius', 'Albi Mall'];
+            const dests = ['QKUK - Qendra Klinike Universitare', 'Aeroporti Ndërkombëtar i Prishtinës', 'Qendra Tregtare Kalabria', 'Arbëria', 'Sheshi Nënë Terezë'];
+
+            AppState.waitingOrders.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                phone: phones[Math.floor(Math.random() * phones.length)],
+                name: 'Klient',
+                pickup: pickups[Math.floor(Math.random() * pickups.length)],
+                destination: dests[Math.floor(Math.random() * dests.length)],
+                waitStart: Date.now(),
+                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                zone: 'zona1'
+            });
+            renderWaitingOrders();
+            updateStats();
+            showToast('warning', 'Porosi e re në pritje', 'Kërkon caktim');
+        }
+    }, 35000);
+}
+
+// ═══ GLOBAL ═══
+window.acceptCall = acceptCall;
+window.rejectCall = rejectCall;
+window.assignWaitingOrder = assignWaitingOrder;
+window.cancelWaitingOrder = cancelWaitingOrder;
+window.cancelOrder = cancelOrder;
+window.activatePreorder = activatePreorder;
+window.cancelPreorder = cancelPreorder;
+window.showToast = showToast;
+
+console.log('%c✅ TaxiDispatch Pro Ready', 'color:#a855f7;font-size:14px;font-weight:bold;');
