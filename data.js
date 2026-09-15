@@ -1,13 +1,10 @@
-/* ============================================================
-   TaxiDispatch Pro - Database Module (data.js)
-   Version: 2.0 Professional
-   ============================================================ */
+/* ═══════════════════════════════════════════════════════
+   TaxiDispatch Pro - Database Module
+   ═══════════════════════════════════════════════════════ */
 
 'use strict';
 
-// ============================================================
-// 1. ADRESAT E REGJISTRUARA
-// ============================================================
+// ═══ ADRESAT ═══
 const DB_ADDRESSES = [
     { id: 1, name: "Grand Hotel Prishtina", alias: ["grandi", "grand", "grand hotel"], lat: 42.6629, lng: 21.1655, zone: "zona1", category: "hotel", priority: 10 },
     { id: 2, name: "Hotel Sirius", alias: ["sirius"], lat: 42.6608, lng: 21.1645, zone: "zona1", category: "hotel", priority: 8 },
@@ -48,116 +45,75 @@ const DB_ADDRESSES = [
     { id: 37, name: "Gjimnazi Sami Frashëri", alias: ["sami frashri", "gjimnazi"], lat: 42.6565, lng: 21.1665, zone: "zona1", category: "school", priority: 5 },
     { id: 38, name: "Stacioni i Autobusëve", alias: ["stacioni autobuseve", "autobuset"], lat: 42.6480, lng: 21.1560, zone: "zona1", category: "transport", priority: 9 },
     { id: 39, name: "Stacioni i Trenit", alias: ["stacioni trenit", "treni"], lat: 42.6490, lng: 21.1570, zone: "zona1", category: "transport", priority: 7 },
-    { id: 40, name: "Terminali i Autobusëve të Gjilanit", alias: ["gjilani", "terminali gjilan"], lat: 42.6485, lng: 21.1565, zone: "zona1", category: "transport", priority: 5 },
-    { id: 41, name: "Hotel Prishtina", alias: ["hotel prishtina"], lat: 42.6620, lng: 21.1640, zone: "zona1", category: "hotel", priority: 7 },
-    { id: 42, name: "Hotel Victory", alias: ["victory"], lat: 42.6610, lng: 21.1630, zone: "zona1", category: "hotel", priority: 6 },
-    { id: 43, name: "Hotel Begolli", alias: ["begolli"], lat: 42.6630, lng: 21.1650, zone: "zona1", category: "hotel", priority: 5 },
-    { id: 44, name: "Restorant Kulla", alias: ["kulla"], lat: 42.6600, lng: 21.1620, zone: "zona1", category: "restaurant", priority: 5 },
-    { id: 45, name: "Restorant Shaban", alias: ["shaban"], lat: 42.6590, lng: 21.1610, zone: "zona1", category: "restaurant", priority: 5 },
-    { id: 46, name: "Bregu i Diellit", alias: ["bregu diellit", "bregu"], lat: 42.6500, lng: 21.1700, zone: "zona4", category: "neighborhood", priority: 6 },
-    { id: 47, name: "Ulpiana", alias: ["ulpiana"], lat: 42.6580, lng: 21.1700, zone: "zona4", category: "neighborhood", priority: 6 },
-    { id: 48, name: "Lakrishte", alias: ["lakrishte"], lat: 42.6600, lng: 21.1720, zone: "zona4", category: "neighborhood", priority: 6 },
-    { id: 49, name: "Velania", alias: ["velania"], lat: 42.6610, lng: 21.1690, zone: "zona4", category: "neighborhood", priority: 5 },
-    { id: 50, name: "Tophane", alias: ["tophane"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "neighborhood", priority: 6 },
-    { id: 51, name: "Kodra e Diellit", alias: ["kodra diellit"], lat: 42.6680, lng: 21.1690, zone: "zona4", category: "neighborhood", priority: 7 },
-    { id: 52, name: "Mati 1", alias: ["mati 1", "mati"], lat: 42.6700, lng: 21.1700, zone: "zona2", category: "neighborhood", priority: 6 },
-    { id: 53, name: "Pejton", alias: ["pejton"], lat: 42.6645, lng: 21.1650, zone: "zona1", category: "neighborhood", priority: 5 },
-    { id: 54, name: "Sunny Hill", alias: ["sunny hill", "sunny"], lat: 42.6610, lng: 21.1550, zone: "zona4", category: "neighborhood", priority: 5 },
-    { id: 55, name: "Kolonë", alias: ["kolone"], lat: 42.6670, lng: 21.1720, zone: "zona2", category: "neighborhood", priority: 5 },
-    { id: 56, name: "Taslixhe", alias: ["taslixhe"], lat: 42.6680, lng: 21.1730, zone: "zona2", category: "neighborhood", priority: 5 },
-    { id: 57, name: "Zona Industriale", alias: ["zona industriale", "industriale"], lat: 42.6450, lng: 21.1800, zone: "zona5", category: "industrial", priority: 5 },
-    { id: 58, name: "Fushë Kosova", alias: ["fushe kosova", "fushe"], lat: 42.6350, lng: 21.0950, zone: "zona5", category: "city", priority: 8 },
-    { id: 59, name: "Kastriot", alias: ["kastrioti"], lat: 42.6400, lng: 21.1500, zone: "zona3", category: "neighborhood", priority: 5 },
-    { id: 60, name: "Bardhosh", alias: ["bardhosh"], lat: 42.6550, lng: 21.1300, zone: "zona3", category: "neighborhood", priority: 5 },
-    { id: 61, name: "Klinika Vip Medica", alias: ["vip medica"], lat: 42.6585, lng: 21.1650, zone: "zona1", category: "hospital", priority: 5 },
-    { id: 62, name: "Klinika EndoMed", alias: ["endomed"], lat: 42.6590, lng: 21.1640, zone: "zona1", category: "hospital", priority: 5 },
-    { id: 63, name: "Qendra Tregtare Prishtina Mall", alias: ["prishtina mall", "pr mall"], lat: 42.6350, lng: 21.1700, zone: "zona5", category: "shopping", priority: 9 },
-    { id: 64, name: "Qendra Tregtare Royal Mall", alias: ["royal mall", "royal"], lat: 42.6300, lng: 21.1800, zone: "zona5", category: "shopping", priority: 7 },
-    { id: 65, name: "Grand Store", alias: ["grand store"], lat: 42.6600, lng: 21.1620, zone: "zona1", category: "shopping", priority: 5 },
-    { id: 66, name: "Interex", alias: ["interex"], lat: 42.6620, lng: 21.1650, zone: "zona1", category: "shopping", priority: 5 },
-    { id: 67, name: "Viva Fresh", alias: ["viva fresh", "viva"], lat: 42.6580, lng: 21.1630, zone: "zona1", category: "shopping", priority: 5 },
-    { id: 68, name: "Emona Center", alias: ["emona"], lat: 42.6590, lng: 21.1640, zone: "zona1", category: "shopping", priority: 5 },
-    { id: 69, name: "Parku i Qytetit", alias: ["parku qytetit", "parku"], lat: 42.6650, lng: 21.1660, zone: "zona1", category: "park", priority: 5 },
-    { id: 70, name: "Parku Tauk Bahçe", alias: ["tauk bahce"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "park", priority: 4 },
-    { id: 71, name: "Parku i Gërmisë", alias: ["germia", "gërmia"], lat: 42.6700, lng: 21.1900, zone: "zona4", category: "park", priority: 6 },
-    { id: 72, name: "Kuvendi i Kosovës", alias: ["kuvendi", "parlament"], lat: 42.6630, lng: 21.1660, zone: "zona1", category: "institution", priority: 7 },
-    { id: 73, name: "Qeveria e Kosovës", alias: ["qeveria", "government"], lat: 42.6635, lng: 21.1665, zone: "zona1", category: "institution", priority: 7 },
-    { id: 74, name: "Presidenca", alias: ["presidenca", "president"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "institution", priority: 6 },
-    { id: 75, name: "Komuna e Prishtinës", alias: ["komuna", "municipality"], lat: 42.6630, lng: 21.1655, zone: "zona1", category: "institution", priority: 6 },
-    { id: 76, name: "Ministria e Arsimit", alias: ["ministria arsimit", "masht"], lat: 42.6635, lng: 21.1660, zone: "zona1", category: "institution", priority: 5 },
-    { id: 77, name: "Ministria e Shëndetësisë", alias: ["ministria shendetesise"], lat: 42.6640, lng: 21.1665, zone: "zona1", category: "institution", priority: 5 }
+    { id: 40, name: "Hotel Prishtina", alias: ["hotel prishtina"], lat: 42.6620, lng: 21.1640, zone: "zona1", category: "hotel", priority: 7 },
+    { id: 41, name: "Hotel Victory", alias: ["victory"], lat: 42.6610, lng: 21.1630, zone: "zona1", category: "hotel", priority: 6 },
+    { id: 42, name: "Hotel Begolli", alias: ["begolli"], lat: 42.6630, lng: 21.1650, zone: "zona1", category: "hotel", priority: 5 },
+    { id: 43, name: "Restorant Kulla", alias: ["kulla"], lat: 42.6600, lng: 21.1620, zone: "zona1", category: "restaurant", priority: 5 },
+    { id: 44, name: "Restorant Shaban", alias: ["shaban"], lat: 42.6590, lng: 21.1610, zone: "zona1", category: "restaurant", priority: 5 },
+    { id: 45, name: "Bregu i Diellit", alias: ["bregu diellit", "bregu"], lat: 42.6500, lng: 21.1700, zone: "zona4", category: "neighborhood", priority: 6 },
+    { id: 46, name: "Ulpiana", alias: ["ulpiana"], lat: 42.6580, lng: 21.1700, zone: "zona4", category: "neighborhood", priority: 6 },
+    { id: 47, name: "Lakrishte", alias: ["lakrishte"], lat: 42.6600, lng: 21.1720, zone: "zona4", category: "neighborhood", priority: 6 },
+    { id: 48, name: "Velania", alias: ["velania"], lat: 42.6610, lng: 21.1690, zone: "zona4", category: "neighborhood", priority: 5 },
+    { id: 49, name: "Tophane", alias: ["tophane"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "neighborhood", priority: 6 },
+    { id: 50, name: "Kodra e Diellit", alias: ["kodra diellit"], lat: 42.6680, lng: 21.1690, zone: "zona4", category: "neighborhood", priority: 7 },
+    { id: 51, name: "Mati 1", alias: ["mati 1", "mati"], lat: 42.6700, lng: 21.1700, zone: "zona2", category: "neighborhood", priority: 6 },
+    { id: 52, name: "Pejton", alias: ["pejton"], lat: 42.6645, lng: 21.1650, zone: "zona1", category: "neighborhood", priority: 5 },
+    { id: 53, name: "Sunny Hill", alias: ["sunny hill", "sunny"], lat: 42.6610, lng: 21.1550, zone: "zona4", category: "neighborhood", priority: 5 },
+    { id: 54, name: "Kolonë", alias: ["kolone"], lat: 42.6670, lng: 21.1720, zone: "zona2", category: "neighborhood", priority: 5 },
+    { id: 55, name: "Taslixhe", alias: ["taslixhe"], lat: 42.6680, lng: 21.1730, zone: "zona2", category: "neighborhood", priority: 5 },
+    { id: 56, name: "Zona Industriale", alias: ["zona industriale", "industriale"], lat: 42.6450, lng: 21.1800, zone: "zona5", category: "industrial", priority: 5 },
+    { id: 57, name: "Fushë Kosova", alias: ["fushe kosova", "fushe"], lat: 42.6350, lng: 21.0950, zone: "zona5", category: "city", priority: 8 },
+    { id: 58, name: "Kastriot", alias: ["kastrioti"], lat: 42.6400, lng: 21.1500, zone: "zona3", category: "neighborhood", priority: 5 },
+    { id: 59, name: "Bardhosh", alias: ["bardhosh"], lat: 42.6550, lng: 21.1300, zone: "zona3", category: "neighborhood", priority: 5 },
+    { id: 60, name: "Prishtina Mall", alias: ["prishtina mall", "pr mall"], lat: 42.6350, lng: 21.1700, zone: "zona5", category: "shopping", priority: 9 },
+    { id: 61, name: "Royal Mall", alias: ["royal mall", "royal"], lat: 42.6300, lng: 21.1800, zone: "zona5", category: "shopping", priority: 7 },
+    { id: 62, name: "Grand Store", alias: ["grand store"], lat: 42.6600, lng: 21.1620, zone: "zona1", category: "shopping", priority: 5 },
+    { id: 63, name: "Interex", alias: ["interex"], lat: 42.6620, lng: 21.1650, zone: "zona1", category: "shopping", priority: 5 },
+    { id: 64, name: "Viva Fresh", alias: ["viva fresh", "viva"], lat: 42.6580, lng: 21.1630, zone: "zona1", category: "shopping", priority: 5 },
+    { id: 65, name: "Emona Center", alias: ["emona"], lat: 42.6590, lng: 21.1640, zone: "zona1", category: "shopping", priority: 5 },
+    { id: 66, name: "Parku i Qytetit", alias: ["parku qytetit", "parku"], lat: 42.6650, lng: 21.1660, zone: "zona1", category: "park", priority: 5 },
+    { id: 67, name: "Parku Tauk Bahçe", alias: ["tauk bahce"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "park", priority: 4 },
+    { id: 68, name: "Parku i Gërmisë", alias: ["germia", "gërmia"], lat: 42.6700, lng: 21.1900, zone: "zona4", category: "park", priority: 6 },
+    { id: 69, name: "Kuvendi i Kosovës", alias: ["kuvendi", "parlament"], lat: 42.6630, lng: 21.1660, zone: "zona1", category: "institution", priority: 7 },
+    { id: 70, name: "Qeveria e Kosovës", alias: ["qeveria", "government"], lat: 42.6635, lng: 21.1665, zone: "zona1", category: "institution", priority: 7 },
+    { id: 71, name: "Presidenca", alias: ["presidenca", "president"], lat: 42.6640, lng: 21.1670, zone: "zona1", category: "institution", priority: 6 },
+    { id: 72, name: "Komuna e Prishtinës", alias: ["komuna", "municipality"], lat: 42.6630, lng: 21.1655, zone: "zona1", category: "institution", priority: 6 }
 ];
 
-// ============================================================
-// 2. ZONAT GJEOGRAFIKE
-// ============================================================
+// ═══ ZONAT ═══
 const DB_ZONES = [
-    {
-        id: "zona1", name: "Zona 1 - Qendra", color: "#06b6d4", tariff: 2.50,
-        description: "Qendra e Prishtinës, Sheshi, Pejton, Tophane",
-        backupZones: ["zona2", "zona4"],
-        polygon: [[42.6680, 21.1620], [42.6680, 21.1700], [42.6600, 21.1700], [42.6600, 21.1620]],
-        active: true, priority: 1
-    },
-    {
-        id: "zona2", name: "Zona 2 - Dardania", color: "#8b5cf6", tariff: 3.00,
-        description: "Dardania, Mati, Kolonë, Taslixhe",
-        backupZones: ["zona1", "zona4"],
-        polygon: [[42.6580, 21.1550], [42.6580, 21.1650], [42.6480, 21.1650], [42.6480, 21.1550]],
-        active: true, priority: 2
-    },
-    {
-        id: "zona3", name: "Zona 3 - Aeroporti", color: "#f59e0b", tariff: 15.00,
-        description: "Aeroporti Ndërkombëtar, Kastrioti, Bardhoshi",
-        backupZones: ["zona5"],
-        polygon: [[42.5800, 21.0300], [42.5800, 21.0500], [42.5650, 21.0500], [42.5650, 21.0300]],
-        active: true, priority: 3
-    },
-    {
-        id: "zona4", name: "Zona 4 - Arbëria", color: "#10b981", tariff: 3.00,
-        description: "Arbëria, Bregu i Diellit, Ulpiana, Lakrishte",
-        backupZones: ["zona1", "zona2"],
-        polygon: [[42.6720, 21.1480], [42.6720, 21.1620], [42.6580, 21.1620], [42.6580, 21.1480]],
-        active: true, priority: 2
-    },
-    {
-        id: "zona5", name: "Zona 5 - Kalabria & Industriale", color: "#ef4444", tariff: 4.00,
-        description: "Kalabria, Albi Mall, Zona Industriale, Fushë Kosova",
-        backupZones: ["zona1", "zona2"],
-        polygon: [[42.6800, 21.1750], [42.6800, 21.1950], [42.6300, 21.1950], [42.6300, 21.1750]],
-        active: true, priority: 3
-    }
+    { id: "zona1", name: "Zona 1 - Qendra", color: "#a855f7", tariff: 2.50, description: "Qendra, Sheshi, Pejton, Tophane", backupZones: ["zona2", "zona4"], polygon: [[42.6680, 21.1620], [42.6680, 21.1700], [42.6600, 21.1700], [42.6600, 21.1620]], active: true, priority: 1 },
+    { id: "zona2", name: "Zona 2 - Dardania", color: "#ec4899", tariff: 3.00, description: "Dardania, Mati, Kolonë, Taslixhe", backupZones: ["zona1", "zona4"], polygon: [[42.6580, 21.1550], [42.6580, 21.1650], [42.6480, 21.1650], [42.6480, 21.1550]], active: true, priority: 2 },
+    { id: "zona3", name: "Zona 3 - Aeroporti", color: "#f59e0b", tariff: 15.00, description: "Aeroporti, Kastrioti, Bardhoshi", backupZones: ["zona5"], polygon: [[42.5800, 21.0300], [42.5800, 21.0500], [42.5650, 21.0500], [42.5650, 21.0300]], active: true, priority: 3 },
+    { id: "zona4", name: "Zona 4 - Arbëria", color: "#10b981", tariff: 3.00, description: "Arbëria, Bregu i Diellit, Ulpiana", backupZones: ["zona1", "zona2"], polygon: [[42.6720, 21.1480], [42.6720, 21.1620], [42.6580, 21.1620], [42.6580, 21.1480]], active: true, priority: 2 },
+    { id: "zona5", name: "Zona 5 - Kalabria", color: "#ef4444", tariff: 4.00, description: "Kalabria, Albi Mall, Zona Industriale", backupZones: ["zona1", "zona2"], polygon: [[42.6800, 21.1750], [42.6800, 21.1950], [42.6300, 21.1950], [42.6300, 21.1750]], active: true, priority: 3 }
 ];
 
-// ============================================================
-// 3. SHOFERËT
-// ============================================================
+// ═══ SHOFERËT (me mode të re: free, taximeter, fixed, pause, inactive) ═══
 const DB_DRIVERS = [
-    { id: 1, name: "Arben Krasniqi", phone: "+383 44 111 001", vehicleId: 1, status: "available", rating: 4.9, trips: 1245, lat: 42.6629, lng: 21.1655, zone: "zona1", shift: "morning", avatar: "AK" },
-    { id: 2, name: "Blerim Hoxha", phone: "+383 44 111 002", vehicleId: 2, status: "busy", rating: 4.8, trips: 1102, lat: 42.6600, lng: 21.1630, zone: "zona1", shift: "morning", avatar: "BH" },
-    { id: 3, name: "Driton Berisha", phone: "+383 44 111 003", vehicleId: 3, status: "available", rating: 4.9, trips: 1534, lat: 42.6550, lng: 21.1600, zone: "zona2", shift: "morning", avatar: "DB" },
-    { id: 4, name: "Endrit Morina", phone: "+383 44 111 004", vehicleId: 4, status: "break", rating: 4.7, trips: 876, lat: 42.6650, lng: 21.1550, zone: "zona4", shift: "morning", avatar: "EM" },
-    { id: 5, name: "Fisnik Gashi", phone: "+383 44 111 005", vehicleId: 5, status: "available", rating: 4.9, trips: 1876, lat: 42.6580, lng: 21.1700, zone: "zona4", shift: "morning", avatar: "FG" },
-    { id: 6, name: "Genc Rama", phone: "+383 44 111 006", vehicleId: 6, status: "busy", rating: 4.8, trips: 965, lat: 42.6720, lng: 21.1480, zone: "zona4", shift: "morning", avatar: "GR" },
-    { id: 7, name: "Hekuran Zeka", phone: "+383 44 111 007", vehicleId: 7, status: "available", rating: 4.6, trips: 654, lat: 42.6800, lng: 21.1800, zone: "zona5", shift: "morning", avatar: "HZ" },
-    { id: 8, name: "Ilir Thaçi", phone: "+383 44 111 008", vehicleId: 8, status: "offline", rating: 4.8, trips: 1320, lat: 42.5728, lng: 21.0356, zone: "zona3", shift: "morning", avatar: "IT" },
-    { id: 9, name: "Jeton Bytyqi", phone: "+383 44 111 009", vehicleId: 9, status: "available", rating: 4.9, trips: 1654, lat: 42.6630, lng: 21.1650, zone: "zona1", shift: "evening", avatar: "JB" },
-    { id: 10, name: "Kreshnik Dema", phone: "+383 44 111 010", vehicleId: 10, status: "busy", rating: 4.7, trips: 890, lat: 42.6580, lng: 21.1620, zone: "zona1", shift: "evening", avatar: "KD" },
-    { id: 11, name: "Luan Ahmeti", phone: "+383 44 111 011", vehicleId: 11, status: "available", rating: 4.8, trips: 1120, lat: 42.6560, lng: 21.1590, zone: "zona2", shift: "evening", avatar: "LA" },
-    { id: 12, name: "Mentor Bekteshi", phone: "+383 44 111 012", vehicleId: 12, status: "available", rating: 4.9, trips: 1450, lat: 42.6660, lng: 21.1540, zone: "zona4", shift: "evening", avatar: "MB" },
-    { id: 13, name: "Naim Shala", phone: "+383 44 111 013", vehicleId: 13, status: "offline", rating: 4.6, trips: 540, lat: 42.6640, lng: 21.1530, zone: "zona4", shift: "evening", avatar: "NS" },
-    { id: 14, name: "Osman Krasniqi", phone: "+383 44 111 014", vehicleId: 14, status: "busy", rating: 4.8, trips: 1230, lat: 42.6700, lng: 21.1850, zone: "zona5", shift: "evening", avatar: "OK" },
-    { id: 15, name: "Petrit Berisha", phone: "+383 44 111 015", vehicleId: 15, status: "available", rating: 4.9, trips: 1780, lat: 42.6600, lng: 21.1620, zone: "zona1", shift: "night", avatar: "PB" },
-    { id: 16, name: "Qendrim Rexha", phone: "+383 44 111 016", vehicleId: 16, status: "available", rating: 4.7, trips: 780, lat: 42.6570, lng: 21.1640, zone: "zona2", shift: "night", avatar: "QR" },
-    { id: 17, name: "Rrahim Hoxha", phone: "+383 44 111 017", vehicleId: 17, status: "break", rating: 4.8, trips: 1340, lat: 42.6630, lng: 21.1660, zone: "zona1", shift: "night", avatar: "RH" },
-    { id: 18, name: "Sami Berisha", phone: "+383 44 111 018", vehicleId: 18, status: "available", rating: 4.9, trips: 1560, lat: 42.6650, lng: 21.1520, zone: "zona4", shift: "night", avatar: "SB" },
-    { id: 19, name: "Trim Gashi", phone: "+383 44 111 019", vehicleId: 19, status: "offline", rating: 4.5, trips: 420, lat: 42.6800, lng: 21.1900, zone: "zona5", shift: "night", avatar: "TG" },
-    { id: 20, name: "Urim Morina", phone: "+383 44 111 020", vehicleId: 20, status: "available", rating: 4.8, trips: 990, lat: 42.5728, lng: 21.0356, zone: "zona3", shift: "night", avatar: "UM" }
+    { id: 1, name: "Arben Krasniqi", phone: "+383 44 111 001", vehicleId: 1, status: "available", mode: "free", rating: 4.9, trips: 1245, lat: 42.6629, lng: 21.1655, zone: "zona1", avatar: "AK" },
+    { id: 2, name: "Blerim Hoxha", phone: "+383 44 111 002", vehicleId: 2, status: "busy", mode: "taximeter", rating: 4.8, trips: 1102, lat: 42.6600, lng: 21.1630, zone: "zona1", avatar: "BH" },
+    { id: 3, name: "Driton Berisha", phone: "+383 44 111 003", vehicleId: 3, status: "available", mode: "free", rating: 4.9, trips: 1534, lat: 42.6550, lng: 21.1600, zone: "zona2", avatar: "DB" },
+    { id: 4, name: "Endrit Morina", phone: "+383 44 111 004", vehicleId: 4, status: "break", mode: "pause", rating: 4.7, trips: 876, lat: 42.6650, lng: 21.1550, zone: "zona4", avatar: "EM" },
+    { id: 5, name: "Fisnik Gashi", phone: "+383 44 111 005", vehicleId: 5, status: "available", mode: "free", rating: 4.9, trips: 1876, lat: 42.6580, lng: 21.1700, zone: "zona4", avatar: "FG" },
+    { id: 6, name: "Genc Rama", phone: "+383 44 111 006", vehicleId: 6, status: "busy", mode: "fixed", rating: 4.8, trips: 965, lat: 42.6720, lng: 21.1480, zone: "zona4", avatar: "GR" },
+    { id: 7, name: "Hekuran Zeka", phone: "+383 44 111 007", vehicleId: 7, status: "available", mode: "free", rating: 4.6, trips: 654, lat: 42.6800, lng: 21.1800, zone: "zona5", avatar: "HZ" },
+    { id: 8, name: "Ilir Thaçi", phone: "+383 44 111 008", vehicleId: 8, status: "offline", mode: "inactive", rating: 4.8, trips: 1320, lat: 42.5728, lng: 21.0356, zone: "zona3", avatar: "IT" },
+    { id: 9, name: "Jeton Bytyqi", phone: "+383 44 111 009", vehicleId: 9, status: "busy", mode: "taximeter", rating: 4.9, trips: 1654, lat: 42.6630, lng: 21.1650, zone: "zona1", avatar: "JB" },
+    { id: 10, name: "Kreshnik Dema", phone: "+383 44 111 010", vehicleId: 10, status: "busy", mode: "fixed", rating: 4.7, trips: 890, lat: 42.6580, lng: 21.1620, zone: "zona1", avatar: "KD" },
+    { id: 11, name: "Luan Ahmeti", phone: "+383 44 111 011", vehicleId: 11, status: "available", mode: "free", rating: 4.8, trips: 1120, lat: 42.6560, lng: 21.1590, zone: "zona2", avatar: "LA" },
+    { id: 12, name: "Mentor Bekteshi", phone: "+383 44 111 012", vehicleId: 12, status: "available", mode: "free", rating: 4.9, trips: 1450, lat: 42.6660, lng: 21.1540, zone: "zona4", avatar: "MB" },
+    { id: 13, name: "Naim Shala", phone: "+383 44 111 013", vehicleId: 13, status: "offline", mode: "inactive", rating: 4.6, trips: 540, lat: 42.6640, lng: 21.1530, zone: "zona4", avatar: "NS" },
+    { id: 14, name: "Osman Krasniqi", phone: "+383 44 111 014", vehicleId: 14, status: "busy", mode: "taximeter", rating: 4.8, trips: 1230, lat: 42.6700, lng: 21.1850, zone: "zona5", avatar: "OK" },
+    { id: 15, name: "Petrit Berisha", phone: "+383 44 111 015", vehicleId: 15, status: "available", mode: "free", rating: 4.9, trips: 1780, lat: 42.6600, lng: 21.1620, zone: "zona1", avatar: "PB" },
+    { id: 16, name: "Qendrim Rexha", phone: "+383 44 111 016", vehicleId: 16, status: "busy", mode: "fixed", rating: 4.7, trips: 780, lat: 42.6570, lng: 21.1640, zone: "zona2", avatar: "QR" },
+    { id: 17, name: "Rrahim Hoxha", phone: "+383 44 111 017", vehicleId: 17, status: "break", mode: "pause", rating: 4.8, trips: 1340, lat: 42.6630, lng: 21.1660, zone: "zona1", avatar: "RH" },
+    { id: 18, name: "Sami Berisha", phone: "+383 44 111 018", vehicleId: 18, status: "available", mode: "free", rating: 4.9, trips: 1560, lat: 42.6650, lng: 21.1520, zone: "zona4", avatar: "SB" },
+    { id: 19, name: "Trim Gashi", phone: "+383 44 111 019", vehicleId: 19, status: "offline", mode: "inactive", rating: 4.5, trips: 420, lat: 42.6800, lng: 21.1900, zone: "zona5", avatar: "TG" },
+    { id: 20, name: "Urim Morina", phone: "+383 44 111 020", vehicleId: 20, status: "busy", mode: "taximeter", rating: 4.8, trips: 990, lat: 42.5728, lng: 21.0356, zone: "zona3", avatar: "UM" }
 ];
 
-// ============================================================
-// 4. VETURAT
-// ============================================================
+// ═══ VETURAT ═══
 const DB_VEHICLES = [
     { id: 1, plate: "01-123-AB", model: "Skoda Octavia", year: 2020, color: "E bardhë", driver: 1, category: "standard", fuel: 78, mileage: 145230 },
     { id: 2, plate: "01-124-CD", model: "Toyota Corolla", year: 2021, color: "E zezë", driver: 2, category: "standard", fuel: 62, mileage: 98050 },
@@ -181,98 +137,56 @@ const DB_VEHICLES = [
     { id: 20, plate: "01-142-GG", model: "Mercedes Vito", year: 2021, color: "Gri", driver: 20, category: "van", fuel: 90, mileage: 92000 }
 ];
 
-// ============================================================
-// 5. PIKAT E PARKIMIT
-// ============================================================
+// ═══ PIKAT E PARKIMIT ═══
 const DB_PARKING_POINTS = [
     { id: 1, name: "Parking Sheshi", lat: 42.6629, lng: 21.1655, zone: "zona1", capacity: 8, occupied: 3 },
     { id: 2, name: "Parking Grand", lat: 42.6635, lng: 21.1660, zone: "zona1", capacity: 5, occupied: 2 },
     { id: 3, name: "Parking Dardania", lat: 42.6550, lng: 21.1600, zone: "zona2", capacity: 6, occupied: 1 },
     { id: 4, name: "Parking Albi Mall", lat: 42.6620, lng: 21.1820, zone: "zona5", capacity: 10, occupied: 5 },
-    { id: 5, name: "Parking Aeroport", lat: 42.5728, lng: 21.0356, zone: "zona3", capacity: 15, occupied: 8 },
-    { id: 6, name: "Parking Arbëria", lat: 42.6650, lng: 21.1550, zone: "zona4", capacity: 4, occupied: 1 },
-    { id: 7, name: "Parking QKUK", lat: 42.6420, lng: 21.1580, zone: "zona1", capacity: 6, occupied: 4 },
-    { id: 8, name: "Parking Kalabria", lat: 42.6700, lng: 21.1850, zone: "zona5", capacity: 7, occupied: 2 }
+    { id: 5, name: "Parking Aeroport", lat: 42.5728, lng: 21.0356, zone: "zona3", capacity: 15, occupied: 8 }
 ];
 
-// ============================================================
-// 6. TARIFAT
-// ============================================================
+// ═══ TARIFAT ═══
 const DB_TARIFFS = [
     { id: "standard", name: "Standard", base: 2.50, perKm: 0.80, minFare: 3.00 },
     { id: "vip", name: "VIP", base: 5.00, perKm: 1.20, minFare: 6.00 },
     { id: "airport", name: "Aeroport", base: 15.00, perKm: 0.50, minFare: 15.00 },
-    { id: "night", name: "Natë (22:00-06:00)", base: 3.50, perKm: 1.00, minFare: 4.50 },
-    { id: "van", name: "Van (7 vende)", base: 4.00, perKm: 1.00, minFare: 5.00 }
+    { id: "night", name: "Natë", base: 3.50, perKm: 1.00, minFare: 4.50 },
+    { id: "van", name: "Van", base: 4.00, perKm: 1.00, minFare: 5.00 }
 ];
 
-// ============================================================
-// 7. POROSITË SHEMBULL
-// ============================================================
-const DB_MOCK_ORDERS = [
-    { id: 1001, phone: "+383 44 123 456", name: "Klient 1", pickup: "Grand Hotel Prishtina", destination: "Aeroporti Ndërkombëtar", status: "new", taxi: "Auto", time: "19:04", zone: "zona1", tariff: "airport", priority: "high", note: "Klienti ka bagazh" },
-    { id: 1002, phone: "+383 49 987 654", name: "Klient 2", pickup: "Newborn Monument", destination: "Albi Mall", status: "assigned", taxi: "01-124-CD", time: "19:02", zone: "zona1", tariff: "standard", priority: "normal", note: "" },
-    { id: 1003, phone: "+383 44 555 222", name: "Klient 3", pickup: "Rr. UÇK Dardani", destination: "QKUK", status: "onroute", taxi: "01-125-EF", time: "18:55", zone: "zona2", tariff: "standard", priority: "high", note: "Urgjencë mjekësore" },
-    { id: 1004, phone: "+383 45 111 222", name: "Klient 4", pickup: "Katedralja Nënë Tereza", destination: "Kalabria", status: "delay", taxi: "01-126-GH", time: "18:50", zone: "zona1", tariff: "standard", priority: "normal", note: "" },
-    { id: 1005, phone: "+383 44 777 888", name: "Klient 5", pickup: "Qendra Tregtare Kalabria", destination: "Arbëria", status: "pending", taxi: "N/A", time: "19:08", zone: "zona5", tariff: "standard", priority: "normal", note: "" },
-    { id: 1006, phone: "+383 49 333 444", name: "Klient 6", pickup: "Hotel Swiss Diamond", destination: "Stacioni i Autobusëve", status: "new", taxi: "Auto", time: "19:10", zone: "zona1", tariff: "standard", priority: "normal", note: "" },
-    { id: 1007, phone: "+383 44 999 111", name: "Klient 7", pickup: "Pallati i Drejtësisë", destination: "Sheshi Nëna Terezë", status: "assigned", taxi: "01-131-QR", time: "19:05", zone: "zona4", tariff: "vip", priority: "high", note: "Klient VIP" },
-    { id: 1008, phone: "+383 45 222 333", name: "Klient 8", pickup: "QKUK", destination: "Fushë Kosova", status: "onroute", taxi: "01-132-ST", time: "18:48", zone: "zona1", tariff: "standard", priority: "normal", note: "" },
-    { id: 1009, phone: "+383 49 444 555", name: "Klient 9", pickup: "Spitali Amerikan", destination: "Dardania", status: "completed", taxi: "01-127-IJ", time: "18:30", zone: "zona1", tariff: "standard", priority: "normal", note: "" },
-    { id: 1010, phone: "+383 44 666 777", name: "Klient 10", pickup: "Kodra e Diellit", destination: "Prishtina Mall", status: "new", taxi: "Auto", time: "19:12", zone: "zona4", tariff: "standard", priority: "normal", note: "" }
-];
-
-// ============================================================
-// 8. KONFIGURIMET
-// ============================================================
+// ═══ KONFIGURIMET ═══
 const DB_CONFIG = {
     companyName: "TaxiDispatch Pro",
     companyPhone: "+383 38 123 456",
-    companyEmail: "info@taxidispatch.com",
     currency: "EUR",
     currencySymbol: "€",
     language: "sq",
-    timezone: "Europe/Belgrade",
     mapCenter: [42.6629, 21.1655],
-    mapZoom: 13,
-    autoAssignTimeout: 30,
-    driverSearchRadius: 3,
-    maxDriversPerZone: 10,
-    allowPreorder: true,
-    allowPriority: true,
-    enableSMS: true,
-    enableGSM: true,
-    enablePushNotifications: true,
-    nightModeStart: 22,
-    nightModeEnd: 6,
-    workingHours: { start: "06:00", end: "23:00" }
+    mapZoom: 13
 };
 
-// ============================================================
-// 9. STATUSET
-// ============================================================
+// ═══ STATUSET ═══
 const DB_ORDER_STATUSES = {
-    new: { label: "E Re", color: "#06b6d4", icon: "fa-bolt" },
+    new: { label: "E Re", color: "#a855f7", icon: "fa-bolt" },
     pending: { label: "Në Pritje", color: "#f59e0b", icon: "fa-hourglass-half" },
     assigned: { label: "E Caktuar", color: "#8b5cf6", icon: "fa-user-check" },
     onroute: { label: "Në Rrugë", color: "#3b82f6", icon: "fa-route" },
-    completed: { label: "Përfunduar", color: "#10b981", icon: "fa-check" },
+    completed: { label: "Përfunduar", color: "#22c55e", icon: "fa-check" },
     cancelled: { label: "Anuluar", color: "#6b7280", icon: "fa-xmark" },
-    delay: { label: "Vonesë", color: "#ef4444", icon: "fa-clock" }
+    delay: { label: "Vonesë", color: "#f43f5e", icon: "fa-clock" }
 };
 
-// ============================================================
-// 10. KATEGORITË
-// ============================================================
+// ═══ KATEGORITË ═══
 const DB_ADDRESS_CATEGORIES = {
-    hotel: { label: "Hotel", icon: "fa-hotel", color: "#8b5cf6" },
+    hotel: { label: "Hotel", icon: "fa-hotel", color: "#ec4899" },
     restaurant: { label: "Restorant", icon: "fa-utensils", color: "#f59e0b" },
     shopping: { label: "Qendër Tregtare", icon: "fa-bag-shopping", color: "#06b6d4" },
     hospital: { label: "Spital", icon: "fa-hospital", color: "#ef4444" },
     university: { label: "Universitet", icon: "fa-graduation-cap", color: "#3b82f6" },
     school: { label: "Shkollë", icon: "fa-school", color: "#10b981" },
     transport: { label: "Transport", icon: "fa-bus", color: "#f59e0b" },
-    airport: { label: "Aeroport", icon: "fa-plane", color: "#06b6d4" },
+    airport: { label: "Aeroport", icon: "fa-plane", color: "#a855f7" },
     institution: { label: "Institucion", icon: "fa-building-columns", color: "#8b5cf6" },
     monument: { label: "Monument", icon: "fa-monument", color: "#f59e0b" },
     park: { label: "Park", icon: "fa-tree", color: "#10b981" },
@@ -288,9 +202,7 @@ const DB_ADDRESS_CATEGORIES = {
     parking: { label: "Parking", icon: "fa-square-parking", color: "#3b82f6" }
 };
 
-// ============================================================
-// 11. EKSPORTIMI
-// ============================================================
+// ═══ EKSPORT ═══
 window.TaxiData = {
     addresses: DB_ADDRESSES,
     zones: DB_ZONES,
@@ -298,17 +210,13 @@ window.TaxiData = {
     vehicles: DB_VEHICLES,
     parkingPoints: DB_PARKING_POINTS,
     tariffs: DB_TARIFFS,
-    mockOrders: DB_MOCK_ORDERS,
     config: DB_CONFIG,
     orderStatuses: DB_ORDER_STATUSES,
     addressCategories: DB_ADDRESS_CATEGORIES,
 
-    getAddressById: (id) => DB_ADDRESSES.find(a => a.id === id),
     getDriverById: (id) => DB_DRIVERS.find(d => d.id === id),
     getVehicleById: (id) => DB_VEHICLES.find(v => v.id === id),
     getZoneById: (id) => DB_ZONES.find(z => z.id === id),
-    getTariffById: (id) => DB_TARIFFS.find(t => t.id === id),
-    getDriverByVehicle: (vehicleId) => DB_DRIVERS.find(d => d.vehicleId === vehicleId),
 
     searchAddresses: (query) => {
         if (!query || query.length < 2) return [];
@@ -317,43 +225,7 @@ window.TaxiData = {
             .filter(a => a.name.toLowerCase().includes(q) || a.alias.some(al => al.toLowerCase().includes(q)))
             .sort((a, b) => b.priority - a.priority)
             .slice(0, 8);
-    },
-
-    getZoneByCoords: (lat, lng) => {
-        for (const zone of DB_ZONES) {
-            if (isPointInPolygon([lat, lng], zone.polygon)) return zone;
-        }
-        return null;
     }
 };
 
-// ============================================================
-// 12. FUNKSIONE NDIHMËSE
-// ============================================================
-function isPointInPolygon(point, polygon) {
-    const x = point[0], y = point[1];
-    let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const xi = polygon[i][0], yi = polygon[i][1];
-        const xj = polygon[j][0], yj = polygon[j][1];
-        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-        if (intersect) inside = !inside;
-    }
-    return inside;
-}
-
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-window.TaxiUtils = { isPointInPolygon, calculateDistance };
-
-console.log("%c🚕 TaxiDispatch Pro - Data Module Loaded", "color:#06b6d4;font-size:14px;font-weight:bold;");
-console.log(`📊 ${DB_ADDRESSES.length} adresa, ${DB_DRIVERS.length} shoferë, ${DB_ZONES.length} zona, ${DB_VEHICLES.length} vetura`);
+console.log('%c🚕 TaxiDispatch Data Loaded', 'color:#a855f7;font-weight:bold;');
