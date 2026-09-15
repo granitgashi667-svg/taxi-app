@@ -85,18 +85,6 @@ function loadData() {
             manualSelect.appendChild(opt);
         });
     }
-
-    // Popullo message target select
-    const msgTarget = document.getElementById('msg-target');
-    if (msgTarget) {
-        AppState.drivers.forEach(d => {
-            const num = String(d.vehicleId).padStart(2, '0');
-            const opt = document.createElement('option');
-            opt.value = d.id;
-            opt.textContent = `🚗 ${num} — ${d.name}`;
-            msgTarget.appendChild(opt);
-        });
-    }
 }
 
 // ═══ CLOCK ═══
@@ -189,14 +177,6 @@ function updateVehicleMarker(driverId) {
 
 // ═══ EVENT LISTENERS ═══
 function initEventListeners() {
-    document.getElementById('btn-new-order')?.addEventListener('click', openNewOrderModal);
-    document.querySelectorAll('[data-close]').forEach(btn => {
-        btn.addEventListener('click', () => document.getElementById(btn.dataset.close)?.classList.remove('active'));
-    });
-    document.querySelectorAll('.modal-overlay').forEach(ov => {
-        ov.addEventListener('click', (e) => { if (e.target === ov) ov.classList.remove('active'); });
-    });
-
     document.getElementById('order-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitOrder(); });
     document.getElementById('btn-submit-order')?.addEventListener('click', (e) => { e.preventDefault(); submitOrder(); });
 
@@ -220,7 +200,6 @@ function initEventListeners() {
         else document.exitFullscreen?.();
     });
 
-    // SOUND
     document.getElementById('btn-sound-toggle')?.addEventListener('click', (e) => {
         AppState.soundEnabled = !AppState.soundEnabled;
         const btn = e.currentTarget;
@@ -230,7 +209,6 @@ function initEventListeners() {
         showToast('info', 'Zëri', AppState.soundEnabled ? 'Aktivizuar' : 'Çaktivizuar');
     });
 
-    // PANEL MIN/MAX
     document.querySelectorAll('[data-panel-min]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -262,15 +240,6 @@ function initEventListeners() {
         });
     });
 
-    // LOGIN
-    document.getElementById('rail-user')?.addEventListener('click', () => {
-        if (AppState.currentOperator.loggedIn) showOperatorStats();
-        else document.getElementById('modal-login')?.classList.add('active');
-    });
-    document.getElementById('btn-do-login')?.addEventListener('click', doLogin);
-    document.getElementById('btn-logout')?.addEventListener('click', doLogout);
-
-    // MANUAL ASSIGN
     document.getElementById('btn-confirm-manual-assign')?.addEventListener('click', confirmManualAssign);
     document.getElementById('assign-vehicle-select')?.addEventListener('change', (e) => {
         const num = e.target.value;
@@ -279,127 +248,12 @@ function initEventListeners() {
         document.getElementById('assign-driver-name').value = driver ? driver.name : '';
     });
 
-    // MESSAGES
-    document.getElementById('btn-messages')?.addEventListener('click', openMessages);
-    document.getElementById('btn-send-msg')?.addEventListener('click', sendMessage);
-    document.querySelectorAll('.msg-quick-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('msg-custom').value = btn.dataset.msg;
-        });
+    document.getElementById('btn-toggle-termin')?.addEventListener('click', () => {
+        document.getElementById('termin-options')?.classList.toggle('active');
     });
-}
-
-// ═══ LOGIN ═══
-function doLogin() {
-    const name = document.getElementById('login-username')?.value.trim();
-    if (!name) { showToast('error', 'Gabim', 'Shkruaj emrin'); return; }
-    AppState.currentOperator.name = name;
-    AppState.currentOperator.initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-    AppState.currentOperator.loggedIn = true;
-    AppState.currentOperator.loginTime = Date.now();
-    AppState.currentOperator.stats = { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 };
-    document.getElementById('rail-user').textContent = AppState.currentOperator.initials;
-    document.getElementById('modal-login')?.classList.remove('active');
-    showToast('success', 'U loguat', `Mirë se vjen, ${name}!`);
-    showOperatorStats();
-}
-
-function doLogout() {
-    AppState.currentOperator.loggedIn = false;
-    AppState.currentOperator.loginTime = null;
-    document.getElementById('rail-user').textContent = 'GD';
-    document.getElementById('modal-operator-stats')?.classList.remove('active');
-    showToast('info', 'U dilni', 'Dilni nga sistemi');
-}
-
-function showOperatorStats() {
-    const op = AppState.currentOperator;
-    const onlineTime = op.loginTime ? Math.floor((Date.now() - op.loginTime) / 60000) : 0;
-    const onlineHours = Math.floor(onlineTime / 60);
-    const onlineMins = onlineTime % 60;
-
-    document.getElementById('operator-stats-body').innerHTML = `
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg-tertiary);border-radius:12px;border-left:4px solid var(--accent-purple);">
-            <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:white;">${op.initials}</div>
-            <div>
-                <div style="font-size:16px;font-weight:800;">${op.name}</div>
-                <div style="font-size:12px;color:var(--text-muted);">Dispeçer ${op.loggedIn ? '· Online' : ''}</div>
-            </div>
-        </div>
-        <div class="detail-section-title"><i class="fa-solid fa-chart-simple"></i> STATISTIKAT</div>
-        <div class="stats-grid">
-            <div class="stat-box"><span class="stat-box-label">💰 Të Ardhura</span><span class="stat-box-value green">€${op.stats.revenue.toFixed(2)}</span></div>
-            <div class="stat-box"><span class="stat-box-label">🚗 Udhëtime</span><span class="stat-box-value">${op.stats.trips}</span></div>
-            <div class="stat-box"><span class="stat-box-label">📞 Thirrje të Marra</span><span class="stat-box-value pink">${op.stats.callsTaken}</span></div>
-            <div class="stat-box"><span class="stat-box-label">⏳ Në Pritje</span><span class="stat-box-value blue">${op.stats.callsWaiting}</span></div>
-            <div class="stat-box"><span class="stat-box-label">📂 Thirrje të Hapura</span><span class="stat-box-value">${op.stats.callsOpened}</span></div>
-            <div class="stat-box"><span class="stat-box-label">❌ Anuluar</span><span class="stat-box-value" style="color:var(--accent-red);">${op.stats.cancelled}</span></div>
-            <div class="stat-box" style="grid-column:1/-1;"><span class="stat-box-label">⏱️ Koha Online</span><span class="stat-box-value">${onlineHours}h ${onlineMins}min</span></div>
-        </div>
-    `;
-    document.getElementById('modal-operator-stats')?.classList.add('active');
-}
-
-// ═══ MESSAGES ═══
-function openMessages() {
-    renderMessages();
-    document.getElementById('modal-messages')?.classList.add('active');
-    AppState.messages.forEach(m => m.unread = false);
-    updateMessagesBadge();
-}
-
-function renderMessages() {
-    const list = document.getElementById('msgs-list');
-    if (!list) return;
-    if (!AppState.messages.length) {
-        list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Nuk ka mesazhe</div>`;
-        return;
-    }
-    list.innerHTML = AppState.messages.map(m => `
-        <div class="msg-item">
-            <span class="msg-item-time">${m.time}</span>
-            <div class="msg-item-content">
-                <div class="msg-item-name">${m.name}</div>
-                <div class="msg-item-text">${m.text}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-function sendMessage() {
-    const custom = document.getElementById('msg-custom')?.value.trim();
-    const targetId = document.getElementById('msg-target')?.value;
-    if (!custom) { showToast('error', 'Gabim', 'Shkruaj një mesazh'); return; }
-
-    if (targetId === 'all') {
-        AppState.drivers.forEach(d => {
-            AppState.messages.unshift({
-                id: Date.now() + d.id, driverId: d.id, name: d.name,
-                text: custom,
-                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
-            });
-        });
-        showToast('success', 'U dërgua', `Te të gjithë shoferët (${AppState.drivers.length})`);
-    } else {
-        const d = AppState.drivers.find(x => x.id == targetId);
-        if (!d) return;
-        AppState.messages.unshift({
-            id: Date.now(), driverId: d.id, name: d.name, text: custom,
-            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
-        });
-        showToast('success', 'U dërgua', `Tek ${d.name}`);
-    }
-
-    document.getElementById('msg-custom').value = '';
-    renderMessages();
-}
-
-function updateMessagesBadge() {
-    const badge = document.getElementById('msgs-badge');
-    if (!badge) return;
-    const unread = AppState.messages.filter(m => m.unread).length;
-    badge.textContent = unread;
-    badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+    document.getElementById('btn-close-termin')?.addEventListener('click', () => {
+        document.getElementById('termin-options')?.classList.remove('active');
+    });
 }
 
 // ═══ AUTCOMPLETE ═══
@@ -444,7 +298,6 @@ function renderAll() {
     renderPreOrders();
     renderMessages();
     updateStats();
-    updateMessagesBadge();
 }
 
 // ═══ CALLS ═══
@@ -475,7 +328,6 @@ function acceptCall(callId) {
     if (!call) return;
     AppState.currentOperator.stats.callsTaken++;
     AppState.currentOperator.stats.callsOpened++;
-    openNewOrderModal();
     document.getElementById('client-phone').value = call.phone;
     if (call.name) document.getElementById('client-name').value = call.name;
     if (call.lastAddress) document.getElementById('pickup-address').value = call.lastAddress;
@@ -659,9 +511,9 @@ function renderOrders() {
     if (cnt) cnt.textContent = AppState.orders.length;
     if (!tb) return;
     if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi</td></tr>`; return; }
-    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer' };
+    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
     tb.innerHTML = AppState.orders.map(o => `
-        <tr onclick="openOrderDetail(${o.id})">
+        <tr onclick="openOrderDetail('${o.id}')">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : `<span class="vehicle-badge empty">—</span>`}</td>
@@ -671,7 +523,7 @@ function renderOrders() {
             <td>${o.driverName || '<span style="color:var(--text-muted)">—</span>'}</td>
             <td onclick="event.stopPropagation()">
                 <div class="row-actions">
-                    <button class="row-btn danger" onclick="cancelOrder(${o.id})"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="row-btn danger" onclick="cancelOrder('${o.id}')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </td>
         </tr>
@@ -679,9 +531,9 @@ function renderOrders() {
 }
 
 function openOrderDetail(id) {
-    const o = AppState.orders.find(x => x.id === id);
+    const o = AppState.orders.find(x => String(x.id) === String(id));
     if (!o) return;
-    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar' };
+    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje' };
     document.getElementById('order-detail-body').innerHTML = `
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-receipt"></i> INFORMACION BAZË</div>
@@ -690,7 +542,7 @@ function openOrderDetail(id) {
                 <div class="detail-item"><label>Statusi</label><span><span class="status-badge ${o.status}">${statusLbl[o.status] || o.status}</span></span></div>
                 <div class="detail-item"><label>Telefon</label><span class="mono">${o.phone}</span></div>
                 <div class="detail-item"><label>Emri Klientit</label><span>${o.name || 'N/A'}</span></div>
-                <div class="detail-item"><label>Operatori (Bazisti)</label><span style="color:var(--accent-purple);font-weight:700;">${o.operator || AppState.currentOperator.name}</span></div>
+                <div class="detail-item"><label>Operatori</label><span style="color:var(--accent-purple);font-weight:700;">${o.operator || AppState.currentOperator.name}</span></div>
                 <div class="detail-item"><label>Tarifa</label><span>${o.tariff || 'standard'}</span></div>
             </div>
         </div>
@@ -700,9 +552,9 @@ function openOrderDetail(id) {
                 <div class="detail-item" style="grid-column:1/-1;"><label>Adresa e Marrjes</label><span>📍 ${o.pickup}</span></div>
                 <div class="detail-item" style="grid-column:1/-1;"><label>Destinacioni</label><span>🏁 ${o.destination}</span></div>
                 <div class="detail-item"><label>Zona</label><span>${o.zone || 'N/A'}</span></div>
-                <div class="detail-item"><label>Vetura që mori</label><span class="mono">${o.vehicle ? '🚗 ' + o.vehicle : '—'}</span></div>
+                <div class="detail-item"><label>Vetura</label><span class="mono">${o.vehicle ? '🚗 ' + o.vehicle : '—'}</span></div>
                 <div class="detail-item"><label>Shoferi</label><span>${o.driverName || '—'}</span></div>
-                <div class="detail-item"><label>Vetura afër në momentin e marrjes</label><span>${o.nearbyCars || 0} taksi</span></div>
+                <div class="detail-item"><label>Vetura afër</label><span>${o.nearbyCars || 0} taksi</span></div>
             </div>
         </div>
         <div class="detail-section">
@@ -710,7 +562,7 @@ function openOrderDetail(id) {
             <div class="detail-grid">
                 <div class="detail-item"><label>U mor në</label><span class="mono">${o.takenAt || o.time}</span></div>
                 <div class="detail-item"><label>U lëshua në</label><span class="mono">${o.doneAt || '—'}</span></div>
-                <div class="detail-item"><label>Statusi aktual</label><span>${statusLbl[o.status] || o.status}</span></div>
+                <div class="detail-item"><label>Statusi</label><span>${statusLbl[o.status] || o.status}</span></div>
                 <div class="detail-item"><label>Operatori</label><span>${o.operator || '—'}</span></div>
             </div>
         </div>
@@ -719,7 +571,7 @@ function openOrderDetail(id) {
 }
 
 function cancelOrder(id) {
-    AppState.orders = AppState.orders.filter(x => x.id !== id);
+    AppState.orders = AppState.orders.filter(x => String(x.id) !== String(id));
     AppState.currentOperator.stats.cancelled++;
     renderOrders(); updateStats();
     showToast('info', 'Anuluar', `Porosia #${id}`);
@@ -732,17 +584,17 @@ function filterOrders(q) {
     if (!tb) return;
     const f = AppState.orders.filter(o => o.phone.includes(lower) || o.pickup.toLowerCase().includes(lower) || (o.destination || '').toLowerCase().includes(lower));
     if (!f.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk u gjet</td></tr>`; return; }
-    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer' };
+    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
     tb.innerHTML = f.map(o => `
-        <tr onclick="openOrderDetail(${o.id})">
-            <td><span class="status-badge ${o.status}">${lbl[o.status]}</span></td>
+        <tr onclick="openOrderDetail('${o.id}')">
+            <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '—'}</td>
-            <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder(${o.id})"><i class="fa-solid fa-xmark"></i></button></div></td>
+            <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder('${o.id}')"><i class="fa-solid fa-xmark"></i></button></div></td>
         </tr>
     `).join('');
 }
@@ -788,12 +640,12 @@ function cancelPre(id) {
     renderPreOrders(); updateStats();
 }
 
-// ═══ NEW ORDER ═══
-function openNewOrderModal() {
-    document.getElementById('modal-new-order')?.classList.add('active');
-    setTimeout(() => document.getElementById('client-phone')?.focus(), 200);
+// ═══ MESSAGES ═══
+function renderMessages() {
+    // E mbajmë bosh për tani — do shtohet më vonë
 }
 
+// ═══ NEW ORDER ═══
 function submitOrder() {
     const phone = document.getElementById('client-phone')?.value.trim();
     const name = document.getElementById('client-name')?.value.trim();
@@ -801,6 +653,7 @@ function submitOrder() {
     const dest = document.getElementById('destination-address')?.value.trim();
     const zone = document.getElementById('order-zone')?.value;
     const tariff = document.getElementById('order-tariff')?.value;
+    const remark = document.getElementById('order-note')?.value.trim();
 
     if (!phone || !pickup) { showToast('error', 'Gabim', 'Plotëso numrin dhe adresën'); return; }
 
@@ -811,7 +664,8 @@ function submitOrder() {
         zone: zone === 'auto' ? 'zona1' : zone, tariff: tariff || 'standard',
         operator: AppState.currentOperator.name,
         takenAt: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
+        doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1,
+        remark: remark || ''
     };
 
     if (AppState.currentDispatchMode === 'manual') {
@@ -824,7 +678,7 @@ function submitOrder() {
             order.status = 'assigned';
             if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
         } else {
-            order.status = 'pending';
+            order.status = 'waiting';
             AppState.waitingOrders.unshift({ ...order, waitStart: Date.now() });
             AppState.currentOperator.stats.callsWaiting++;
         }
@@ -854,7 +708,7 @@ function submitOrder() {
         }
     }
 
-    if (order.status !== 'pending') {
+    if (order.status !== 'waiting') {
         AppState.orders.unshift(order);
         AppState.currentOperator.stats.trips++;
         AppState.currentOperator.stats.revenue += 4.5;
@@ -865,10 +719,16 @@ function submitOrder() {
 
     updateStats();
     renderOrders(); renderWaitingOrders();
-    document.getElementById('modal-new-order')?.classList.remove('active');
     document.getElementById('order-form')?.reset();
     document.getElementById('manual-vehicle-picker').style.display = 'none';
     showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
+
+    // 🔥 RUAJ NË FIRESTORE
+    if (window.TaxiOrdersBridge) {
+        setTimeout(() => {
+            window.TaxiOrdersBridge.createFromForm();
+        }, 100);
+    }
 }
 
 // ═══ STATS ═══
@@ -938,51 +798,10 @@ function startOrderSimulation() {
     }, 4000);
 
     setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
-
-    setInterval(() => {
-        AppState.drivers.forEach(d => {
-            if (d.mode === 'taximeter' || d.mode === 'fixed') {
-                if (Math.random() > 0.75) { d.mode = 'free'; d.status = 'available'; updateVehicleMarker(d.id); updateStats(); }
-            } else if (d.mode === 'free') {
-                if (Math.random() > 0.9) { d.mode = Math.random() > 0.5 ? 'taximeter' : 'fixed'; d.status = 'busy'; updateVehicleMarker(d.id); updateStats(); }
-            }
-        });
-    }, 15000);
-
-    setInterval(() => {
-        if (AppState.waitingOrders.length < 5 && Math.random() > 0.5) {
-            const pickups = ['Grand Hotel Prishtina', 'Newborn Monument', 'Hotel Sirius', 'Albi Mall'];
-            const dests = ['QKUK Spitali', 'Aeroporti Ndërkombëtar', 'Sheshi Nënë Terezë'];
-            AppState.waitingOrders.push({
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                phone: '+383 44 ' + Math.floor(100 + Math.random() * 900) + ' ' + Math.floor(100 + Math.random() * 900),
-                name: 'Klient',
-                pickup: pickups[Math.floor(Math.random() * pickups.length)],
-                destination: dests[Math.floor(Math.random() * dests.length)],
-                waitStart: Date.now(),
-                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                zone: 'zona1', operator: AppState.currentOperator.name
-            });
-            renderWaitingOrders(); updateStats();
-        }
-    }, 40000);
 }
 
 function startMessageSimulation() {
-    setInterval(() => {
-        if (AppState.drivers.length && Math.random() > 0.5) {
-            const d = AppState.drivers[Math.floor(Math.random() * AppState.drivers.length)];
-            const msgs = ['JASHT VETURE', 'DUKE PRITUR', 'A MUNDESH ME I LAJMRU?', 'KËRKESË PËR PAUZË', 'NË PUNË JAM'];
-            AppState.messages.unshift({
-                id: Date.now(), driverId: d.id, name: d.name,
-                text: msgs[Math.floor(Math.random() * msgs.length)],
-                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                unread: true
-            });
-            renderMessages();
-            updateMessagesBadge();
-        }
-    }, 45000);
+    // E mbajmë bosh për tani
 }
 
 // ═══ GLOBAL ═══
