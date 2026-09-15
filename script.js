@@ -21,7 +21,6 @@ const AppState = {
         loginTime: null,
         stats: { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 }
     },
-    editingOrderId: null,
     manualAssignOrderId: null,
     audioContext: null
 };
@@ -47,22 +46,22 @@ function loadData() {
     AppState.config = window.TaxiData.config || {};
 
     AppState.orders = [
-        { id: 1001, phone: '+383 44 123 456', name: 'Ardit Krasniqi', pickup: 'Grand Hotel Prishtina', destination: 'Aeroporti Ndërkombëtar i Prishtinës', status: 'assigned', vehicle: '01', driverName: 'Arben Krasniqi', time: '19:04', zone: 'zona1', tariff: 'airport', operator: 'Granit Gashi', takenAt: '19:04', doneAt: '', nearbyCars: 3 },
+        { id: 1001, phone: '+383 44 123 456', name: 'Ardit Krasniqi', pickup: 'Grand Hotel Prishtina', destination: 'Aeroporti Ndërkombëtar', status: 'assigned', vehicle: '01', driverName: 'Arben Krasniqi', time: '19:04', zone: 'zona1', tariff: 'airport', operator: 'Granit Gashi', takenAt: '19:04', doneAt: '', nearbyCars: 3 },
         { id: 1002, phone: '+383 49 987 654', name: 'Blerim Hoxha', pickup: 'Newborn Monument', destination: 'Albi Mall', status: 'onroute', vehicle: '04', driverName: 'Endrit Morina', time: '19:02', zone: 'zona1', tariff: 'standard', operator: 'Granit Gashi', takenAt: '19:02', doneAt: '', nearbyCars: 5 },
-        { id: 1003, phone: '+383 44 555 222', name: 'Driton Berisha', pickup: 'QKUK - Qendra Klinike Universitare', destination: 'Aeroporti Ndërkombëtar i Prishtinës', status: 'delay', vehicle: '05', driverName: 'Fisnik Gashi', time: '18:55', zone: 'zona2', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:55', doneAt: '', nearbyCars: 2 },
-        { id: 1004, phone: '+383 45 111 222', name: 'Endrit Morina', pickup: 'Katedralja Nënë Tereza', destination: 'Qendra Tregtare Kalabria', status: 'assigned', vehicle: '07', driverName: 'Hekuran Zeka', time: '18:50', zone: 'zona1', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:50', doneAt: '', nearbyCars: 4 }
+        { id: 1003, phone: '+383 44 555 222', name: 'Driton Berisha', pickup: 'QKUK Spitali', destination: 'Aeroporti Ndërkombëtar', status: 'delay', vehicle: '05', driverName: 'Fisnik Gashi', time: '18:55', zone: 'zona2', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:55', doneAt: '', nearbyCars: 2 },
+        { id: 1004, phone: '+383 45 111 222', name: 'Endrit Morina', pickup: 'Katedralja Nënë Tereza', destination: 'Kalabria', status: 'assigned', vehicle: '07', driverName: 'Hekuran Zeka', time: '18:50', zone: 'zona1', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:50', doneAt: '', nearbyCars: 4 }
     ];
 
     AppState.waitingOrders = [
         { id: 2001, phone: '+383 44 777 888', name: 'Genc Rama', pickup: 'Qendra Tregtare Kalabria', destination: 'Arbëria', waitStart: Date.now() - 45000, time: '19:08', zone: 'zona5', operator: 'Granit Gashi' },
         { id: 2002, phone: '+383 49 333 444', name: 'Ilir Thaçi', pickup: 'Hotel Swiss Diamond', destination: 'Stacioni i Autobusëve', waitStart: Date.now() - 120000, time: '19:10', zone: 'zona1', operator: 'Granit Gashi' },
-        { id: 2003, phone: '+383 45 222 333', name: 'Jeton Bytyqi', pickup: 'QKUK - Qendra Klinike Universitare', destination: 'Fushë Kosova', waitStart: Date.now() - 280000, time: '18:48', zone: 'zona1', operator: 'Granit Gashi' }
+        { id: 2003, phone: '+383 45 222 333', name: 'Jeton Bytyqi', pickup: 'QKUK Spitali', destination: 'Fushë Kosova', waitStart: Date.now() - 280000, time: '18:48', zone: 'zona1', operator: 'Granit Gashi' }
     ];
 
     AppState.preOrders = [
-        { id: 3001, phone: '+383 44 111 999', name: 'Kreshnik Dema', pickup: 'Aeroporti Ndërkombëtar i Prishtinës', destination: 'Grand Hotel Prishtina', date: '15/09', time: '06:30', zone: 'zona3', vehicle: '', operator: 'Granit Gashi' },
-        { id: 3002, phone: '+383 44 222 888', name: 'Luan Ahmeti', pickup: 'Grand Hotel Prishtina', destination: 'QKUK - Qendra Klinike Universitare', date: '15/09', time: '07:15', zone: 'zona1', vehicle: '', operator: 'Granit Gashi' },
-        { id: 3003, phone: '+383 44 333 777', name: 'Mentor Bekteshi', pickup: 'Hotel Emerald', destination: 'Albi Mall', date: '15/09', time: '08:00', zone: 'zona2', vehicle: '', operator: 'Granit Gashi' }
+        { id: 3001, phone: '+383 44 111 999', name: 'Kreshnik Dema', pickup: 'Aeroporti Ndërkombëtar', destination: 'Grand Hotel Prishtina', date: '15/09', time: '06:30', zone: 'zona3', vehicle: '', operator: 'Granit Gashi' },
+        { id: 3002, phone: '+383 44 222 888', name: 'Luan Ahmeti', pickup: 'Grand Hotel Prishtina', destination: 'QKUK Spitali', date: '15/09', time: '07:15', zone: 'zona1', vehicle: '', operator: 'Granit Gashi' },
+        { id: 3003, phone: '+383 44 333 777', name: 'Mentor Bekteshi', pickup: 'Emerald Hotel', destination: 'Albi Mall', date: '15/09', time: '08:00', zone: 'zona2', vehicle: '', operator: 'Granit Gashi' }
     ];
 
     AppState.incomingCalls = [
@@ -87,8 +86,10 @@ function loadData() {
 function initClock() {
     const update = () => {
         const now = new Date();
-        document.getElementById('clock-time').textContent = now.toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        document.getElementById('clock-date').textContent = now.toLocaleDateString('sq-AL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const t = document.getElementById('clock-time');
+        const d = document.getElementById('clock-date');
+        if (t) t.textContent = now.toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if (d) d.textContent = now.toLocaleDateString('sq-AL', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
     update();
     setInterval(update, 1000);
@@ -147,7 +148,6 @@ function renderVehiclesOnMap() {
                 <div style="font-size:11px;color:#b8a8d9;">📞 ${driver.phone}<br>⭐ ${driver.rating}</div>
             </div>
         `);
-        marker.on('click', () => {});
         AppState.vehicleMarkers.set(driver.id, marker);
     });
     const cnt = document.getElementById('map-counter');
@@ -217,7 +217,7 @@ function initEventListeners() {
         showToast('info', 'Zëri', AppState.soundEnabled ? 'Aktivizuar' : 'Çaktivizuar');
     });
 
-    // PANEL MIN/MAX - FIXED
+    // PANEL MIN/MAX
     document.querySelectorAll('[data-panel-toggle]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -237,7 +237,8 @@ function initEventListeners() {
             const isMax = panel.classList.contains('maximized');
             document.querySelectorAll('.panel.maximized').forEach(p => {
                 p.classList.remove('maximized');
-                p.querySelector('[data-panel-maximize] i').className = 'fa-solid fa-expand';
+                const ic = p.querySelector('[data-panel-maximize] i');
+                if (ic) ic.className = 'fa-solid fa-expand';
             });
             if (!isMax) {
                 panel.classList.add('maximized');
@@ -250,16 +251,13 @@ function initEventListeners() {
 
     // LOGIN
     document.getElementById('rail-user')?.addEventListener('click', () => {
-        if (AppState.currentOperator.loggedIn) {
-            showOperatorStats();
-        } else {
-            document.getElementById('modal-login')?.classList.add('active');
-        }
+        if (AppState.currentOperator.loggedIn) showOperatorStats();
+        else document.getElementById('modal-login')?.classList.add('active');
     });
     document.getElementById('btn-do-login')?.addEventListener('click', doLogin);
     document.getElementById('btn-logout')?.addEventListener('click', doLogout);
 
-    // MANUAL ASSIGN CONFIRM
+    // MANUAL ASSIGN
     document.getElementById('btn-confirm-manual-assign')?.addEventListener('click', confirmManualAssign);
     document.getElementById('assign-vehicle-select')?.addEventListener('change', (e) => {
         const num = e.target.value;
@@ -278,7 +276,6 @@ function doLogin() {
     AppState.currentOperator.loggedIn = true;
     AppState.currentOperator.loginTime = Date.now();
     AppState.currentOperator.stats = { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 };
-
     document.getElementById('rail-user').textContent = AppState.currentOperator.initials;
     document.getElementById('modal-login')?.classList.remove('active');
     showToast('success', 'U loguat', `Mirë se vjen, ${name}!`);
@@ -307,37 +304,15 @@ function showOperatorStats() {
                 <div style="font-size:12px;color:var(--text-muted);">Dispeçer ${op.loggedIn ? '· Online' : ''}</div>
             </div>
         </div>
-
         <div class="detail-section-title"><i class="fa-solid fa-chart-simple"></i> STATISTIKAT</div>
         <div class="stats-grid">
-            <div class="stat-box">
-                <span class="stat-box-label">💰 Të Ardhura</span>
-                <span class="stat-box-value green">€${op.stats.revenue.toFixed(2)}</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-box-label">🚗 Udhëtime</span>
-                <span class="stat-box-value">${op.stats.trips}</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-box-label">📞 Thirrje të Marra</span>
-                <span class="stat-box-value pink">${op.stats.callsTaken}</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-box-label">⏳ Në Pritje</span>
-                <span class="stat-box-value blue">${op.stats.callsWaiting}</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-box-label">📂 Thirrje të Hapura</span>
-                <span class="stat-box-value">${op.stats.callsOpened}</span>
-            </div>
-            <div class="stat-box">
-                <span class="stat-box-label">❌ Anuluar</span>
-                <span class="stat-box-value" style="color:var(--accent-red);">${op.stats.cancelled}</span>
-            </div>
-            <div class="stat-box" style="grid-column:1/-1;">
-                <span class="stat-box-label">⏱️ Koha Online</span>
-                <span class="stat-box-value">${onlineHours}h ${onlineMins}min</span>
-            </div>
+            <div class="stat-box"><span class="stat-box-label">💰 Të Ardhura</span><span class="stat-box-value green">€${op.stats.revenue.toFixed(2)}</span></div>
+            <div class="stat-box"><span class="stat-box-label">🚗 Udhëtime</span><span class="stat-box-value">${op.stats.trips}</span></div>
+            <div class="stat-box"><span class="stat-box-label">📞 Thirrje të Marra</span><span class="stat-box-value pink">${op.stats.callsTaken}</span></div>
+            <div class="stat-box"><span class="stat-box-label">⏳ Në Pritje</span><span class="stat-box-value blue">${op.stats.callsWaiting}</span></div>
+            <div class="stat-box"><span class="stat-box-label">📂 Thirrje të Hapura</span><span class="stat-box-value">${op.stats.callsOpened}</span></div>
+            <div class="stat-box"><span class="stat-box-label">❌ Anuluar</span><span class="stat-box-value" style="color:var(--accent-red);">${op.stats.cancelled}</span></div>
+            <div class="stat-box" style="grid-column:1/-1;"><span class="stat-box-label">⏱️ Koha Online</span><span class="stat-box-value">${onlineHours}h ${onlineMins}min</span></div>
         </div>
     `;
     document.getElementById('modal-operator-stats')?.classList.add('active');
@@ -430,23 +405,25 @@ let ringInterval = null;
 
 function playRing() {
     if (!AppState.soundEnabled) return;
-    if (!AppState.audioContext) AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = AppState.audioContext;
-    const playBeep = (time, freq) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0, time);
-        gain.gain.linearRampToValueAtTime(0.15, time + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
-        osc.start(time); osc.stop(time + 0.4);
-    };
-    const now = ctx.currentTime;
-    playBeep(now, 880);
-    playBeep(now + 0.5, 660);
-    playBeep(now + 1.0, 880);
+    try {
+        if (!AppState.audioContext) AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = AppState.audioContext;
+        const playBeep = (time, freq) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.15, time + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+            osc.start(time); osc.stop(time + 0.4);
+        };
+        const now = ctx.currentTime;
+        playBeep(now, 880);
+        playBeep(now + 0.5, 660);
+        playBeep(now + 1.0, 880);
+    } catch (e) { console.error('Audio error', e); }
 }
 
 function startRing() {
@@ -502,7 +479,7 @@ function autoAssignWaiting(id) {
     AppState.orders.unshift({
         id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
         status: 'assigned', vehicle: num, driverName: d.name, time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, nearbyCars: Math.floor(Math.random() * 6) + 1
+        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
     });
     AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
     d.mode = Math.random() > 0.5 ? 'taximeter' : 'fixed';
@@ -545,7 +522,7 @@ function confirmManualAssign() {
     AppState.orders.unshift({
         id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
         status: 'assigned', vehicle: num, driverName: d ? d.name : 'N/A', time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, nearbyCars: Math.floor(Math.random() * 6) + 1
+        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
     });
     AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
     if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
@@ -572,7 +549,7 @@ function closestAssignWaiting(id) {
     AppState.orders.unshift({
         id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
         status: 'assigned', vehicle: num, driverName: best.name, time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, nearbyCars: 1
+        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: 1
     });
     AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
     best.mode = 'taximeter'; best.status = 'busy';
@@ -621,10 +598,7 @@ function renderOrders() {
 function openOrderDetail(id) {
     const o = AppState.orders.find(x => x.id === id);
     if (!o) return;
-    AppState.editingOrderId = id;
-
     const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar' };
-
     document.getElementById('order-detail-body').innerHTML = `
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-receipt"></i> INFORMACION BAZË</div>
@@ -637,7 +611,6 @@ function openOrderDetail(id) {
                 <div class="detail-item"><label>Tarifa</label><span>${o.tariff || 'standard'}</span></div>
             </div>
         </div>
-
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-route"></i> RRUGËTIMI</div>
             <div class="detail-grid">
@@ -649,18 +622,16 @@ function openOrderDetail(id) {
                 <div class="detail-item"><label>Vetura afër në momentin e marrjes</label><span>${o.nearbyCars || 0} taksi</span></div>
             </div>
         </div>
-
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-clock"></i> KOHËT</div>
             <div class="detail-grid">
                 <div class="detail-item"><label>U mor në</label><span class="mono">${o.takenAt || o.time}</span></div>
                 <div class="detail-item"><label>U lëshua në</label><span class="mono">${o.doneAt || '—'}</span></div>
-                <div class="detail-item"><label>Kohëzgjatja</label><span>${o.doneAt ? 'Llogaritet' : 'Në vazhdim'}</span></div>
                 <div class="detail-item"><label>Statusi aktual</label><span>${statusLbl[o.status] || o.status}</span></div>
+                <div class="detail-item"><label>Operatori</label><span>${o.operator || '—'}</span></div>
             </div>
         </div>
     `;
-
     document.getElementById('modal-order-detail')?.classList.add('active');
 }
 
@@ -734,7 +705,7 @@ function cancelPre(id) {
     renderPreOrders(); updateStats();
 }
 
-// ═══ MODAL NEW ORDER ═══
+// ═══ NEW ORDER ═══
 function openNewOrderModal() {
     document.getElementById('modal-new-order')?.classList.add('active');
     setTimeout(() => document.getElementById('client-phone')?.focus(), 200);
@@ -751,17 +722,13 @@ function submitOrder() {
     if (!phone || !pickup) { showToast('error', 'Gabim', 'Plotëso numrin dhe adresën'); return; }
 
     const order = {
-        id: Date.now(),
-        phone, name: name || 'Klient',
-        pickup, destination: dest || 'N/A',
+        id: Date.now(), phone, name: name || 'Klient', pickup, destination: dest || 'N/A',
         status: 'new', vehicle: '', driverName: '',
         time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        zone: zone === 'auto' ? 'zona1' : zone,
-        tariff: tariff || 'standard',
+        zone: zone === 'auto' ? 'zona1' : zone, tariff: tariff || 'standard',
         operator: AppState.currentOperator.name,
         takenAt: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        doneAt: '',
-        nearbyCars: Math.floor(Math.random() * 6) + 1
+        doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
     };
 
     if (AppState.currentDispatchMode === 'manual') {
@@ -852,7 +819,7 @@ function showToast(type, title, msg) {
 
 // ═══ SIMULATION ═══
 function startCallSimulation() {
-    setTimeout(() => generateCall(), 3000);
+    setTimeout(() => generateCall(), 5000);
     setInterval(() => { if (AppState.incomingCalls.length < 3) generateCall(); }, 30000);
 }
 
@@ -875,6 +842,7 @@ function generateCall() {
 }
 
 function startOrderSimulation() {
+    // Vehicles move
     setInterval(() => {
         AppState.vehicleMarkers.forEach((m, id) => {
             const d = AppState.drivers.find(x => x.id === id);
@@ -887,8 +855,10 @@ function startOrderSimulation() {
         });
     }, 4000);
 
+    // Update wait times
     setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
 
+    // Mode changes
     setInterval(() => {
         AppState.drivers.forEach(d => {
             if (d.mode === 'taximeter' || d.mode === 'fixed') {
@@ -899,10 +869,11 @@ function startOrderSimulation() {
         });
     }, 15000);
 
+    // New waiting orders
     setInterval(() => {
         if (AppState.waitingOrders.length < 5 && Math.random() > 0.5) {
             const pickups = ['Grand Hotel Prishtina', 'Newborn Monument', 'Hotel Sirius', 'Albi Mall'];
-            const dests = ['QKUK - Qendra Klinike Universitare', 'Aeroporti Ndërkombëtar i Prishtinës', 'Sheshi Nënë Terezë'];
+            const dests = ['QKUK Spitali', 'Aeroporti Ndërkombëtar', 'Sheshi Nëna Terezë'];
             AppState.waitingOrders.push({
                 id: Date.now() + Math.floor(Math.random() * 1000),
                 phone: '+383 44 ' + Math.floor(100 + Math.random() * 900) + ' ' + Math.floor(100 + Math.random() * 900),
@@ -930,4 +901,4 @@ window.openOrderDetail = openOrderDetail;
 window.activatePre = activatePre;
 window.cancelPre = cancelPre;
 
-console.log('%c✅ TaxiDispatch Pro Ready', 'color:#a855f7;font-size:14px;font-weight:bold;');
+console.log('✅ TaxiDispatch Pro Ready');
