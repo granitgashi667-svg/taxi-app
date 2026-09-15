@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="TaxiDispatch Pro - Dispatch Console">
     <title>TaxiDispatch Pro | Dispatch Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +14,6 @@
 </head>
 <body class="theme-2">
 
-    <!-- LOADING -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -25,86 +23,36 @@
 
     <!-- NAV RAIL -->
     <aside class="nav-rail" id="nav-rail">
-        <div class="rail-logo" title="TaxiDispatch Pro">
-            <i class="fa-solid fa-taxi"></i>
-        </div>
+        <div class="rail-logo"><i class="fa-solid fa-taxi"></i></div>
         <nav class="rail-nav">
-            <a href="#" class="rail-item active" data-view="monitor" title="Dispatch Console">
-                <i class="fa-solid fa-gauge-high"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="calls" title="Thirrjet">
-                <i class="fa-solid fa-phone-volume"></i>
-                <span class="rail-badge" id="rail-calls-badge">0</span>
-            </a>
-            <a href="#" class="rail-item" data-view="orders" title="Porositë">
-                <i class="fa-solid fa-clipboard-list"></i>
-                <span class="rail-badge" id="rail-orders-badge">0</span>
-            </a>
-            <a href="#" class="rail-item" data-view="waiting" title="Në Pritje">
-                <i class="fa-solid fa-hourglass-half"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="preorders" title="Me Termin">
-                <i class="fa-solid fa-calendar-clock"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="drivers" title="Shoferët">
-                <i class="fa-solid fa-users"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="vehicles" title="Veturat">
-                <i class="fa-solid fa-car-side"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="map" title="Harta">
-                <i class="fa-solid fa-map"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="zones" title="Zonat">
-                <i class="fa-solid fa-map-location-dot"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="parking" title="Parkingjet">
-                <i class="fa-solid fa-square-parking"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="clients" title="Klientët">
-                <i class="fa-solid fa-address-book"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="companies" title="Kompanitë">
-                <i class="fa-solid fa-building"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="reports" title="Raporte">
-                <i class="fa-solid fa-chart-line"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="finance" title="Financa">
-                <i class="fa-solid fa-coins"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="sms" title="SMS">
-                <i class="fa-solid fa-comment-sms"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="logs" title="Logs">
-                <i class="fa-solid fa-file-lines"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="users" title="Përdoruesit">
-                <i class="fa-solid fa-user-shield"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="settings" title="Cilësimet">
-                <i class="fa-solid fa-sliders"></i>
-            </a>
-            <a href="#" class="rail-item" data-view="help" title="Ndihmë">
-                <i class="fa-solid fa-circle-question"></i>
-            </a>
+            <a href="#" class="rail-item active" data-view="monitor" title="Dispatch"><i class="fa-solid fa-gauge-high"></i></a>
+            <a href="#" class="rail-item" data-view="calls" title="Thirrjet"><i class="fa-solid fa-phone-volume"></i><span class="rail-badge" id="rail-calls-badge">0</span></a>
+            <a href="#" class="rail-item" data-view="orders" title="Porositë"><i class="fa-solid fa-clipboard-list"></i><span class="rail-badge" id="rail-orders-badge">0</span></a>
+            <a href="#" class="rail-item" data-view="waiting" title="Në Pritje"><i class="fa-solid fa-hourglass-half"></i></a>
+            <a href="#" class="rail-item" data-view="preorders" title="Me Termin"><i class="fa-solid fa-calendar-clock"></i></a>
+            <a href="#" class="rail-item" data-view="drivers" title="Shoferët"><i class="fa-solid fa-users"></i></a>
+            <a href="#" class="rail-item" data-view="vehicles" title="Veturat"><i class="fa-solid fa-car-side"></i></a>
+            <a href="#" class="rail-item" data-view="map" title="Harta"><i class="fa-solid fa-map"></i></a>
+            <a href="#" class="rail-item" data-view="zones" title="Zonat"><i class="fa-solid fa-map-location-dot"></i></a>
+            <a href="#" class="rail-item" data-view="clients" title="Klientët"><i class="fa-solid fa-address-book"></i></a>
+            <a href="#" class="rail-item" data-view="companies" title="Kompanitë"><i class="fa-solid fa-building"></i></a>
+            <a href="#" class="rail-item" data-view="reports" title="Raporte"><i class="fa-solid fa-chart-line"></i></a>
+            <a href="#" class="rail-item" data-view="finance" title="Financa"><i class="fa-solid fa-coins"></i></a>
+            <a href="#" class="rail-item" data-view="sms" title="SMS"><i class="fa-solid fa-comment-sms"></i></a>
+            <a href="#" class="rail-item" data-view="logs" title="Logs"><i class="fa-solid fa-file-lines"></i></a>
+            <a href="#" class="rail-item" data-view="settings" title="Cilësimet"><i class="fa-solid fa-sliders"></i></a>
         </nav>
         <div class="rail-bottom">
-            <button class="rail-item" id="btn-fullscreen" title="Ekran i plotë">
-                <i class="fa-solid fa-expand"></i>
+            <button class="rail-item" id="btn-sound-toggle" title="Zëri i thirrjeve">
+                <i class="fa-solid fa-volume-high"></i>
             </button>
-            <button class="rail-item" id="btn-notifications" title="Njoftime">
-                <i class="fa-solid fa-bell"></i>
-                <span class="rail-dot"></span>
-            </button>
-            <div class="rail-user" title="Granit Gashi">GD</div>
+            <button class="rail-item" id="btn-fullscreen" title="Ekran i plotë"><i class="fa-solid fa-expand"></i></button>
+            <button class="rail-item" id="btn-notifications" title="Njoftime"><i class="fa-solid fa-bell"></i><span class="rail-dot"></span></button>
+            <div class="rail-user" id="rail-user" title="Kliko për login">GD</div>
         </div>
     </aside>
 
-    <!-- MAIN -->
     <main class="dispatch-main">
-
-        <!-- TOPBAR -->
         <header class="dispatch-topbar">
             <div class="topbar-brand">
                 <i class="fa-solid fa-bolt"></i>
@@ -112,26 +60,10 @@
                 <span class="brand-badge">LIVE</span>
             </div>
             <div class="topbar-stats">
-                <div class="stat-pill">
-                    <i class="fa-solid fa-car" style="color:var(--accent-green)"></i>
-                    <span id="stat-online">0</span>
-                    <small>Online</small>
-                </div>
-                <div class="stat-pill">
-                    <i class="fa-solid fa-hourglass-half" style="color:var(--accent-yellow)"></i>
-                    <span id="stat-pending">0</span>
-                    <small>Në pritje</small>
-                </div>
-                <div class="stat-pill">
-                    <i class="fa-solid fa-route" style="color:var(--accent-blue)"></i>
-                    <span id="stat-trips">0</span>
-                    <small>Udhëtime</small>
-                </div>
-                <div class="stat-pill">
-                    <i class="fa-solid fa-euro-sign" style="color:var(--accent-pink)"></i>
-                    <span id="stat-revenue">0 €</span>
-                    <small>Të ardhura</small>
-                </div>
+                <div class="stat-pill"><i class="fa-solid fa-car" style="color:var(--accent-green)"></i><span id="stat-online">0</span><small>Online</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-hourglass-half" style="color:var(--accent-yellow)"></i><span id="stat-pending">0</span><small>Në pritje</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-route" style="color:var(--accent-blue)"></i><span id="stat-trips">0</span><small>Udhëtime</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-euro-sign" style="color:var(--accent-pink)"></i><span id="stat-revenue">0 €</span><small>Të ardhura</small></div>
             </div>
             <div class="topbar-time">
                 <div class="time-clock" id="clock-time">--:--:--</div>
@@ -139,50 +71,31 @@
             </div>
         </header>
 
-        <!-- DISPATCH LAYOUT -->
         <div class="dispatch-layout">
-
-            <!-- KOLONA E MAJTË -->
             <div class="dispatch-left">
-
-                <!-- THIRRJET HYRËSE -->
                 <section class="panel panel-calls" id="panel-calls">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-phone-volume"></i>
                             <h3>Thirrjet Hyrëse</h3>
+                            <span class="count-badge" id="calls-count">0</span>
                         </div>
                         <div class="panel-header-actions">
-                            <span class="live-indicator">
-                                <span class="live-dot"></span>
-                                LIVE
-                            </span>
-                            <button class="panel-btn" data-panel-toggle="panel-calls" title="Minimizo">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                            <button class="panel-btn" data-panel-maximize="panel-calls" title="Zmadho">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
+                            <span class="live-indicator"><span class="live-dot"></span> LIVE</span>
+                            <button class="panel-btn" data-panel-toggle="panel-calls"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-maximize="panel-calls"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
                     <div class="panel-body calls-list" id="calls-list"></div>
                 </section>
 
-                <!-- HARTA LIVE -->
                 <section class="panel panel-map" id="panel-map">
                     <div class="panel-header">
-                        <div class="panel-header-title">
-                            <i class="fa-solid fa-satellite-dish"></i>
-                            <h3>Harta Live</h3>
-                        </div>
+                        <div class="panel-header-title"><i class="fa-solid fa-satellite-dish"></i><h3>Harta Live</h3></div>
                         <div class="panel-header-actions">
                             <span class="map-counter" id="map-counter">0 taksí</span>
-                            <button class="panel-btn" data-panel-toggle="panel-map" title="Minimizo">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                            <button class="panel-btn" data-panel-maximize="panel-map" title="Zmadho">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
+                            <button class="panel-btn" data-panel-toggle="panel-map"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-maximize="panel-map"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
                     <div class="panel-body map-body">
@@ -196,13 +109,9 @@
                         </div>
                     </div>
                 </section>
-
             </div>
 
-            <!-- KOLONA E DJATHTË -->
             <div class="dispatch-right">
-
-                <!-- WAITING ORDERS -->
                 <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
                         <div class="panel-header-title">
@@ -212,25 +121,15 @@
                         </div>
                         <div class="panel-header-actions">
                             <span class="panel-subtitle">Presin kerre të lira</span>
-                            <button class="panel-btn" data-panel-toggle="panel-waiting" title="Minimizo">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                            <button class="panel-btn" data-panel-maximize="panel-waiting" title="Zmadho">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
+                            <button class="panel-btn" data-panel-toggle="panel-waiting"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-maximize="panel-waiting"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
                     <div class="panel-body waiting-body">
                         <table class="orders-table compact" id="waiting-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Ora</th>
-                                    <th>Telefon</th>
-                                    <th>Marrja</th>
-                                    <th>Destinacioni</th>
-                                    <th>Pritja</th>
-                                    <th>Veprimet</th>
+                                    <th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th>
                                 </tr>
                             </thead>
                             <tbody id="waiting-tbody"></tbody>
@@ -238,7 +137,6 @@
                     </div>
                 </section>
 
-                <!-- ORDERS TABLE -->
                 <section class="panel panel-orders" id="panel-orders">
                     <div class="panel-header">
                         <div class="panel-header-title">
@@ -248,30 +146,16 @@
                         </div>
                         <div class="panel-header-actions">
                             <input type="text" class="mini-search" placeholder="Kërko..." id="order-search">
-                            <button class="panel-btn" data-panel-toggle="panel-orders" title="Minimizo">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                            <button class="panel-btn" data-panel-maximize="panel-orders" title="Zmadho">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
-                            <button class="btn-new-order" id="btn-new-order">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>POROSI E RE</span>
-                            </button>
+                            <button class="panel-btn" data-panel-toggle="panel-orders"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-maximize="panel-orders"><i class="fa-solid fa-expand"></i></button>
+                            <button class="btn-new-order" id="btn-new-order"><i class="fa-solid fa-plus"></i><span>POROSI E RE</span></button>
                         </div>
                     </div>
                     <div class="panel-body orders-table-body">
                         <table class="orders-table" id="orders-table">
                             <thead>
                                 <tr>
-                                    <th>Statusi</th>
-                                    <th>Ora</th>
-                                    <th>Vetura</th>
-                                    <th>Telefon</th>
-                                    <th>Marrja</th>
-                                    <th>Destinacioni</th>
-                                    <th>Shoferi</th>
-                                    <th>Veprimet</th>
+                                    <th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>Veprimet</th>
                                 </tr>
                             </thead>
                             <tbody id="orders-tbody"></tbody>
@@ -279,7 +163,6 @@
                     </div>
                 </section>
 
-                <!-- PRE-ORDERS -->
                 <section class="panel panel-preorders" id="panel-preorders">
                     <div class="panel-header">
                         <div class="panel-header-title">
@@ -288,116 +171,161 @@
                             <span class="count-badge" id="preorders-count">0</span>
                         </div>
                         <div class="panel-header-actions">
-                            <button class="panel-btn" data-panel-toggle="panel-preorders" title="Minimizo">
-                                <i class="fa-solid fa-minus"></i>
-                            </button>
-                            <button class="panel-btn" data-panel-maximize="panel-preorders" title="Zmadho">
-                                <i class="fa-solid fa-expand"></i>
-                            </button>
+                            <button class="panel-btn" data-panel-toggle="panel-preorders"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-maximize="panel-preorders"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
                     <div class="panel-body preorders-table-body">
                         <table class="orders-table compact" id="preorders-table">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
-                                    <th>Ora</th>
-                                    <th>Telefon</th>
-                                    <th>Marrja</th>
-                                    <th>Destinacioni</th>
-                                    <th>Vetura</th>
-                                    <th>Veprimet</th>
+                                    <th>Data</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Vetura</th><th>Veprimet</th>
                                 </tr>
                             </thead>
                             <tbody id="preorders-tbody"></tbody>
                         </table>
                     </div>
                 </section>
-
             </div>
-
         </div>
-
     </main>
 
     <!-- MODAL: POROSI E RE -->
     <div class="modal-overlay" id="modal-new-order">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <div class="modal-title">
-                    <i class="fa-solid fa-taxi"></i>
-                    <h3>Porosi e Re</h3>
-                </div>
+                <div class="modal-title"><i class="fa-solid fa-taxi"></i><h3>Porosi e Re</h3></div>
                 <button class="modal-close" data-close="modal-new-order">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="order-form">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-phone"></i> Numri i Telefonit <span class="required">*</span></label>
-                            <input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-user"></i> Emri i Klientit</label>
-                            <input type="text" id="client-name" placeholder="Emri (opsionale)" class="input-field">
-                        </div>
-                        <div class="form-group full-width">
-                            <label><i class="fa-solid fa-location-dot"></i> Adresa e Marrjes <span class="required">*</span></label>
-                            <input type="text" id="pickup-address" placeholder="P.sh. Grandi, Newborn..." class="input-field" autocomplete="off">
-                            <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
-                        </div>
-                        <div class="form-group full-width">
-                            <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
-                            <input type="text" id="destination-address" placeholder="Ku shkon klienti?" class="input-field" autocomplete="off">
-                            <div class="autocomplete-suggestions" id="destination-suggestions"></div>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
+                        <div class="form-group"><label><i class="fa-solid fa-phone"></i> Numri <span class="required">*</span></label><input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field"></div>
+                        <div class="form-group"><label><i class="fa-solid fa-user"></i> Emri Klientit</label><input type="text" id="client-name" placeholder="Opsionale" class="input-field"></div>
+                        <div class="form-group full-width"><label><i class="fa-solid fa-location-dot"></i> Marrja <span class="required">*</span></label><input type="text" id="pickup-address" placeholder="P.sh. Grandi..." class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="pickup-suggestions"></div></div>
+                        <div class="form-group full-width"><label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label><input type="text" id="destination-address" placeholder="Ku shkon?" class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="destination-suggestions"></div></div>
+                        <div class="form-group"><label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
                             <select id="order-zone" class="input-field">
-                                <option value="auto">🔄 Automatik</option>
-                                <option value="zona1">Zona 1 - Qendra</option>
-                                <option value="zona2">Zona 2 - Dardania</option>
-                                <option value="zona3">Zona 3 - Aeroporti</option>
-                                <option value="zona4">Zona 4 - Arbëria</option>
-                                <option value="zona5">Zona 5 - Kalabria</option>
+                                <option value="auto">🔄 Automatik</option><option value="zona1">Zona 1</option><option value="zona2">Zona 2</option><option value="zona3">Zona 3</option><option value="zona4">Zona 4</option><option value="zona5">Zona 5</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
+                        <div class="form-group"><label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
                             <select id="order-tariff" class="input-field">
-                                <option value="standard">Standard</option>
-                                <option value="vip">VIP</option>
-                                <option value="airport">Aeroport</option>
-                                <option value="night">Natë</option>
-                                <option value="van">Van</option>
+                                <option value="standard">Standard</option><option value="vip">VIP</option><option value="airport">Aeroport</option><option value="night">Natë</option><option value="van">Van</option>
                             </select>
                         </div>
-                        <div class="form-group full-width">
-                            <label><i class="fa-solid fa-note-sticky"></i> Shënim</label>
-                            <textarea id="order-note" class="input-field" rows="2" placeholder="Shënim për shoferin..."></textarea>
-                        </div>
+                        <div class="form-group full-width"><label><i class="fa-solid fa-note-sticky"></i> Shënim</label><textarea id="order-note" class="input-field" rows="2" placeholder="Shënim..."></textarea></div>
                     </div>
                     <div class="dispatch-options">
                         <div class="dispatch-title">Mënyra e Caktimit</div>
                         <div class="dispatch-buttons">
-                            <button type="button" class="dispatch-btn active" data-dispatch="auto">
-                                <i class="fa-solid fa-robot"></i><span>Automatik</span>
-                            </button>
-                            <button type="button" class="dispatch-btn" data-dispatch="closest">
-                                <i class="fa-solid fa-location-crosshairs"></i><span>Më i afërti</span>
-                            </button>
-                            <button type="button" class="dispatch-btn" data-dispatch="manual">
-                                <i class="fa-solid fa-hand-pointer"></i><span>Manual</span>
-                            </button>
+                            <button type="button" class="dispatch-btn active" data-dispatch="auto"><i class="fa-solid fa-robot"></i><span>Automatik</span></button>
+                            <button type="button" class="dispatch-btn" data-dispatch="closest"><i class="fa-solid fa-location-crosshairs"></i><span>Më i afërti</span></button>
+                            <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
+                        </div>
+                        <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
+                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën manualisht</label>
+                            <select id="manual-vehicle-select" class="input-field">
+                                <option value="">-- Zgjedh veturën --</option>
+                            </select>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn-ghost" data-close="modal-new-order">Anulo</button>
-                <button class="btn-primary btn-lg" id="btn-submit-order">
-                    <i class="fa-solid fa-paper-plane"></i> Dërgo
-                </button>
+                <button class="btn-primary btn-lg" id="btn-submit-order"><i class="fa-solid fa-paper-plane"></i> Dërgo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETAJET E POROSISË -->
+    <div class="modal-overlay" id="modal-order-detail">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-receipt"></i><h3>Detajet e Porosisë</h3></div>
+                <button class="modal-close" data-close="modal-order-detail">&times;</button>
+            </div>
+            <div class="modal-body" id="order-detail-body"></div>
+            <div class="modal-footer">
+                <button class="btn-ghost" data-close="modal-order-detail">Mbyll</button>
+                <button class="btn-secondary" id="btn-detail-call"><i class="fa-solid fa-phone"></i> Telefono</button>
+                <button class="btn-primary" id="btn-detail-assign"><i class="fa-solid fa-user-plus"></i> Cakto Shofer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MANUAL ASSIGN (kur klikohet "Manual" në tabelë) -->
+    <div class="modal-overlay" id="modal-manual-assign">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-hand-pointer"></i><h3>Caktim Manual</h3></div>
+                <button class="modal-close" data-close="modal-manual-assign">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-car"></i> Zgjedh veturën (numri)</label>
+                    <select id="assign-vehicle-select" class="input-field">
+                        <option value="">-- Zgjedh --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-user"></i> Shoferi</label>
+                    <input type="text" id="assign-driver-name" class="input-field" readonly>
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-clock"></i> Koha e pritjes</label>
+                    <input type="text" id="assign-wait-time" class="input-field" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-ghost" data-close="modal-manual-assign">Anulo</button>
+                <button class="btn-primary" id="btn-confirm-manual-assign"><i class="fa-solid fa-check"></i> Cakto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LOGIN OPERATOR -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-user-shield"></i><h3>Login Operatori</h3></div>
+                <button class="modal-close" data-close="modal-login">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-user"></i> Emri</label>
+                    <input type="text" id="login-username" class="input-field" placeholder="P.sh. Granit">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="login-remember">
+                        <span>Mbaj mend</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-ghost" data-close="modal-login">Anulo</button>
+                <button class="btn-primary" id="btn-do-login"><i class="fa-solid fa-sign-in-alt"></i> Hyr</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: OPERATOR STATS -->
+    <div class="modal-overlay" id="modal-operator-stats">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-chart-simple"></i><h3>Statistikat e Operatorit</h3></div>
+                <button class="modal-close" data-close="modal-operator-stats">&times;</button>
+            </div>
+            <div class="modal-body" id="operator-stats-body"></div>
+            <div class="modal-footer">
+                <button class="btn-ghost" data-close="modal-operator-stats">Mbyll</button>
+                <button class="btn-danger" id="btn-logout"><i class="fa-solid fa-sign-out-alt"></i> Dil</button>
             </div>
         </div>
     </div>
