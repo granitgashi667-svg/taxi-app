@@ -347,23 +347,30 @@
         </div>
     </div>
 
-    <!-- MODAL: LOGIN -->
-    <div class="modal-overlay" id="modal-login">
-        <div class="modal">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fa-solid fa-user-shield"></i><h3>Login Operatori</h3></div>
-                <button class="modal-close" data-close="modal-login">&times;</button>
+ <!-- MODAL: LOGIN -->
+<div class="modal-overlay" id="modal-login">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fa-solid fa-user-shield"></i><h3>Login Operatori</h3></div>
+            <button class="modal-close" data-close="modal-login">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label><i class="fa-solid fa-envelope"></i> Email</label>
+                <input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com">
             </div>
-            <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-user"></i> Emri</label><input type="text" id="login-username" class="input-field" placeholder="P.sh. Granit"></div>
-                <div class="form-group"><label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label><input type="password" id="login-password" class="input-field" placeholder="••••••"></div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                <input type="password" id="login-password" class="input-field" placeholder="••••••••">
             </div>
-            <div class="modal-footer">
-                <button class="btn-ghost" data-close="modal-login">Anulo</button>
-                <button class="btn-primary" id="btn-do-login"><i class="fa-solid fa-sign-in-alt"></i> Hyr</button>
-            </div>
+            <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ghost" data-close="modal-login">Anulo</button>
+            <button class="btn-primary" id="btn-do-login"><i class="fa-solid fa-sign-in-alt"></i> Hyr</button>
         </div>
     </div>
+</div>
 
     <!-- MODAL: OPERATOR STATS -->
     <div class="modal-overlay" id="modal-operator-stats">
@@ -410,14 +417,79 @@
     <script src="script.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- INIT FIREBASE                                           -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.TaxiFirebase) {
-                window.TaxiFirebase.init();
+<!-- INIT FIREBASE + LOGIN -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.TaxiFirebase) {
+            window.TaxiFirebase.init();
+
+            // Test: Kur user logohet, shfaq në console
+            window.TaxiAuth.onAuthChange((user) => {
+                if (user) {
+                    console.log('👤 User aktiv:', user.email);
+                } else {
+                    console.log('👤 Asnjë user aktiv');
+                }
+            });
+
+            // Butoni i login-it
+            const btnLogin = document.getElementById('btn-do-login');
+            if (btnLogin) {
+                // Hiq eventet e vjetra duke klonuar
+                const newBtn = btnLogin.cloneNode(true);
+                btnLogin.parentNode.replaceChild(newBtn, btnLogin);
+
+                newBtn.addEventListener('click', async () => {
+                    const email = document.getElementById('login-email').value.trim();
+                    const password = document.getElementById('login-password').value;
+                    const errBox = document.getElementById('login-error');
+
+                    errBox.style.display = 'none';
+
+                    if (!email || !password) {
+                        errBox.textContent = 'Shkruaj email dhe fjalëkalim';
+                        errBox.style.display = 'block';
+                        return;
+                    }
+
+                    try {
+                        newBtn.disabled = true;
+                        newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Duke hyrë...';
+
+                        const user = await window.TaxiAuth.login(email, password);
+
+                        console.log('✅ U loguat:', user);
+
+                        // Mbyll modalin
+                        document.getElementById('modal-login')?.classList.remove('active');
+
+                        // Update user badge
+                        const railUser = document.getElementById('rail-user');
+                        if (railUser) {
+                            railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
+                        }
+
+                        alert(`✅ Mirë se vjen, ${user.name}!`);
+
+                    } catch (e) {
+                        let msg = 'Gabim gjatë login-it';
+                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+                            msg = 'Email ose fjalëkalim i gabuar';
+                        } else if (e.code === 'auth/user-not-found') {
+                            msg = 'Ky user nuk ekziston';
+                        } else if (e.code === 'auth/invalid-email') {
+                            msg = 'Email-i nuk është valid';
+                        } else if (e.code === 'auth/network-request-failed') {
+                            msg = 'Problem me internetin';
+                        }
+                        errBox.textContent = '❌ ' + msg;
+                        errBox.style.display = 'block';
+                    } finally {
+                        newBtn.disabled = false;
+                        newBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Hyr';
+                    }
+                });
             }
-        });
-    </script>
-</body>
-</html>
+        }
+    });
+</script>
