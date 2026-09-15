@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="description" content="TaxiDispatch Pro - Dispatch Console">
-    <meta name="theme-color" content="#0a0416">
     <title>TaxiDispatch Pro | Dispatch Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,6 +15,7 @@
 </head>
 <body class="theme-2">
 
+    <!-- LOADING -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -23,18 +23,28 @@
         </div>
     </div>
 
-    <!-- ═══ NAV RAIL (majtas, kompakt) ═══ -->
+    <!-- NAV RAIL -->
     <aside class="nav-rail" id="nav-rail">
         <div class="rail-logo" title="TaxiDispatch Pro">
             <i class="fa-solid fa-taxi"></i>
         </div>
         <nav class="rail-nav">
-            <a href="#" class="rail-item active" data-view="monitor" title="Dispatch">
+            <a href="#" class="rail-item active" data-view="monitor" title="Dispatch Console">
                 <i class="fa-solid fa-gauge-high"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="calls" title="Thirrjet">
+                <i class="fa-solid fa-phone-volume"></i>
+                <span class="rail-badge" id="rail-calls-badge">0</span>
             </a>
             <a href="#" class="rail-item" data-view="orders" title="Porositë">
                 <i class="fa-solid fa-clipboard-list"></i>
                 <span class="rail-badge" id="rail-orders-badge">0</span>
+            </a>
+            <a href="#" class="rail-item" data-view="waiting" title="Në Pritje">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="preorders" title="Me Termin">
+                <i class="fa-solid fa-calendar-clock"></i>
             </a>
             <a href="#" class="rail-item" data-view="drivers" title="Shoferët">
                 <i class="fa-solid fa-users"></i>
@@ -42,14 +52,41 @@
             <a href="#" class="rail-item" data-view="vehicles" title="Veturat">
                 <i class="fa-solid fa-car-side"></i>
             </a>
+            <a href="#" class="rail-item" data-view="map" title="Harta">
+                <i class="fa-solid fa-map"></i>
+            </a>
             <a href="#" class="rail-item" data-view="zones" title="Zonat">
                 <i class="fa-solid fa-map-location-dot"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="parking" title="Parkingjet">
+                <i class="fa-solid fa-square-parking"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="clients" title="Klientët">
+                <i class="fa-solid fa-address-book"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="companies" title="Kompanitë">
+                <i class="fa-solid fa-building"></i>
             </a>
             <a href="#" class="rail-item" data-view="reports" title="Raporte">
                 <i class="fa-solid fa-chart-line"></i>
             </a>
+            <a href="#" class="rail-item" data-view="finance" title="Financa">
+                <i class="fa-solid fa-coins"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="sms" title="SMS">
+                <i class="fa-solid fa-comment-sms"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="logs" title="Logs">
+                <i class="fa-solid fa-file-lines"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="users" title="Përdoruesit">
+                <i class="fa-solid fa-user-shield"></i>
+            </a>
             <a href="#" class="rail-item" data-view="settings" title="Cilësimet">
                 <i class="fa-solid fa-sliders"></i>
+            </a>
+            <a href="#" class="rail-item" data-view="help" title="Ndihmë">
+                <i class="fa-solid fa-circle-question"></i>
             </a>
         </nav>
         <div class="rail-bottom">
@@ -64,7 +101,7 @@
         </div>
     </aside>
 
-    <!-- ═══ MAIN ═══ -->
+    <!-- MAIN -->
     <main class="dispatch-main">
 
         <!-- TOPBAR -->
@@ -105,11 +142,11 @@
         <!-- DISPATCH LAYOUT -->
         <div class="dispatch-layout">
 
-            <!-- ═══ KOLONA E MAJTË ═══ -->
+            <!-- KOLONA E MAJTË -->
             <div class="dispatch-left">
 
                 <!-- THIRRJET HYRËSE -->
-                <section class="panel panel-calls">
+                <section class="panel panel-calls" id="panel-calls">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-phone-volume"></i>
@@ -120,13 +157,19 @@
                                 <span class="live-dot"></span>
                                 LIVE
                             </span>
+                            <button class="panel-btn" data-panel-toggle="panel-calls" title="Minimizo">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <button class="panel-btn" data-panel-maximize="panel-calls" title="Zmadho">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="panel-body calls-list" id="calls-list"></div>
                 </section>
 
                 <!-- HARTA LIVE -->
-                <section class="panel panel-map">
+                <section class="panel panel-map" id="panel-map">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-satellite-dish"></i>
@@ -134,25 +177,33 @@
                         </div>
                         <div class="panel-header-actions">
                             <span class="map-counter" id="map-counter">0 taksí</span>
+                            <button class="panel-btn" data-panel-toggle="panel-map" title="Minimizo">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <button class="panel-btn" data-panel-maximize="panel-map" title="Zmadho">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="panel-body map-body">
                         <div id="map"></div>
                         <div class="map-legend-mini">
-                            <span><i class="fa-solid fa-circle" style="color:var(--accent-green)"></i> Lirë</span>
-                            <span><i class="fa-solid fa-circle" style="color:var(--accent-red)"></i> Zënë</span>
-                            <span><i class="fa-solid fa-circle" style="color:var(--accent-yellow)"></i> Pushim</span>
+                            <span><span class="dot-color free"></span> E lirë</span>
+                            <span><span class="dot-color taximeter"></span> Taksimetër</span>
+                            <span><span class="dot-color fixed"></span> Çmim fiks</span>
+                            <span><span class="dot-color pause"></span> Pushim</span>
+                            <span><span class="dot-color inactive"></span> Joaktiv</span>
                         </div>
                     </div>
                 </section>
 
             </div>
 
-            <!-- ═══ KOLONA E DJATHTË ═══ -->
+            <!-- KOLONA E DJATHTË -->
             <div class="dispatch-right">
 
                 <!-- WAITING ORDERS -->
-                <section class="panel panel-waiting">
+                <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-hourglass-half"></i>
@@ -161,6 +212,12 @@
                         </div>
                         <div class="panel-header-actions">
                             <span class="panel-subtitle">Presin kerre të lira</span>
+                            <button class="panel-btn" data-panel-toggle="panel-waiting" title="Minimizo">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <button class="panel-btn" data-panel-maximize="panel-waiting" title="Zmadho">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="panel-body waiting-body">
@@ -182,7 +239,7 @@
                 </section>
 
                 <!-- ORDERS TABLE -->
-                <section class="panel panel-orders">
+                <section class="panel panel-orders" id="panel-orders">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -191,8 +248,11 @@
                         </div>
                         <div class="panel-header-actions">
                             <input type="text" class="mini-search" placeholder="Kërko..." id="order-search">
-                            <button class="btn-icon" title="Filtro">
-                                <i class="fa-solid fa-filter"></i>
+                            <button class="panel-btn" data-panel-toggle="panel-orders" title="Minimizo">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <button class="panel-btn" data-panel-maximize="panel-orders" title="Zmadho">
+                                <i class="fa-solid fa-expand"></i>
                             </button>
                             <button class="btn-new-order" id="btn-new-order">
                                 <i class="fa-solid fa-plus"></i>
@@ -220,7 +280,7 @@
                 </section>
 
                 <!-- PRE-ORDERS -->
-                <section class="panel panel-preorders">
+                <section class="panel panel-preorders" id="panel-preorders">
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-calendar-clock"></i>
@@ -228,8 +288,11 @@
                             <span class="count-badge" id="preorders-count">0</span>
                         </div>
                         <div class="panel-header-actions">
-                            <button class="btn-icon" title="Filtro">
-                                <i class="fa-solid fa-filter"></i>
+                            <button class="panel-btn" data-panel-toggle="panel-preorders" title="Minimizo">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <button class="panel-btn" data-panel-maximize="panel-preorders" title="Zmadho">
+                                <i class="fa-solid fa-expand"></i>
                             </button>
                         </div>
                     </div>
@@ -257,7 +320,7 @@
 
     </main>
 
-    <!-- ═══ MODAL: POROSI E RE ═══ -->
+    <!-- MODAL: POROSI E RE -->
     <div class="modal-overlay" id="modal-new-order">
         <div class="modal modal-lg">
             <div class="modal-header">
