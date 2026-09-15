@@ -719,16 +719,25 @@ function submitOrder() {
 
     updateStats();
     renderOrders(); renderWaitingOrders();
-    document.getElementById('order-form')?.reset();
-    document.getElementById('manual-vehicle-picker').style.display = 'none';
     showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
 
-    // 🔥 RUAJ NË FIRESTORE
+    // 🔥 RUAJ NË FIRESTORE (PARA reset-imit)
     if (window.TaxiOrdersBridge) {
-        setTimeout(() => {
-            window.TaxiOrdersBridge.createFromForm();
-        }, 100);
+        window.TaxiOrdersBridge.createFromData({
+            phone: phone,
+            name: name || 'Klient',
+            pickup: pickup,
+            destination: dest || 'N/A',
+            zone: zone === 'auto' ? 'zona1' : zone,
+            tariff: tariff || 'standard',
+            remark: remark || '',
+            status: order.status
+        });
     }
+
+    // Reset formës (PAS ruajtjes)
+    document.getElementById('order-form')?.reset();
+    document.getElementById('manual-vehicle-picker').style.display = 'none';
 }
 
 // ═══ STATS ═══
