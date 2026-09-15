@@ -2,8 +2,6 @@
 
 /**
  * orders-bridge.js — Lidh sistemin e vjetër (script.js) me Firestore
- * - Kur krijohet porosi → ruhet në Firestore
- * - Kur ndryshon në Firestore → shfaqet në tabelë
  */
 
 window.TaxiOrdersBridge = (() => {
@@ -15,13 +13,11 @@ window.TaxiOrdersBridge = (() => {
 
         console.log('🔗 Duke lidhur porositë me Firestore...');
 
-        // ─── 1. DËGJO NDRYSHIMET NGA FIRESTORE ───
+        // Dëgjo ndryshimet nga Firestore
         window.TaxiEvents.on('firestore:order_added', (orders) => {
             console.log('🆕 Porosi të re nga cloud:', orders.length);
             orders.forEach(order => {
-                // Konverto formatin Firestore → formatin lokal
                 const localOrder = mapToLocal(order);
-                // Shto në state nëse nuk ekziston
                 const exists = window.TaxiState.get('orders').find(o => o.id === localOrder.id);
                 if (!exists) {
                     window.TaxiState.get('orders').unshift(localOrder);
@@ -42,7 +38,6 @@ window.TaxiOrdersBridge = (() => {
                 }
             });
             renderOrdersFromState();
-            renderWaitingFromState();
         });
 
         window.TaxiEvents.on('firestore:order_removed', (orders) => {
@@ -58,7 +53,6 @@ window.TaxiOrdersBridge = (() => {
         console.log('✅ Bridge u aktivizua');
     }
 
-    // ─── MAPIMI: Firestore → Lokal ───
     function mapToLocal(fsOrder) {
         return {
             id: fsOrder.id,
@@ -82,61 +76,47 @@ window.TaxiOrdersBridge = (() => {
         };
     }
 
-    // ─── RENDER nga State ───
     function renderOrdersFromState() {
         if (typeof renderOrders === 'function') renderOrders();
         if (typeof updateStats === 'function') updateStats();
     }
 
-    function renderWaitingFromState() {
-        if (typeof renderWaitingOrders === 'function') renderWaitingOrders();
-    }
-
-    // ─── KRIJO POROSI (nga forma) ───
-    async function createFromForm() {
-        const phone = document.getElementById('client-phone')?.value.trim();
-        const name = document.getElementById('client-name')?.value.trim();
-        const pickup = document.getElementById('pickup-address')?.value.trim();
-        const dest = document.getElementById('destination-address')?.value.trim();
-        const zone = document.getElementById('order-zone')?.value;
-        const tariff = document.getElementById('order-tariff')?.value;
-        const remark = document.getElementById('order-note')?.value.trim();
-
-        if (!phone || !pickup) {
-            if (typeof showToast === 'function') {
-                showToast('error', 'Gabim', 'Plotëso numrin dhe adresën');
-            }
+    // ─── KRIJO POROSI (pranon objekt direkt) ───
+    async function createFromData(orderData) {
+        if (!window.TaxiOrders) {
+            console.error('❌ TaxiOrders nuk është gati');
             return null;
         }
 
         try {
+            console.log('💾 Duke ruajtur në Firestore:', orderData);
+
             const order = await window.TaxiOrders.create({
-                phone,
-                name: name || 'Klient',
-                pickup,
-                destination: dest || 'N/A',
-                zone: zone === 'auto' ? 'zona1' : zone,
-                tariff: tariff || 'standard',
-                remark,
-                status: 'waiting'
+                phone: orderData.phone,
+                name: orderData.name,
+                pickup: orderData.pickup,
+                destination: orderData.destination,
+                zone: orderData.zone,
+                tariff: orderData.tariff,
+                remark: orderData.remark,
+                status: orderData.status
             });
 
-            console.log('✅ Porosia u ruajt në Firestore:', order.id);
-
-            if (typeof showToast === 'function') {
-                showToast('success', 'Porosia u ruajt', `${phone} — ${pickup}`);
-            }
-
-            // Reset formës
-            document.getElementById('order-form')?.reset();
-            document.getElementById('manual-vehicle-picker').style.display = 'none';
-
+            console.log('✅ Porosia u ruajt me ID:', order.id);
             return order;
 
         } catch (e) {
-            console.error('❌ Gabim:', e);
+            console.error('❌ Gabim gjatë ruajtjes:', e);
+            console.error('   Kodi:', e.code);
+            console.error('   Mesazhi:', e.message);
+
+            // Provo të shohësh arsyen
+            if (e.code === 'permission-denied') {
+                console.error('⚠️ Firestore RULES po bllokojnë! Kontrollo Rules tab.');
+            }
+
             if (typeof showToast === 'function') {
-                showToast('error', 'Gabim', 'Porosia nuk u ruajt');
+                showToast('error', 'Gabim', 'Porosia nuk u ruajt në cloud');
             }
             return null;
         }
@@ -144,7 +124,7 @@ window.TaxiOrdersBridge = (() => {
 
     return {
         init,
-        createFromForm
+        createFromData
     };
 })();
 
