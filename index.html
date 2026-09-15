@@ -17,7 +17,7 @@
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
-            <div class="loading-text">Duke ngarkuar dispatch console...</div>
+            <div class="loading-text">Duke ngarkuar...</div>
         </div>
     </div>
 
@@ -43,10 +43,10 @@
             <a href="#" class="rail-item" data-view="settings" title="Cilësimet"><i class="fa-solid fa-sliders"></i></a>
         </nav>
         <div class="rail-bottom">
-            <button class="rail-item" id="btn-sound-toggle" title="Zëri i thirrjeve">
+            <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri">
                 <i class="fa-solid fa-volume-high"></i>
             </button>
-            <button class="rail-item" id="btn-fullscreen" title="Ekran i plotë"><i class="fa-solid fa-expand"></i></button>
+            <button class="rail-item" id="btn-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
             <button class="rail-item" id="btn-notifications" title="Njoftime"><i class="fa-solid fa-bell"></i><span class="rail-dot"></span></button>
             <div class="rail-user" id="rail-user" title="Kliko për login">GD</div>
         </div>
@@ -72,6 +72,7 @@
         </header>
 
         <div class="dispatch-layout">
+            <!-- LEFT -->
             <div class="dispatch-left">
                 <section class="panel panel-calls" id="panel-calls">
                     <div class="panel-header">
@@ -101,9 +102,9 @@
                     <div class="panel-body map-body">
                         <div id="map"></div>
                         <div class="map-legend-mini">
-                            <span><span class="dot-color free"></span> E lirë</span>
+                            <span><span class="dot-color free"></span> Lirë</span>
                             <span><span class="dot-color taximeter"></span> Taksimetër</span>
-                            <span><span class="dot-color fixed"></span> Çmim fiks</span>
+                            <span><span class="dot-color fixed"></span> Fiks</span>
                             <span><span class="dot-color pause"></span> Pushim</span>
                             <span><span class="dot-color inactive"></span> Joaktiv</span>
                         </div>
@@ -111,6 +112,7 @@
                 </section>
             </div>
 
+            <!-- RIGHT -->
             <div class="dispatch-right">
                 <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
@@ -120,17 +122,14 @@
                             <span class="count-badge warning" id="waiting-count">0</span>
                         </div>
                         <div class="panel-header-actions">
-                            <span class="panel-subtitle">Presin kerre të lira</span>
                             <button class="panel-btn" data-panel-toggle="panel-waiting"><i class="fa-solid fa-minus"></i></button>
                             <button class="panel-btn" data-panel-maximize="panel-waiting"><i class="fa-solid fa-expand"></i></button>
                         </div>
                     </div>
                     <div class="panel-body waiting-body">
-                        <table class="orders-table compact" id="waiting-table">
+                        <table class="orders-table compact">
                             <thead>
-                                <tr>
-                                    <th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th>
-                                </tr>
+                                <tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th></tr>
                             </thead>
                             <tbody id="waiting-tbody"></tbody>
                         </table>
@@ -152,11 +151,9 @@
                         </div>
                     </div>
                     <div class="panel-body orders-table-body">
-                        <table class="orders-table" id="orders-table">
+                        <table class="orders-table">
                             <thead>
-                                <tr>
-                                    <th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>Veprimet</th>
-                                </tr>
+                                <tr><th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th></th></tr>
                             </thead>
                             <tbody id="orders-tbody"></tbody>
                         </table>
@@ -167,7 +164,7 @@
                     <div class="panel-header">
                         <div class="panel-header-title">
                             <i class="fa-solid fa-calendar-clock"></i>
-                            <h3>Pre-Orders / Me Termin</h3>
+                            <h3>Me Termin</h3>
                             <span class="count-badge" id="preorders-count">0</span>
                         </div>
                         <div class="panel-header-actions">
@@ -176,11 +173,9 @@
                         </div>
                     </div>
                     <div class="panel-body preorders-table-body">
-                        <table class="orders-table compact" id="preorders-table">
+                        <table class="orders-table compact">
                             <thead>
-                                <tr>
-                                    <th>Data</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Vetura</th><th>Veprimet</th>
-                                </tr>
+                                <tr><th>Data</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Vetura</th><th>Veprimet</th></tr>
                             </thead>
                             <tbody id="preorders-tbody"></tbody>
                         </table>
@@ -201,17 +196,26 @@
                 <form id="order-form">
                     <div class="form-grid">
                         <div class="form-group"><label><i class="fa-solid fa-phone"></i> Numri <span class="required">*</span></label><input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field"></div>
-                        <div class="form-group"><label><i class="fa-solid fa-user"></i> Emri Klientit</label><input type="text" id="client-name" placeholder="Opsionale" class="input-field"></div>
+                        <div class="form-group"><label><i class="fa-solid fa-user"></i> Emri</label><input type="text" id="client-name" placeholder="Opsionale" class="input-field"></div>
                         <div class="form-group full-width"><label><i class="fa-solid fa-location-dot"></i> Marrja <span class="required">*</span></label><input type="text" id="pickup-address" placeholder="P.sh. Grandi..." class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="pickup-suggestions"></div></div>
                         <div class="form-group full-width"><label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label><input type="text" id="destination-address" placeholder="Ku shkon?" class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="destination-suggestions"></div></div>
                         <div class="form-group"><label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
                             <select id="order-zone" class="input-field">
-                                <option value="auto">🔄 Automatik</option><option value="zona1">Zona 1</option><option value="zona2">Zona 2</option><option value="zona3">Zona 3</option><option value="zona4">Zona 4</option><option value="zona5">Zona 5</option>
+                                <option value="auto">🔄 Automatik</option>
+                                <option value="zona1">Zona 1</option>
+                                <option value="zona2">Zona 2</option>
+                                <option value="zona3">Zona 3</option>
+                                <option value="zona4">Zona 4</option>
+                                <option value="zona5">Zona 5</option>
                             </select>
                         </div>
                         <div class="form-group"><label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
                             <select id="order-tariff" class="input-field">
-                                <option value="standard">Standard</option><option value="vip">VIP</option><option value="airport">Aeroport</option><option value="night">Natë</option><option value="van">Van</option>
+                                <option value="standard">Standard</option>
+                                <option value="vip">VIP</option>
+                                <option value="airport">Aeroport</option>
+                                <option value="night">Natë</option>
+                                <option value="van">Van</option>
                             </select>
                         </div>
                         <div class="form-group full-width"><label><i class="fa-solid fa-note-sticky"></i> Shënim</label><textarea id="order-note" class="input-field" rows="2" placeholder="Shënim..."></textarea></div>
@@ -220,13 +224,13 @@
                         <div class="dispatch-title">Mënyra e Caktimit</div>
                         <div class="dispatch-buttons">
                             <button type="button" class="dispatch-btn active" data-dispatch="auto"><i class="fa-solid fa-robot"></i><span>Automatik</span></button>
-                            <button type="button" class="dispatch-btn" data-dispatch="closest"><i class="fa-solid fa-location-crosshairs"></i><span>Më i afërti</span></button>
+                            <button type="button" class="dispatch-btn" data-dispatch="closest"><i class="fa-solid fa-location-crosshairs"></i><span>Më i Afërti</span></button>
                             <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
                         </div>
                         <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
-                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën manualisht</label>
+                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
                             <select id="manual-vehicle-select" class="input-field">
-                                <option value="">-- Zgjedh veturën --</option>
+                                <option value="">-- Zgjedh --</option>
                             </select>
                         </div>
                     </div>
@@ -249,13 +253,11 @@
             <div class="modal-body" id="order-detail-body"></div>
             <div class="modal-footer">
                 <button class="btn-ghost" data-close="modal-order-detail">Mbyll</button>
-                <button class="btn-secondary" id="btn-detail-call"><i class="fa-solid fa-phone"></i> Telefono</button>
-                <button class="btn-primary" id="btn-detail-assign"><i class="fa-solid fa-user-plus"></i> Cakto Shofer</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: MANUAL ASSIGN (kur klikohet "Manual" në tabelë) -->
+    <!-- MODAL: MANUAL ASSIGN -->
     <div class="modal-overlay" id="modal-manual-assign">
         <div class="modal">
             <div class="modal-header">
@@ -264,7 +266,7 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label><i class="fa-solid fa-car"></i> Zgjedh veturën (numri)</label>
+                    <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
                     <select id="assign-vehicle-select" class="input-field">
                         <option value="">-- Zgjedh --</option>
                     </select>
@@ -285,7 +287,7 @@
         </div>
     </div>
 
-    <!-- MODAL: LOGIN OPERATOR -->
+    <!-- MODAL: LOGIN -->
     <div class="modal-overlay" id="modal-login">
         <div class="modal">
             <div class="modal-header">
@@ -300,12 +302,6 @@
                 <div class="form-group">
                     <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
                     <input type="password" id="login-password" class="input-field" placeholder="••••••">
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="login-remember">
-                        <span>Mbaj mend</span>
-                    </label>
                 </div>
             </div>
             <div class="modal-footer">
