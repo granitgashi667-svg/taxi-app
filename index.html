@@ -106,7 +106,7 @@
                 </section>
             </div>
 
-            <!-- CENTER: Forma e Porosisë + Waiting -->
+            <!-- CENTER: Forma e Porosisë -->
             <div class="col-center">
                 <section class="panel panel-new-order" id="panel-new-order">
                     <div class="panel-header">
@@ -212,7 +212,7 @@
                                 </div>
                                 <div class="termin-info">
                                     <i class="fa-solid fa-circle-info"></i>
-                                    Porosia aktivizohet automatikisht në <strong>pritje</strong> 15 minuta para terminit. Mund ta ndryshosh nga 1 deri në 3000 minuta.
+                                    Porosia aktivizohet automatikisht në <strong>pritje</strong> 15 minuta para terminit.
                                 </div>
                             </div>
 
@@ -347,30 +347,30 @@
         </div>
     </div>
 
- <!-- MODAL: LOGIN -->
-<div class="modal-overlay" id="modal-login">
-    <div class="modal">
-        <div class="modal-header">
-            <div class="modal-title"><i class="fa-solid fa-user-shield"></i><h3>Login Operatori</h3></div>
-            <button class="modal-close" data-close="modal-login">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label><i class="fa-solid fa-envelope"></i> Email</label>
-                <input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com">
+    <!-- MODAL: LOGIN -->
+    <div class="modal-overlay" id="modal-login">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fa-solid fa-user-shield"></i><h3>Login Operatori</h3></div>
+                <button class="modal-close" data-close="modal-login">&times;</button>
             </div>
-            <div class="form-group">
-                <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
-                <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+                </div>
+                <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
             </div>
-            <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-ghost" data-close="modal-login">Anulo</button>
-            <button class="btn-primary" id="btn-do-login"><i class="fa-solid fa-sign-in-alt"></i> Hyr</button>
+            <div class="modal-footer">
+                <button class="btn-ghost" data-close="modal-login">Anulo</button>
+                <button class="btn-primary" id="btn-do-login"><i class="fa-solid fa-sign-in-alt"></i> Hyr</button>
+            </div>
         </div>
     </div>
-</div>
 
     <!-- MODAL: OPERATOR STATS -->
     <div class="modal-overlay" id="modal-operator-stats">
@@ -410,6 +410,12 @@
     <script src="js/core/firebase.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES                                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="js/services/auth.js"></script>
+    <script src="js/services/orders.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
     <!-- EXISTING MODULES                                        -->
     <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -417,25 +423,41 @@
     <script src="script.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-<!-- INIT FIREBASE + LOGIN -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        if (window.TaxiFirebase) {
+    <!-- INIT: FIREBASE + LOGIN + ORDERS                         -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.TaxiFirebase) {
+                console.error('❌ TaxiFirebase nuk u ngarkua');
+                return;
+            }
+
+            // 1. Inicializo Firebase
             window.TaxiFirebase.init();
 
-            // Test: Kur user logohet, shfaq në console
-            window.TaxiAuth.onAuthChange((user) => {
-                if (user) {
-                    console.log('👤 User aktiv:', user.email);
-                } else {
-                    console.log('👤 Asnjë user aktiv');
-                }
-            });
+            // 2. Dëgjo porositë live nga Firestore
+            if (window.TaxiOrders) {
+                window.TaxiOrders.subscribe();
+            }
 
-            // Butoni i login-it
+            // 3. Monitoro statusin e login-it
+            if (window.TaxiAuth) {
+                window.TaxiAuth.onAuthChange((user) => {
+                    if (user) {
+                        console.log('👤 User aktiv:', user.email);
+                        const railUser = document.getElementById('rail-user');
+                        if (railUser) {
+                            railUser.textContent = user.email.slice(0, 2).toUpperCase();
+                        }
+                    } else {
+                        console.log('👤 Asnjë user aktiv');
+                    }
+                });
+            }
+
+            // 4. Butoni i LOGIN
             const btnLogin = document.getElementById('btn-do-login');
             if (btnLogin) {
-                // Hiq eventet e vjetra duke klonuar
                 const newBtn = btnLogin.cloneNode(true);
                 btnLogin.parentNode.replaceChild(newBtn, btnLogin);
 
@@ -457,23 +479,23 @@
                         newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Duke hyrë...';
 
                         const user = await window.TaxiAuth.login(email, password);
-
                         console.log('✅ U loguat:', user);
 
-                        // Mbyll modalin
                         document.getElementById('modal-login')?.classList.remove('active');
 
-                        // Update user badge
                         const railUser = document.getElementById('rail-user');
                         if (railUser) {
                             railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
                         }
 
-                        alert(`✅ Mirë se vjen, ${user.name}!`);
+                        // Toast
+                        if (typeof showToast === 'function') {
+                            showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
+                        }
 
                     } catch (e) {
                         let msg = 'Gabim gjatë login-it';
-                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') {
                             msg = 'Email ose fjalëkalim i gabuar';
                         } else if (e.code === 'auth/user-not-found') {
                             msg = 'Ky user nuk ekziston';
@@ -490,6 +512,22 @@
                     }
                 });
             }
-        }
-    });
-</script>
+
+            // 5. Butoni i LOGOUT
+            const btnLogout = document.getElementById('btn-logout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', async () => {
+                    await window.TaxiAuth.logout();
+                    document.getElementById('modal-operator-stats')?.classList.remove('active');
+                    document.getElementById('rail-user').textContent = 'GD';
+                    if (typeof showToast === 'function') {
+                        showToast('info', 'U dilni', 'Deri herën tjetër!');
+                    }
+                });
+            }
+
+            console.log('🚀 Init komplet përfundoi');
+        });
+    </script>
+</body>
+</html>
