@@ -57,11 +57,6 @@
                 <div class="stat-pill"><i class="fa-solid fa-euro-sign" style="color:var(--accent-pink)"></i><span id="stat-revenue">€0</span><small>Të ardhura</small></div>
             </div>
             <div class="topbar-actions">
-                <button class="btn-messages" id="btn-messages">
-                    <i class="fa-solid fa-comment-dots"></i>
-                    <span>MESAZH I RI</span>
-                    <span class="msgs-badge" id="msgs-badge">3</span>
-                </button>
                 <div class="topbar-time">
                     <div class="time-clock" id="clock-time">--:--:--</div>
                     <div class="time-date" id="clock-date">--/--/----</div>
@@ -111,12 +106,128 @@
                 </section>
             </div>
 
-            <!-- CENTER: Porosi e Re + Waiting -->
+            <!-- CENTER: Forma e Porosisë + Waiting -->
             <div class="col-center">
-                <button class="btn-big-new-order" id="btn-new-order">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>POROSI E RE</span>
-                </button>
+                <section class="panel panel-new-order" id="panel-new-order">
+                    <div class="panel-header">
+                        <div class="panel-header-title">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <h3>Porosi e Re</h3>
+                        </div>
+                        <div class="panel-header-actions">
+                            <button class="panel-btn" data-panel-min="panel-new-order"><i class="fa-solid fa-minus"></i></button>
+                            <button class="panel-btn" data-panel-max="panel-new-order"><i class="fa-solid fa-expand"></i></button>
+                        </div>
+                    </div>
+                    <div class="panel-body new-order-body">
+                        <form id="order-form">
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-phone"></i> Numri <span class="required">*</span></label>
+                                    <input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-user"></i> Emri</label>
+                                    <input type="text" id="client-name" placeholder="Opsionale" class="input-field">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-location-dot"></i> Marrja <span class="required">*</span></label>
+                                <input type="text" id="pickup-address" placeholder="P.sh. Grandi..." class="input-field" autocomplete="off">
+                                <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
+                                <input type="text" id="destination-address" placeholder="Ku shkon?" class="input-field" autocomplete="off">
+                                <div class="autocomplete-suggestions" id="destination-suggestions"></div>
+                            </div>
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
+                                    <select id="order-zone" class="input-field">
+                                        <option value="auto">Auto</option>
+                                        <option value="zona1">Zona 1</option>
+                                        <option value="zona2">Zona 2</option>
+                                        <option value="zona3">Zona 3</option>
+                                        <option value="zona4">Zona 4</option>
+                                        <option value="zona5">Zona 5</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
+                                    <select id="order-tariff" class="input-field">
+                                        <option value="standard">Standard</option>
+                                        <option value="vip">VIP</option>
+                                        <option value="airport">Aeroport</option>
+                                        <option value="night">Natë</option>
+                                        <option value="van">Van</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-note-sticky"></i> Shënim</label>
+                                <input type="text" id="order-note" placeholder="Shënim..." class="input-field">
+                            </div>
+
+                            <button type="button" class="btn-toggle-termin" id="btn-toggle-termin">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                                <span>LANO TERMIN</span>
+                            </button>
+
+                            <div class="termin-options" id="termin-options">
+                                <div class="termin-header">
+                                    <i class="fa-solid fa-calendar-clock"></i>
+                                    <span>Detajet e Terminit</span>
+                                    <button type="button" class="termin-close" id="btn-close-termin">&times;</button>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-calendar"></i> Data</label>
+                                        <input type="date" id="termin-date" class="input-field">
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-clock"></i> Ora</label>
+                                        <input type="time" id="termin-time" class="input-field">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
+                                    <select id="termin-repeat" class="input-field">
+                                        <option value="none">Vetëm një herë</option>
+                                        <option value="daily">Çdo ditë (1 muaj)</option>
+                                        <option value="weekdays">Ditë pune — Hënë-Premte (1 muaj)</option>
+                                        <option value="weekly">Çdo javë (1 muaj)</option>
+                                        <option value="monthly">Çdo muaj</option>
+                                    </select>
+                                </div>
+                                <div class="termin-info">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                    Terminet shfaqen te <strong>ME TERMIN</strong> dhe aktivizohen vetë në orën e caktuar.
+                                </div>
+                            </div>
+
+                            <div class="dispatch-options">
+                                <div class="dispatch-title">Mënyra e Caktimit</div>
+                                <div class="dispatch-buttons">
+                                    <button type="button" class="dispatch-btn active" data-dispatch="auto"><i class="fa-solid fa-robot"></i><span>Auto</span></button>
+                                    <button type="button" class="dispatch-btn" data-dispatch="closest"><i class="fa-solid fa-location-crosshairs"></i><span>Afër</span></button>
+                                    <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
+                                </div>
+                                <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
+                                    <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
+                                    <select id="manual-vehicle-select" class="input-field">
+                                        <option value="">-- Zgjedh --</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn-submit-order-inline" id="btn-submit-order">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                <span>DËRGO POROSINË</span>
+                            </button>
+                        </form>
+                    </div>
+                </section>
 
                 <section class="panel panel-waiting" id="panel-waiting">
                     <div class="panel-header">
@@ -133,7 +244,7 @@
                     <div class="panel-body waiting-body">
                         <table class="orders-table compact">
                             <thead>
-                                <tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th></tr>
+                                <tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Pritja</th><th>Veprimet</th></tr>
                             </thead>
                             <tbody id="waiting-tbody"></tbody>
                         </table>
@@ -181,7 +292,7 @@
                     <div class="panel-body preorders-table-body">
                         <table class="orders-table compact">
                             <thead>
-                                <tr><th>Data</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Vetura</th><th>Veprimet</th></tr>
+                                <tr><th>Data</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Veprimet</th></tr>
                             </thead>
                             <tbody id="preorders-tbody"></tbody>
                         </table>
@@ -192,65 +303,7 @@
         </div>
     </main>
 
-    <!-- MODAL: POROSI E RE -->
-    <div class="modal-overlay" id="modal-new-order">
-        <div class="modal modal-lg">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fa-solid fa-taxi"></i><h3>Porosi e Re</h3></div>
-                <button class="modal-close" data-close="modal-new-order">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="order-form">
-                    <div class="form-grid">
-                        <div class="form-group"><label><i class="fa-solid fa-phone"></i> Numri <span class="required">*</span></label><input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field"></div>
-                        <div class="form-group"><label><i class="fa-solid fa-user"></i> Emri</label><input type="text" id="client-name" placeholder="Opsionale" class="input-field"></div>
-                        <div class="form-group full-width"><label><i class="fa-solid fa-location-dot"></i> Marrja <span class="required">*</span></label><input type="text" id="pickup-address" placeholder="P.sh. Grandi..." class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="pickup-suggestions"></div></div>
-                        <div class="form-group full-width"><label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label><input type="text" id="destination-address" placeholder="Ku shkon?" class="input-field" autocomplete="off"><div class="autocomplete-suggestions" id="destination-suggestions"></div></div>
-                        <div class="form-group"><label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
-                            <select id="order-zone" class="input-field">
-                                <option value="auto">🔄 Automatik</option>
-                                <option value="zona1">Zona 1</option>
-                                <option value="zona2">Zona 2</option>
-                                <option value="zona3">Zona 3</option>
-                                <option value="zona4">Zona 4</option>
-                                <option value="zona5">Zona 5</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
-                            <select id="order-tariff" class="input-field">
-                                <option value="standard">Standard</option>
-                                <option value="vip">VIP</option>
-                                <option value="airport">Aeroport</option>
-                                <option value="night">Natë</option>
-                                <option value="van">Van</option>
-                            </select>
-                        </div>
-                        <div class="form-group full-width"><label><i class="fa-solid fa-note-sticky"></i> Shënim</label><textarea id="order-note" class="input-field" rows="2" placeholder="Shënim..."></textarea></div>
-                    </div>
-                    <div class="dispatch-options">
-                        <div class="dispatch-title">Mënyra e Caktimit</div>
-                        <div class="dispatch-buttons">
-                            <button type="button" class="dispatch-btn active" data-dispatch="auto"><i class="fa-solid fa-robot"></i><span>Automatik</span></button>
-                            <button type="button" class="dispatch-btn" data-dispatch="closest"><i class="fa-solid fa-location-crosshairs"></i><span>Më i Afërti</span></button>
-                            <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
-                        </div>
-                        <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
-                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
-                            <select id="manual-vehicle-select" class="input-field">
-                                <option value="">-- Zgjedh --</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-ghost" data-close="modal-new-order">Anulo</button>
-                <button class="btn-primary btn-lg" id="btn-submit-order"><i class="fa-solid fa-paper-plane"></i> Dërgo</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: DETAJET E POROSISË -->
+    <!-- MODAL: DETAJET -->
     <div class="modal-overlay" id="modal-order-detail">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -280,41 +333,6 @@
             <div class="modal-footer">
                 <button class="btn-ghost" data-close="modal-manual-assign">Anulo</button>
                 <button class="btn-primary" id="btn-confirm-manual-assign"><i class="fa-solid fa-check"></i> Cakto</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: MESAZHET E SHOFERËVE -->
-    <div class="modal-overlay" id="modal-messages">
-        <div class="modal modal-lg">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fa-solid fa-comments"></i><h3>Mesazhet e Shoferëve</h3></div>
-                <button class="modal-close" data-close="modal-messages">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="msgs-quick">
-                    <button class="msg-quick-btn" data-msg="JASHT VETURE"><i class="fa-solid fa-car-side"></i> JASHT VETURE</button>
-                    <button class="msg-quick-btn" data-msg="DUKE PRITUR"><i class="fa-solid fa-clock"></i> DUKE PRITUR</button>
-                    <button class="msg-quick-btn" data-msg="A MUNDESH ME I LAJMRU?"><i class="fa-solid fa-bell"></i> A MUNDESH ME I LAJMRU?</button>
-                    <button class="msg-quick-btn" data-msg="KËRKESË PËR PAUZË"><i class="fa-solid fa-mug-hot"></i> KËRKESË PËR PAUZË</button>
-                    <button class="msg-quick-btn" data-msg="NË PUNË JAM"><i class="fa-solid fa-circle-check"></i> NË PUNË JAM</button>
-                    <button class="msg-quick-btn" data-msg="MË DUHET PUSHIM"><i class="fa-solid fa-bed"></i> MË DUHET PUSHIM</button>
-                </div>
-                <div class="form-group full-width" style="margin-top:16px;">
-                    <label><i class="fa-solid fa-pen"></i> Mesazh i personalizuar</label>
-                    <input type="text" id="msg-custom" class="input-field" placeholder="Shkruaj mesazhin...">
-                </div>
-                <div class="form-group full-width">
-                    <label><i class="fa-solid fa-user"></i> Dërgo tek shoferi</label>
-                    <select id="msg-target" class="input-field">
-                        <option value="all">Të gjithë shoferët</option>
-                    </select>
-                </div>
-                <div class="msgs-list" id="msgs-list"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-ghost" data-close="modal-messages">Mbyll</button>
-                <button class="btn-primary" id="btn-send-msg"><i class="fa-solid fa-paper-plane"></i> Dërgo Mesazhin</button>
             </div>
         </div>
     </div>
