@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="TaxiDispatch Pro - Sistemi Profesional i Dispeçimit për Kompanitë e Taksive">
+    <meta name="description" content="TaxiDispatch Pro - Sistemi Profesional i Dispeçimit">
     <meta name="theme-color" content="#06090f">
     <title>TaxiDispatch Pro | Paneli i Dispeçerit</title>
 
@@ -17,7 +17,6 @@
 </head>
 <body data-view="monitor">
 
-    <!-- ==================== LOADING ==================== -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -27,7 +26,6 @@
         </div>
     </div>
 
-    <!-- ==================== SIDEBAR ==================== -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-logo"><i class="fa-solid fa-taxi"></i></div>
@@ -149,18 +147,13 @@
         </div>
     </aside>
 
-    <!-- ==================== MAIN ==================== -->
     <main class="main-content" id="main-content">
-
-        <!-- TOPBAR -->
         <header class="topbar">
             <button class="menu-toggle" id="menu-toggle"><i class="fa-solid fa-bars"></i></button>
-
             <div class="topbar-title">
                 <h1 id="page-title">Monitor Live</h1>
                 <span class="topbar-subtitle" id="page-subtitle">Pamje e përgjithshme e operacioneve</span>
             </div>
-
             <div class="topbar-stats">
                 <div class="stat-chip">
                     <div class="stat-icon green"><i class="fa-solid fa-car"></i></div>
@@ -191,18 +184,13 @@
                     </div>
                 </div>
             </div>
-
             <div class="topbar-actions">
-                <button class="icon-btn" id="btn-theme" title="Tema">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <button class="icon-btn" id="btn-theme" title="Tema"><i class="fa-solid fa-moon"></i></button>
                 <button class="icon-btn" id="btn-notifications" title="Njoftime">
                     <i class="fa-solid fa-bell"></i>
                     <span class="notification-dot"></span>
                 </button>
-                <button class="icon-btn" id="btn-fullscreen" title="Ekran i plotë">
-                    <i class="fa-solid fa-expand"></i>
-                </button>
+                <button class="icon-btn" id="btn-fullscreen" title="Ekran i plotë"><i class="fa-solid fa-expand"></i></button>
                 <div class="clock-display">
                     <div class="clock-time" id="clock-time">--:--:--</div>
                     <div class="clock-date" id="clock-date">--/--/----</div>
@@ -214,35 +202,20 @@
             </div>
         </header>
 
-        <!-- VIEW: MONITOR -->
         <section class="view active" id="view-monitor">
             <div class="monitor-grid">
                 <div class="map-panel">
                     <div class="panel-toolbar">
                         <div class="toolbar-left">
-                            <button class="toolbar-btn active" data-map-mode="all">
-                                <i class="fa-solid fa-layer-group"></i> Të gjitha
-                            </button>
-                            <button class="toolbar-btn" data-map-mode="available">
-                                <i class="fa-solid fa-circle-check"></i> Të lira
-                            </button>
-                            <button class="toolbar-btn" data-map-mode="busy">
-                                <i class="fa-solid fa-circle-xmark"></i> Të zëna
-                            </button>
-                            <button class="toolbar-btn" data-map-mode="break">
-                                <i class="fa-solid fa-mug-hot"></i> Pushim
-                            </button>
+                            <button class="toolbar-btn active" data-map-mode="all"><i class="fa-solid fa-layer-group"></i> Të gjitha</button>
+                            <button class="toolbar-btn" data-map-mode="available"><i class="fa-solid fa-circle-check"></i> Të lira</button>
+                            <button class="toolbar-btn" data-map-mode="busy"><i class="fa-solid fa-circle-xmark"></i> Të zëna</button>
+                            <button class="toolbar-btn" data-map-mode="break"><i class="fa-solid fa-mug-hot"></i> Pushim</button>
                         </div>
                         <div class="toolbar-right">
-                            <button class="toolbar-btn" id="btn-draw-zone">
-                                <i class="fa-solid fa-draw-polygon"></i> Vizato Zonë
-                            </button>
-                            <button class="toolbar-btn">
-                                <i class="fa-solid fa-ruler"></i> Masa
-                            </button>
-                            <button class="toolbar-btn">
-                                <i class="fa-solid fa-fire"></i> Heatmap
-                            </button>
+                            <button class="toolbar-btn" id="btn-draw-zone"><i class="fa-solid fa-draw-polygon"></i> Vizato Zonë</button>
+                            <button class="toolbar-btn"><i class="fa-solid fa-ruler"></i> Masa</button>
+                            <button class="toolbar-btn"><i class="fa-solid fa-fire"></i> Heatmap</button>
                         </div>
                     </div>
                     <div id="map"></div>
@@ -276,33 +249,24 @@
                 <div class="orders-side-panel">
                     <div class="panel-tabs">
                         <button class="panel-tab active" data-tab="active">
-                            <i class="fa-solid fa-bolt"></i> Aktive
-                            <span class="tab-count" id="active-count">0</span>
+                            <i class="fa-solid fa-bolt"></i> Aktive <span class="tab-count" id="active-count">0</span>
                         </button>
                         <button class="panel-tab" data-tab="queue">
-                            <i class="fa-solid fa-list"></i> Radha
-                            <span class="tab-count" id="queue-count">0</span>
+                            <i class="fa-solid fa-list"></i> Radha <span class="tab-count" id="queue-count">0</span>
                         </button>
                         <button class="panel-tab" data-tab="done">
                             <i class="fa-solid fa-check"></i> Kryer
                         </button>
                     </div>
-
                     <div class="panel-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" placeholder="Filtro porositë..." id="order-search">
                         <button class="panel-filter-btn"><i class="fa-solid fa-filter"></i></button>
                     </div>
-
                     <div class="orders-feed" id="orders-feed"></div>
-
                     <div class="panel-footer">
-                        <button class="btn-ghost" id="btn-view-all-orders">
-                            <i class="fa-solid fa-list-ul"></i> Shiko të gjitha
-                        </button>
-                        <button class="btn-ghost" id="btn-export-orders">
-                            <i class="fa-solid fa-download"></i> Eksporto
-                        </button>
+                        <button class="btn-ghost" id="btn-view-all-orders"><i class="fa-solid fa-list-ul"></i> Shiko të gjitha</button>
+                        <button class="btn-ghost" id="btn-export-orders"><i class="fa-solid fa-download"></i> Eksporto</button>
                     </div>
                 </div>
             </div>
@@ -323,15 +287,13 @@
                             <div class="chart-bar" style="height: 90%"><span>26</span></div>
                             <div class="chart-bar active" style="height: 70%"><span>20</span></div>
                             <div class="chart-bar" style="height: 50%"><span>14</span></div>
-                            <div class="chart-bar" style="height: 85%"><span</>24</span></optiondiv>
-                            <div class="chart-bar">
- style="height: 60%"><                       span>17</span></div>
+                            <div class="chart-bar" style="height: 85%"><span>24</span></div>
+                            <div class="chart-bar" style="height: 60%"><span>17</span></div>
                             <div class="chart-bar" style="height: 75%"><span>21</span></div>
                             <div class="chart-bar" style="height: 40%"><span>11</span></div>
                         </div>
                     </div>
                 </div>
-
                 <div class="info-card">
                     <div class="info-card-header">
                         <h3><i class="fa-solid fa-trophy"></i> Shoferët Top</h3>
@@ -339,7 +301,6 @@
                     </div>
                     <div class="info-card-body" id="top-drivers"></div>
                 </div>
-
                 <div class="info-card">
                     <div class="info-card-header">
                         <h3><i class="fa-solid fa-triangle-exclamation"></i> Alarmet</h3>
@@ -362,13 +323,10 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="info-card">
                     <div class="info-card-header">
                         <h3><i class="fa-solid fa-bullhorn"></i> Njoftime</h3>
-                        <button class="info-card-action" id="btn-send-broadcast">
-                            <i class="fa-solid fa-paper-plane"></i> Dërgo
-                        </button>
+                        <button class="info-card-action" id="btn-send-broadcast"><i class="fa-solid fa-paper-plane"></i> Dërgo</button>
                     </div>
                     <div class="info-card-body">
                         <div class="broadcast-item">
@@ -384,19 +342,12 @@
             </div>
         </section>
 
-        <!-- VIEW: ORDERS -->
         <section class="view" id="view-orders">
             <div class="view-toolbar">
                 <div class="toolbar-group">
-                    <button class="btn-secondary" id="btn-orders-refresh">
-                        <i class="fa-solid fa-rotate"></i> Rifresko
-                    </button>
-                    <button class="btn-secondary" id="btn-orders-export">
-                        <i class="fa-solid fa-file-export"></i> Eksporto CSV
-                    </button>
-                    <button class="btn-secondary">
-                        <i class="fa-solid fa-print"></i> Printo
-                    </button>
+                    <button class="btn-secondary" id="btn-orders-refresh"><i class="fa-solid fa-rotate"></i> Rifresko</button>
+                    <button class="btn-secondary" id="btn-orders-export"><i class="fa-solid fa-file-export"></i> Eksporto CSV</button>
+                    <button class="btn-secondary"><i class="fa-solid fa-print"></i> Printo</button>
                 </div>
                 <div class="toolbar-group">
                     <select class="select-input" id="filter-status">
@@ -404,7 +355,8 @@
                         <option value="new">Të reja</option>
                         <option value="pending">Në pritje</option>
                         <option value="assigned">Të caktuara</option>
-                        <option value="onroute">Në rrugë <option value="completed">Përfunduara</option>
+                        <option value="onroute">Në rrugë</option>
+                        <option value="completed">Përfunduara</option>
                         <option value="delay">Vonesa</option>
                     </select>
                     <select class="select-input" id="filter-zone">
@@ -418,7 +370,6 @@
                     <input type="date" class="select-input" id="filter-date">
                 </div>
             </div>
-
             <div class="table-container">
                 <table class="data-table" id="orders-table">
                     <thead>
@@ -438,7 +389,6 @@
                     <tbody id="orders-tbody"></tbody>
                 </table>
             </div>
-
             <div class="table-footer">
                 <div class="table-info">
                     Duke shfaqur <strong id="rows-shown">0</strong> nga <strong id="rows-total">0</strong> porosi
@@ -455,13 +405,10 @@
             </div>
         </section>
 
-        <!-- VIEW: DRIVERS -->
         <section class="view" id="view-drivers">
             <div class="view-toolbar">
                 <div class="toolbar-group">
-                    <button class="btn-secondary" id="btn-add-driver">
-                        <i class="fa-solid fa-user-plus"></i> Shto Shofer
-                    </button>
+                    <button class="btn-secondary" id="btn-add-driver"><i class="fa-solid fa-user-plus"></i> Shto Shofer</button>
                     <button class="btn-secondary"><i class="fa-solid fa-file-export"></i> Eksporto</button>
                 </div>
                 <div class="toolbar-group">
@@ -478,21 +425,16 @@
             <div class="drivers-grid" id="drivers-grid"></div>
         </section>
 
-        <!-- VIEW: ZONES -->
         <section class="view" id="view-zones">
             <div class="view-toolbar">
                 <div class="toolbar-group">
-                    <button class="btn-primary" id="btn-add-zone">
-                        <i class="fa-solid fa-plus"></i> Zonë e Re
-                    </button>
+                    <button class="btn-primary" id="btn-add-zone"><i class="fa-solid fa-plus"></i> Zonë e Re</button>
                     <button class="btn-secondary"><i class="fa-solid fa-upload"></i> Importo</button>
                     <button class="btn-secondary"><i class="fa-solid fa-download"></i> Eksporto</button>
                 </div>
             </div>
             <div class="zones-container">
-                <div class="zones-map-panel">
-                    <div id="zones-map"></div>
-                </div>
+                <div class="zones-map-panel"><div id="zones-map"></div></div>
                 <div class="zones-list-panel">
                     <h3>Zonat e Regjistruara</h3>
                     <div class="zones-list" id="zones-list"></div>
@@ -500,7 +442,6 @@
             </div>
         </section>
 
-        <!-- VIEW: REPORTS -->
         <section class="view" id="view-reports">
             <div class="reports-grid">
                 <div class="report-card full-width">
@@ -512,9 +453,7 @@
                             <option>Muaji</option>
                         </select>
                     </div>
-                    <div class="report-chart">
-                        <div class="chart-placeholder">📊 Grafiku i udhëtimeve</div>
-                    </div>
+                    <div class="report-chart"><div class="chart-placeholder">📊 Grafiku i udhëtimeve</div></div>
                 </div>
                 <div class="report-card">
                     <div class="report-header"><h3>Statuset e Porosive</h3></div>
@@ -557,7 +496,6 @@
             </div>
         </section>
 
-        <!-- VIEW: SETTINGS -->
         <section class="view" id="view-settings">
             <div class="settings-container">
                 <div class="settings-sidebar">
@@ -598,70 +536,66 @@
             </div>
         </section>
 
-        <!-- VIEWS BOSH PËR TË TJERA -->
         <section class="view" id="view-callcenter">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-headset" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Call Center</h2>
-                <p>Menaxhimi i thirrjeve — së shpejti</p>
+                <h2>Call Center</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-history">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-clock-rotate-left" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Historiku</h2>
-                <p>Porositë e kaluara — së shpejti</p>
+                <h2>Historiku</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-vehicles">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-car-side" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Veturat</h2>
-                <p>Menaxhimi i flotës — së shpejti</p>
+                <h2>Veturat</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-parking">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-square-parking" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Pikat e Parkimit</h2>
-                <p>Menaxhimi i pikave — së shpejti</p>
+                <h2>Pikat e Parkimit</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-finance">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-coins" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Financa</h2>
-                <p>Raportet financiare — së shpejti</p>
+                <h2>Financa</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-statistics">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-chart-pie" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Statistika</h2>
-                <p>Analiza — së shpejti</p>
+                <h2>Statistika</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-users">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-user-shield" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Përdoruesit</h2>
-                <p>Menaxhimi i përdoruesve — së shpejti</p>
+                <h2>Përdoruesit</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
         <section class="view" id="view-help">
             <div style="text-align:center;padding:80px 20px;color:var(--text-muted);">
                 <i class="fa-solid fa-circle-question" style="font-size:60px;opacity:0.3;display:block;margin-bottom:20px;"></i>
-                <h2 style="font-size:20px;margin-bottom:8px;">Ndihmë</h2>
-                <p>Udhëzues dhe mbështetje — së shpejti</p>
+                <h2>Ndihmë</h2>
+                <p>Së shpejti</p>
             </div>
         </section>
-
     </main>
 
-    <!-- FAB MOBILE -->
     <button class="fab" id="fab-main"><i class="fa-solid fa-plus"></i></button>
 
-    <!-- ==================== MODAL: NEW ORDER ==================== -->
     <div class="modal-overlay" id="modal-new-order">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -677,26 +611,21 @@
                         <div class="form-group">
                             <label><i class="fa-solid fa-phone"></i> Numri i Telefonit <span class="required">*</span></label>
                             <input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field">
-                            <div class="form-hint">Shkruaj numrin e klientit</div>
                         </div>
-
                         <div class="form-group">
                             <label><i class="fa-solid fa-user"></i> Emri i Klientit</label>
                             <input type="text" id="client-name" placeholder="Emri (opsionale)" class="input-field">
                         </div>
-
                         <div class="form-group full-width">
                             <label><i class="fa-solid fa-location-dot"></i> Adresa e Marrjes <span class="required">*</span></label>
                             <input type="text" id="pickup-address" placeholder="P.sh. Grandi, Newborn, Rr. UÇK..." class="input-field" autocomplete="off">
                             <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
                         </div>
-
                         <div class="form-group full-width">
                             <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
                             <input type="text" id="destination-address" placeholder="Ku dëshiron të shkojë klienti?" class="input-field" autocomplete="off">
                             <div class="autocomplete-suggestions" id="destination-suggestions"></div>
                         </div>
-
                         <div class="form-group">
                             <label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
                             <select id="order-zone" class="input-field">
@@ -708,7 +637,6 @@
                                 <option value="zona5">Zona 5 - Kalabria</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
                             <select id="order-tariff" class="input-field">
@@ -719,19 +647,16 @@
                                 <option value="van">Van (7 vende)</option>
                             </select>
                         </div>
-
                         <div class="form-group full-width">
                             <label><i class="fa-solid fa-note-sticky"></i> Shënim</label>
                             <textarea id="order-note" placeholder="Shënim shtesë për shoferin..." class="input-field" rows="3"></textarea>
                         </div>
-
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="order-preorder">
                                 <span>Porosi e planifikuar</span>
                             </label>
                         </div>
-
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="order-priority">
@@ -739,7 +664,6 @@
                             </label>
                         </div>
                     </div>
-
                     <div class="dispatch-options">
                         <div class="dispatch-title">Mënyra e Caktimit</div>
                         <div class="dispatch-buttons">
@@ -776,7 +700,6 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL: ZONE EDITOR ==================== -->
     <div class="modal-overlay" id="modal-zone-editor">
         <div class="modal">
             <div class="modal-header">
@@ -789,7 +712,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Emri i Zonës</label>
-                    <input type="text" id="zone-name" placeholder="P.sh. Zona 6 - Lagjja e Spitalit" class="input-field">
+                    <input type="text" id="zone-name" placeholder="P.sh. Zona 6" class="input-field">
                 </div>
                 <div class="form-group">
                     <label>Ngjyra</label>
@@ -813,7 +736,6 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL: BROADCAST ==================== -->
     <div class="modal-overlay" id="modal-broadcast">
         <div class="modal">
             <div class="modal-header">
@@ -847,10 +769,8 @@
         </div>
     </div>
 
-    <!-- TOAST -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- CONTEXT MENU -->
     <div class="context-menu" id="context-menu">
         <div class="context-item" data-action="view"><i class="fa-solid fa-eye"></i> Shiko</div>
         <div class="context-item" data-action="edit"><i class="fa-solid fa-pen"></i> Modifiko</div>
@@ -860,9 +780,8 @@
         <div class="context-item danger" data-action="delete"><i class="fa-solid fa-trash"></i> Fshij</div>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="data.js"></script>
-    <script src="script.js"></script>
+    <script src="Data.js"></script>
+    <script src="Script.js"></script>
 </body>
 </html>
