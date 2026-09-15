@@ -5,6 +5,7 @@ const AppState = {
     waitingOrders: [],
     preOrders: [],
     incomingCalls: [],
+    messages: [],
     drivers: [],
     vehicles: [],
     zones: [],
@@ -15,10 +16,7 @@ const AppState = {
     currentDispatchMode: 'auto',
     soundEnabled: true,
     currentOperator: {
-        name: 'Granit Gashi',
-        initials: 'GD',
-        loggedIn: false,
-        loginTime: null,
+        name: 'Granit Gashi', initials: 'GD', loggedIn: false, loginTime: null,
         stats: { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 }
     },
     manualAssignOrderId: null,
@@ -34,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
     startCallSimulation();
     startOrderSimulation();
+    startMessageSimulation();
 });
 
 // ═══ DATA ═══
@@ -68,6 +67,12 @@ function loadData() {
         { id: Date.now() + 1, phone: '+383 44 555 001', name: 'Klient i Ri', lastAddress: 'Grand Hotel Prishtina', time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }), ringing: true }
     ];
 
+    AppState.messages = [
+        { id: 1, driverId: 1, name: 'Arben Krasniqi', text: 'JASHT VETURE', time: '19:12', unread: true },
+        { id: 2, driverId: 2, name: 'Blerim Hoxha', text: 'DUKE PRITUR', time: '19:10', unread: true },
+        { id: 3, driverId: 3, name: 'Driton Berisha', text: 'KËRKESË PËR PAUZË', time: '19:05', unread: true }
+    ];
+
     // Popullo manual vehicle select
     const manualSelect = document.getElementById('manual-vehicle-select');
     if (manualSelect) {
@@ -78,6 +83,18 @@ function loadData() {
             opt.value = num;
             opt.textContent = `🚗 ${num} — ${v.plate} — ${driver ? driver.name : 'N/A'}`;
             manualSelect.appendChild(opt);
+        });
+    }
+
+    // Popullo message target select
+    const msgTarget = document.getElementById('msg-target');
+    if (msgTarget) {
+        AppState.drivers.forEach(d => {
+            const num = String(d.vehicleId).padStart(2, '0');
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = `🚗 ${num} — ${d.name}`;
+            msgTarget.appendChild(opt);
         });
     }
 }
@@ -118,8 +135,7 @@ function renderAddressMarkers() {
         const icon = L.divIcon({
             className: 'address-marker',
             html: `<div style="background:${cat.color};width:8px;height:8px;border-radius:50%;border:1px solid white;box-shadow:0 0 4px ${cat.color};"></div>`,
-            iconSize: [8, 8],
-            iconAnchor: [4, 4]
+            iconSize: [8, 8], iconAnchor: [4, 4]
         });
         L.marker([addr.lat, addr.lng], { icon }).addTo(AppState.map)
             .bindPopup(`<b>${addr.name}</b><br><small>${cat.label || ''}</small>`);
@@ -135,8 +151,7 @@ function renderVehiclesOnMap() {
         const icon = L.divIcon({
             className: 'vehicle-marker',
             html: `<div class="vehicle-marker-inner ${mode}" data-number="${num}"></div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14]
+            iconSize: [28, 28], iconAnchor: [14, 14]
         });
         const marker = L.marker([driver.lat, driver.lng], { icon, title: `${num} - ${driver.name}` }).addTo(AppState.map);
         marker.bindPopup(`
@@ -205,9 +220,7 @@ function initEventListeners() {
         else document.exitFullscreen?.();
     });
 
-    document.getElementById('btn-notifications')?.addEventListener('click', () => showToast('info', 'Njoftime', 'Keni 3 njoftime të reja'));
-
-    // SOUND TOGGLE
+    // SOUND
     document.getElementById('btn-sound-toggle')?.addEventListener('click', (e) => {
         AppState.soundEnabled = !AppState.soundEnabled;
         const btn = e.currentTarget;
@@ -218,10 +231,10 @@ function initEventListeners() {
     });
 
     // PANEL MIN/MAX
-    document.querySelectorAll('[data-panel-toggle]').forEach(btn => {
+    document.querySelectorAll('[data-panel-min]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
-            const panel = document.getElementById(btn.dataset.panelToggle);
+            const panel = document.getElementById(btn.dataset.panelMin);
             if (!panel) return;
             panel.classList.toggle('minimized');
             const icon = btn.querySelector('i');
@@ -229,15 +242,15 @@ function initEventListeners() {
             setTimeout(() => AppState.map?.invalidateSize(), 400);
         });
     });
-    document.querySelectorAll('[data-panel-maximize]').forEach(btn => {
+    document.querySelectorAll('[data-panel-max]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
-            const panel = document.getElementById(btn.dataset.panelMaximize);
+            const panel = document.getElementById(btn.dataset.panelMax);
             if (!panel) return;
             const isMax = panel.classList.contains('maximized');
             document.querySelectorAll('.panel.maximized').forEach(p => {
                 p.classList.remove('maximized');
-                const ic = p.querySelector('[data-panel-maximize] i');
+                const ic = p.querySelector('[data-panel-max] i');
                 if (ic) ic.className = 'fa-solid fa-expand';
             });
             if (!isMax) {
@@ -264,6 +277,15 @@ function initEventListeners() {
         const vehicle = AppState.vehicles.find(v => String(v.id).padStart(2, '0') === num);
         const driver = vehicle ? AppState.drivers.find(d => d.vehicleId === vehicle.id) : null;
         document.getElementById('assign-driver-name').value = driver ? driver.name : '';
+    });
+
+    // MESSAGES
+    document.getElementById('btn-messages')?.addEventListener('click', openMessages);
+    document.getElementById('btn-send-msg')?.addEventListener('click', sendMessage);
+    document.querySelectorAll('.msg-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('msg-custom').value = btn.dataset.msg;
+        });
     });
 }
 
@@ -318,6 +340,68 @@ function showOperatorStats() {
     document.getElementById('modal-operator-stats')?.classList.add('active');
 }
 
+// ═══ MESSAGES ═══
+function openMessages() {
+    renderMessages();
+    document.getElementById('modal-messages')?.classList.add('active');
+    AppState.messages.forEach(m => m.unread = false);
+    updateMessagesBadge();
+}
+
+function renderMessages() {
+    const list = document.getElementById('msgs-list');
+    if (!list) return;
+    if (!AppState.messages.length) {
+        list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Nuk ka mesazhe</div>`;
+        return;
+    }
+    list.innerHTML = AppState.messages.map(m => `
+        <div class="msg-item">
+            <span class="msg-item-time">${m.time}</span>
+            <div class="msg-item-content">
+                <div class="msg-item-name">${m.name}</div>
+                <div class="msg-item-text">${m.text}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function sendMessage() {
+    const custom = document.getElementById('msg-custom')?.value.trim();
+    const targetId = document.getElementById('msg-target')?.value;
+    if (!custom) { showToast('error', 'Gabim', 'Shkruaj një mesazh'); return; }
+
+    if (targetId === 'all') {
+        AppState.drivers.forEach(d => {
+            AppState.messages.unshift({
+                id: Date.now() + d.id, driverId: d.id, name: d.name,
+                text: custom,
+                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
+            });
+        });
+        showToast('success', 'U dërgua', `Te të gjithë shoferët (${AppState.drivers.length})`);
+    } else {
+        const d = AppState.drivers.find(x => x.id == targetId);
+        if (!d) return;
+        AppState.messages.unshift({
+            id: Date.now(), driverId: d.id, name: d.name, text: custom,
+            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
+        });
+        showToast('success', 'U dërgua', `Tek ${d.name}`);
+    }
+
+    document.getElementById('msg-custom').value = '';
+    renderMessages();
+}
+
+function updateMessagesBadge() {
+    const badge = document.getElementById('msgs-badge');
+    if (!badge) return;
+    const unread = AppState.messages.filter(m => m.unread).length;
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+}
+
 // ═══ AUTCOMPLETE ═══
 function setupAutocomplete(inputId, suggestId) {
     const input = document.getElementById(inputId);
@@ -353,15 +437,21 @@ function getLocationIcon(address) {
 }
 
 // ═══ RENDER ALL ═══
-function renderAll() { renderIncomingCalls(); renderWaitingOrders(); renderOrders(); renderPreOrders(); updateStats(); }
+function renderAll() {
+    renderIncomingCalls();
+    renderWaitingOrders();
+    renderOrders();
+    renderPreOrders();
+    renderMessages();
+    updateStats();
+    updateMessagesBadge();
+}
 
 // ═══ CALLS ═══
 function renderIncomingCalls() {
     const c = document.getElementById('calls-list');
     const cnt = document.getElementById('calls-count');
-    const badge = document.getElementById('rail-calls-badge');
     if (cnt) cnt.textContent = AppState.incomingCalls.length;
-    if (badge) badge.textContent = AppState.incomingCalls.length;
     if (!c) return;
     if (!AppState.incomingCalls.length) {
         c.innerHTML = `<div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:12px;"><i class="fa-solid fa-phone-slash" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i>Nuk ka thirrje</div>`;
@@ -402,7 +492,6 @@ function rejectCall(callId) {
 
 // ═══ SOUND ═══
 let ringInterval = null;
-
 function playRing() {
     if (!AppState.soundEnabled) return;
     try {
@@ -423,18 +512,14 @@ function playRing() {
         playBeep(now, 880);
         playBeep(now + 0.5, 660);
         playBeep(now + 1.0, 880);
-    } catch (e) { console.error('Audio error', e); }
+    } catch (e) {}
 }
-
 function startRing() {
     if (ringInterval) return;
     playRing();
     ringInterval = setInterval(playRing, 2000);
 }
-
-function stopRing() {
-    if (ringInterval) { clearInterval(ringInterval); ringInterval = null; }
-}
+function stopRing() { if (ringInterval) { clearInterval(ringInterval); ringInterval = null; } }
 
 // ═══ WAITING ═══
 function renderWaitingOrders() {
@@ -571,9 +656,7 @@ function cancelWaiting(id) {
 function renderOrders() {
     const tb = document.getElementById('orders-tbody');
     const cnt = document.getElementById('orders-count');
-    const rb = document.getElementById('rail-orders-badge');
     if (cnt) cnt.textContent = AppState.orders.length;
-    if (rb) rb.textContent = AppState.orders.length;
     if (!tb) return;
     if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi</td></tr>`; return; }
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer' };
@@ -842,7 +925,6 @@ function generateCall() {
 }
 
 function startOrderSimulation() {
-    // Vehicles move
     setInterval(() => {
         AppState.vehicleMarkers.forEach((m, id) => {
             const d = AppState.drivers.find(x => x.id === id);
@@ -855,10 +937,8 @@ function startOrderSimulation() {
         });
     }, 4000);
 
-    // Update wait times
     setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
 
-    // Mode changes
     setInterval(() => {
         AppState.drivers.forEach(d => {
             if (d.mode === 'taximeter' || d.mode === 'fixed') {
@@ -869,11 +949,10 @@ function startOrderSimulation() {
         });
     }, 15000);
 
-    // New waiting orders
     setInterval(() => {
         if (AppState.waitingOrders.length < 5 && Math.random() > 0.5) {
             const pickups = ['Grand Hotel Prishtina', 'Newborn Monument', 'Hotel Sirius', 'Albi Mall'];
-            const dests = ['QKUK Spitali', 'Aeroporti Ndërkombëtar', 'Sheshi Nëna Terezë'];
+            const dests = ['QKUK Spitali', 'Aeroporti Ndërkombëtar', 'Sheshi Nënë Terezë'];
             AppState.waitingOrders.push({
                 id: Date.now() + Math.floor(Math.random() * 1000),
                 phone: '+383 44 ' + Math.floor(100 + Math.random() * 900) + ' ' + Math.floor(100 + Math.random() * 900),
@@ -887,6 +966,23 @@ function startOrderSimulation() {
             renderWaitingOrders(); updateStats();
         }
     }, 40000);
+}
+
+function startMessageSimulation() {
+    setInterval(() => {
+        if (AppState.drivers.length && Math.random() > 0.5) {
+            const d = AppState.drivers[Math.floor(Math.random() * AppState.drivers.length)];
+            const msgs = ['JASHT VETURE', 'DUKE PRITUR', 'A MUNDESH ME I LAJMRU?', 'KËRKESË PËR PAUZË', 'NË PUNË JAM'];
+            AppState.messages.unshift({
+                id: Date.now(), driverId: d.id, name: d.name,
+                text: msgs[Math.floor(Math.random() * msgs.length)],
+                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                unread: true
+            });
+            renderMessages();
+            updateMessagesBadge();
+        }
+    }, 45000);
 }
 
 // ═══ GLOBAL ═══
