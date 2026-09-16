@@ -1,0 +1,140 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "phone", "order": "ASCENDING" },
+                { "fieldPath": "createdAtLocal", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "driverId", "order": "ASCENDING" },
+                { "fieldPath": "createdAtLocal", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "operatorId", "order": "ASCENDING" },
+                { "fieldPath": "createdAtLocal", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "status", "order": "ASCENDING" },
+                { "fieldPath": "createdAtLocal", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "orders",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "driverId", "order": "ASCENDING" },
+                { "fieldPath": "status", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "audit_log",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "userId", "order": "ASCENDING" },
+                { "fieldPath": "timestamp", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "audit_log",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "action", "order": "ASCENDING" },
+                { "fieldPath": "timestamp", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "positions_history",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "driverId", "order": "ASCENDING" },
+                { "fieldPath": "timestamp", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "positions_history",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "timestamp", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "releases",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "estimatedFreeTime", "order": "ASCENDING" },
+                { "fieldPath": "releaseTime", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "vacations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "operatorId", "order": "ASCENDING" },
+                { "fieldPath": "requestedAt", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "vacations",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "status", "order": "ASCENDING" },
+                { "fieldPath": "requestedAt", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "calls",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "operatorId", "order": "ASCENDING" },
+                { "fieldPath": "startedAt", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "sms_queue",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "status", "order": "ASCENDING" },
+                { "fieldPath": "createdAt", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "transfers",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "targetUid", "order": "ASCENDING" },
+                { "fieldPath": "status", "order": "ASCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "emergencies",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "status", "order": "ASCENDING" },
+                { "fieldPath": "createdAt", "order": "DESCENDING" }
+            ]
+        },
+        {
+            "collectionGroup": "ratings",
+            "queryScope": "COLLECTION",
+            "fields": [
+                { "fieldPath": "driverId", "order": "ASCENDING" },
+                { "fieldPath": "createdAt", "order": "DESCENDING" }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}
