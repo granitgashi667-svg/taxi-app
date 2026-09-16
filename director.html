@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Taxi Director | Drejtori Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+</head>
+<body class="theme-2">
+
+    <!-- ═══ LOADING ═══ -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar...</div>
+        </div>
+    </div>
+
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div class="screen login-screen active" id="screen-login">
+        <div class="login-box">
+            <div class="login-logo" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            <h1 style="background:linear-gradient(135deg,#f59e0b,#d97706);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Director Panel</h1>
+            <p class="login-sub">Qasje e kufizuar — vetëm drejtori</p>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="director@taxi.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+                </div>
+                <div id="login-error" class="login-error" style="display:none;"></div>
+                <button class="btn-primary big" id="btn-login" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>HYR</span>
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Version 2.0 · Vetëm për drejtorin</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN SCREEN ═══ -->
+    <div class="screen main-screen" id="screen-main">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <div class="sidebar-logo" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+                <i class="fa-solid fa-crown"></i>
+                <span>Director</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-item active" data-page="dashboard" onclick="DirectorApp.switchPage('dashboard'); return false;">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="finance" onclick="DirectorApp.switchPage('finance'); return false;">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    <span>Financa</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="salaries" onclick="DirectorApp.switchPage('salaries'); return false;">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span>Pagat</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="analytics" onclick="DirectorApp.switchPage('analytics'); return false;">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Analitika</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="users" onclick="DirectorApp.switchPage('users'); return false;">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Përdoruesit</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="audit" onclick="DirectorApp.switchPage('audit'); return false;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Audit Log</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="settings" onclick="DirectorApp.switchPage('settings'); return false;">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Cilësimet</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="backup" onclick="DirectorApp.switchPage('backup'); return false;">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Backup</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-user" id="sidebar-user">
+                    <div class="su-avatar" id="su-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">?</div>
+                    <div class="su-info">
+                        <div class="su-name" id="su-name">Drejtori</div>
+                        <div class="su-role" id="su-role">Director</div>
+                    </div>
+                </div>
+                <button class="sidebar-logout" onclick="DirectorApp.logout()" title="Dil">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-content" id="admin-content">
+
+            <!-- TOP BAR -->
+            <header class="admin-topbar">
+                <button class="topbar-toggle" onclick="DirectorApp.toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="topbar-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Pamja ekzekutive</p>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="topbar-time">
+                        <div class="time-clock" id="clock-time">--:--:--</div>
+                        <div class="time-date" id="clock-date">--/--/----</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- PAGE: DASHBOARD -->
+            <div class="admin-page active" data-page="dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card green">
+                        <div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura totale</div>
+                        <div class="kpi-value green" id="kpi-total-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-total-revenue-sub">Që nga fillimi</div>
+                    </div>
+                    <div class="kpi-card blue">
+                        <div class="kpi-label"><i class="fa-solid fa-calendar-day"></i> Sot</div>
+                        <div class="kpi-value blue" id="kpi-today-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-today-revenue-sub">0 porosi</div>
+                    </div>
+                    <div class="kpi-card pink">
+                        <div class="kpi-label"><i class="fa-solid fa-calendar-alt"></i> Ky muaj</div>
+                        <div class="kpi-value pink" id="kpi-month-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-month-revenue-sub">0 porosi</div>
+                    </div>
+                    <div class="kpi-card yellow">
+                        <div class="kpi-label"><i class="fa-solid fa-chart-line"></i> Ky vit</div>
+                        <div class="kpi-value yellow" id="kpi-year-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-year-revenue-sub">0 porosi</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-percent"></i>
+                            <h3>Komisioni i kompanisë</h3>
+                        </div>
+                        <div class="db-panel-body" id="commission-panel">
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-users"></i>
+                            <h3>Statusi i stafit</h3>
+                        </div>
+                        <div class="db-panel-body" id="staff-panel">
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                        </div>
+                    </div>
+
+                    <div class="db-panel full">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <h3>Trendi 30-ditor</h3>
+                        </div>
+                        <div class="db-panel-body">
+                            <canvas id="chart-trend" height="150"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: FINANCE -->
+            <div class="admin-page" data-page="finance">
+                <div id="finance-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: SALARIES -->
+            <div class="admin-page" data-page="salaries">
+                <div id="salaries-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: ANALYTICS -->
+            <div class="admin-page" data-page="analytics">
+                <div id="analytics-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: USERS -->
+            <div class="admin-page" data-page="users">
+                <div id="users-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: AUDIT -->
+            <div class="admin-page" data-page="audit">
+                <div id="audit-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: SETTINGS -->
+            <div class="admin-page" data-page="settings">
+                <div id="settings-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <!-- PAGE: BACKUP -->
+            <div class="admin-page" data-page="backup">
+                <div id="backup-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══ SCRIPTS ═══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SERVICES -->
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/export.js"></script>
+    <script src="js/services/reports.js"></script>
+    <script src="js/services/analytics.js"></script>
+    <script src="js/services/backup.js"></script>
+    <script src="js/services/session.js"></script>
+
+    <!-- DIRECTOR APP -->
+    <script src="js/director/login.js"></script>
+    <script src="js/director/app.js"></script>
+    <script src="js/director/dashboard.js"></script>
+    <script src="js/director/finance.js"></script>
+    <script src="js/director/salaries.js"></script>
+    <script src="js/director/users.js"></script>
+    <script src="js/director/settings.js"></script>
+
+    <!-- INIT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            DirectorApp.init();
+        });
+    </script>
+</body>
+</html>
