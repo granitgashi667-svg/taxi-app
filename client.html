@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="css/client.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
 </head>
 <body>
 
-    <!-- ═══ LOADING ═══ -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -24,7 +24,6 @@
         </div>
     </div>
 
-    <!-- ═══ WELCOME SCREEN ═══ -->
     <div class="screen welcome-screen active" id="screen-welcome">
         <div class="welcome-box">
             <div class="welcome-logo">
@@ -59,7 +58,6 @@
         </div>
     </div>
 
-    <!-- ═══ LOGIN SCREEN ═══ -->
     <div class="screen login-screen" id="screen-login">
         <div class="login-box">
             <button class="back-btn" onclick="ClientApp.goToWelcome()">
@@ -145,7 +143,6 @@
         </div>
     </div>
 
-    <!-- ═══ MAIN SCREEN ═══ -->
     <div class="screen main-screen" id="screen-main">
 
         <header class="client-topbar">
@@ -161,7 +158,6 @@
             </button>
         </header>
 
-        <!-- ORDER FORM -->
         <div class="order-section" id="order-section">
             <div class="order-card">
                 <div class="order-header">
@@ -204,7 +200,6 @@
             </div>
         </div>
 
-        <!-- TRACKING -->
         <div class="tracking-section" id="tracking-section" style="display:none;">
             <div class="tracking-header">
                 <div class="th-status" id="th-status">
@@ -260,7 +255,6 @@
             </button>
         </div>
 
-        <!-- RATE -->
         <div class="rate-section" id="rate-section" style="display:none;">
             <div class="rate-card">
                 <div class="rate-header">
@@ -323,9 +317,6 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- FIREBASE SDK                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -358,6 +349,16 @@
     <script src="js/services/pricing.js"></script>
     <script src="js/services/geocoding.js"></script>
     <script src="js/services/navigation.js"></script>
+    <script src="js/services/validation.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/system-health.js"></script>
+    <script src="js/services/onboarding.js"></script>
+    <script src="js/services/help-center.js"></script>
+    <script src="js/services/feedback.js"></script>
+    <script src="js/services/wallet.js"></script>
+    <script src="js/services/referral.js"></script>
+    <script src="js/services/qr-generator.js"></script>
 
     <!-- CLIENT APP -->
     <script src="js/client/register.js"></script>
@@ -365,13 +366,16 @@
     <script src="js/client/order.js"></script>
     <script src="js/client/tracking.js"></script>
 
-    <!-- INIT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.ClientApp) ClientApp.init();
             if (window.TaxiPWA) TaxiPWA.init();
             if (window.TaxiResponsive) TaxiResponsive.init();
             if (window.TaxiDarkMode) TaxiDarkMode.init();
+            if (window.TaxiHealth) TaxiHealth.start();
+            if (window.TaxiOnboarding) {
+                setTimeout(() => TaxiOnboarding.start('client'), 3000);
+            }
             console.log('📱 Client App gati');
         });
     </script>
