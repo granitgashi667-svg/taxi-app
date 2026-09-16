@@ -53,7 +53,7 @@
             </button>
 
             <div class="welcome-footer">
-                <p>Version 2.0 · Powered by TaxiDispatch</p>
+                <p>Version 3.0 · Powered by TaxiDispatch</p>
             </div>
         </div>
     </div>
@@ -158,150 +158,173 @@
             </button>
         </header>
 
-        <div class="order-section" id="order-section">
-            <div class="order-card">
-                <div class="order-header">
-                    <i class="fa-solid fa-taxi"></i>
-                    <h2>Porosit Taxi</h2>
-                </div>
+        <!-- HOME PAGE -->
+        <div class="client-page active" id="client-home-page" data-page="home">
+            <div class="order-section" id="order-section">
+                <div class="order-card">
+                    <div class="order-header">
+                        <i class="fa-solid fa-taxi"></i>
+                        <h2>Porosit Taxi</h2>
+                    </div>
 
-                <div class="order-body">
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-location-dot"></i> Nga</label>
-                        <input type="text" id="pickup-input" class="input-field" placeholder="Ku jeni tani?" autocomplete="off">
-                        <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
-                        <button class="btn-location" onclick="ClientApp.useMyLocation()" title="Përdor lokacionin tim">
-                            <i class="fa-solid fa-location-crosshairs"></i>
+                    <div class="order-body">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-location-dot"></i> Nga</label>
+                            <input type="text" id="pickup-input" class="input-field" placeholder="Ku jeni tani?" autocomplete="off">
+                            <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
+                            <button class="btn-location" onclick="ClientApp.useMyLocation()" title="Përdor lokacionin tim">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
+                            <input type="text" id="destination-input" class="input-field" placeholder="Ku po shkoni?" autocomplete="off">
+                            <div class="autocomplete-suggestions" id="destination-suggestions"></div>
+                        </div>
+
+                        <div class="order-options">
+                            <div class="option-row">
+                                <i class="fa-solid fa-clock"></i>
+                                <span id="eta-estimate">Duke llogaritur...</span>
+                            </div>
+                            <div class="option-row">
+                                <i class="fa-solid fa-money-bill"></i>
+                                <span id="price-estimate">€—</span>
+                            </div>
+                        </div>
+
+                        <button class="btn-primary big" id="btn-order-taxi">
+                            <i class="fa-solid fa-taxi"></i>
+                            <span>POROSIT TAXI</span>
                         </button>
                     </div>
+                </div>
+            </div>
 
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
-                        <input type="text" id="destination-input" class="input-field" placeholder="Ku po shkoni?" autocomplete="off">
-                        <div class="autocomplete-suggestions" id="destination-suggestions"></div>
+            <div class="tracking-section" id="tracking-section" style="display:none;">
+                <div class="tracking-header">
+                    <div class="th-status" id="th-status">
+                        <div class="th-pulse"></div>
+                        <span id="th-status-text">Duke kërkuar shofer...</span>
                     </div>
+                    <div class="th-time" id="th-time">00:00</div>
+                </div>
 
-                    <div class="order-options">
-                        <div class="option-row">
-                            <i class="fa-solid fa-clock"></i>
-                            <span id="eta-estimate">Duke llogaritur...</span>
-                        </div>
-                        <div class="option-row">
-                            <i class="fa-solid fa-money-bill"></i>
-                            <span id="price-estimate">€—</span>
+                <div class="tracking-map" id="tracking-map"></div>
+
+                <div class="tracking-info">
+                    <div class="ti-row">
+                        <i class="fa-solid fa-car"></i>
+                        <div>
+                            <div class="ti-label">Vetura</div>
+                            <div class="ti-value" id="ti-vehicle">Duke u caktuar...</div>
                         </div>
                     </div>
+                    <div class="ti-row">
+                        <i class="fa-solid fa-user"></i>
+                        <div>
+                            <div class="ti-label">Shoferi</div>
+                            <div class="ti-value" id="ti-driver">Duke u caktuar...</div>
+                        </div>
+                    </div>
+                    <div class="ti-row">
+                        <i class="fa-solid fa-clock"></i>
+                        <div>
+                            <div class="ti-label">Vjen për</div>
+                            <div class="ti-value" id="ti-eta">—</div>
+                        </div>
+                    </div>
+                </div>
 
-                    <button class="btn-primary big" id="btn-order-taxi">
-                        <i class="fa-solid fa-taxi"></i>
-                        <span>POROSIT TAXI</span>
+                <div class="tracking-actions">
+                    <button class="btn-primary" id="btn-chat-driver" style="flex:1;">
+                        <i class="fa-solid fa-comments"></i> CHAT
+                    </button>
+                    <button class="btn-primary" id="btn-call-driver" style="flex:1;background:linear-gradient(135deg,#22c55e,#16a34a);">
+                        <i class="fa-solid fa-phone"></i> TELEFONO
                     </button>
                 </div>
-            </div>
-        </div>
 
-        <div class="tracking-section" id="tracking-section" style="display:none;">
-            <div class="tracking-header">
-                <div class="th-status" id="th-status">
-                    <div class="th-pulse"></div>
-                    <span id="th-status-text">Duke kërkuar shofer...</span>
-                </div>
-                <div class="th-time" id="th-time">00:00</div>
-            </div>
-
-            <div class="tracking-map" id="tracking-map"></div>
-
-            <div class="tracking-info">
-                <div class="ti-row">
-                    <i class="fa-solid fa-car"></i>
-                    <div>
-                        <div class="ti-label">Vetura</div>
-                        <div class="ti-value" id="ti-vehicle">Duke u caktuar...</div>
-                    </div>
-                </div>
-                <div class="ti-row">
-                    <i class="fa-solid fa-user"></i>
-                    <div>
-                        <div class="ti-label">Shoferi</div>
-                        <div class="ti-value" id="ti-driver">Duke u caktuar...</div>
-                    </div>
-                </div>
-                <div class="ti-row">
-                    <i class="fa-solid fa-clock"></i>
-                    <div>
-                        <div class="ti-label">Vjen për</div>
-                        <div class="ti-value" id="ti-eta">—</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tracking-actions">
-                <button class="btn-primary" id="btn-chat-driver" style="flex:1;">
-                    <i class="fa-solid fa-comments"></i> CHAT
+                <button class="btn-danger full" id="btn-cancel-ride" style="margin-top:8px;">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>ANULO POROSINË</span>
                 </button>
-                <button class="btn-primary" id="btn-call-driver" style="flex:1;background:linear-gradient(135deg,#22c55e,#16a34a);">
-                    <i class="fa-solid fa-phone"></i> TELEFONO
+
+                <button class="btn-sos" onclick="ClientApp.activateSOS()" style="margin-top:8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>SOS EMERGJENCË</span>
                 </button>
             </div>
 
-            <button class="btn-danger full" id="btn-cancel-ride" style="margin-top:8px;">
-                <i class="fa-solid fa-xmark"></i>
-                <span>ANULO POROSINË</span>
-            </button>
-
-            <button class="btn-sos" onclick="ClientApp.activateSOS()" style="margin-top:8px;">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span>SOS EMERGJENCË</span>
-            </button>
-        </div>
-
-        <div class="rate-section" id="rate-section" style="display:none;">
-            <div class="rate-card">
-                <div class="rate-header">
-                    <i class="fa-solid fa-flag-checkered"></i>
-                    <h2>Udhëtimi përfundoi!</h2>
-                </div>
-
-                <div class="rate-body">
-                    <div class="rate-info">
-                        <div class="ri-row">
-                            <span>Çmimi:</span>
-                            <strong id="rate-price">€—</strong>
-                        </div>
-                        <div class="ri-row">
-                            <span>Shoferi:</span>
-                            <strong id="rate-driver">—</strong>
-                        </div>
+            <div class="rate-section" id="rate-section" style="display:none;">
+                <div class="rate-card">
+                    <div class="rate-header">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                        <h2>Udhëtimi përfundoi!</h2>
                     </div>
 
-                    <div class="rate-stars">
-                        <p>Vlerëso shoferin:</p>
-                        <div class="stars" id="stars-container">
-                            <i class="fa-solid fa-star" data-star="1"></i>
-                            <i class="fa-solid fa-star" data-star="2"></i>
-                            <i class="fa-solid fa-star" data-star="3"></i>
-                            <i class="fa-solid fa-star" data-star="4"></i>
-                            <i class="fa-solid fa-star" data-star="5"></i>
+                    <div class="rate-body">
+                        <div class="rate-info">
+                            <div class="ri-row">
+                                <span>Çmimi:</span>
+                                <strong id="rate-price">€—</strong>
+                            </div>
+                            <div class="ri-row">
+                                <span>Shoferi:</span>
+                                <strong id="rate-driver">—</strong>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-comment"></i> Koment (opsionale)</label>
-                        <textarea id="rate-comment" class="input-field" rows="2" placeholder="Shkruaj komentin..."></textarea>
-                    </div>
+                        <div class="rate-stars">
+                            <p>Vlerëso shoferin:</p>
+                            <div class="stars" id="stars-container">
+                                <i class="fa-solid fa-star" data-star="1"></i>
+                                <i class="fa-solid fa-star" data-star="2"></i>
+                                <i class="fa-solid fa-star" data-star="3"></i>
+                                <i class="fa-solid fa-star" data-star="4"></i>
+                                <i class="fa-solid fa-star" data-star="5"></i>
+                            </div>
+                        </div>
 
-                    <button class="btn-primary big" id="btn-submit-rating">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>DËRGO VLERËSIMIN</span>
-                    </button>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-comment"></i> Koment (opsionale)</label>
+                            <textarea id="rate-comment" class="input-field" rows="2" placeholder="Shkruaj komentin..."></textarea>
+                        </div>
+
+                        <button class="btn-primary big" id="btn-submit-rating">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>DËRGO VLERËSIMIN</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- LOYALTY PAGE -->
+        <div class="client-page" id="client-loyalty-page" data-page="loyalty"></div>
+
+        <!-- WALLET PAGE -->
+        <div class="client-page" id="client-wallet-page" data-page="wallet"></div>
+
+        <!-- HISTORY PAGE -->
+        <div class="client-page" id="client-history-page" data-page="history"></div>
+
+        <!-- PROFILE PAGE -->
+        <div class="client-page" id="client-profile-page" data-page="profile"></div>
 
         <nav class="bottom-nav">
             <a href="#" class="nav-item active" data-tab="home" onclick="ClientApp.switchTab('home'); return false;">
                 <i class="fa-solid fa-home"></i>
                 <span>Kryefaqja</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="loyalty" onclick="ClientApp.switchTab('loyalty'); return false;">
+                <i class="fa-solid fa-id-card"></i>
+                <span>Karta</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="wallet" onclick="ClientApp.switchTab('wallet'); return false;">
+                <i class="fa-solid fa-wallet"></i>
+                <span>Portofoli</span>
             </a>
             <a href="#" class="nav-item" data-tab="history" onclick="ClientApp.switchTab('history'); return false;">
                 <i class="fa-solid fa-clock-rotate-left"></i>
@@ -365,6 +388,10 @@
     <script src="js/client/app.js"></script>
     <script src="js/client/order.js"></script>
     <script src="js/client/tracking.js"></script>
+    <script src="js/client/loyalty.js"></script>
+    <script src="js/client/wallet.js"></script>
+    <script src="js/client/history.js"></script>
+    <script src="js/client/profile.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -376,7 +403,7 @@
             if (window.TaxiOnboarding) {
                 setTimeout(() => TaxiOnboarding.start('client'), 3000);
             }
-            console.log('📱 Client App gati');
+            console.log('📱 Client App v3.0 gati');
         });
     </script>
 </body>
