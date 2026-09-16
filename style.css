@@ -2238,3 +2238,107 @@ textarea.input-field { resize: vertical; min-height: 50px; font-family: inherit;
     .edit-grid { grid-template-columns: 1fr; }
     .price-type-buttons { grid-template-columns: 1fr; }
 }
+/* ═══════════════════════════════════════════════════════
+   NGJYRAT E RRESHTAVE SIPAS STATUSIT
+   ═══════════════════════════════════════════════════════ */
+
+.orders-table tbody tr.row-waiting {
+    background: rgba(236, 72, 153, 0.06);
+    border-left: 3px solid #ec4899;
+}
+.orders-table tbody tr.row-waiting:hover {
+    background: rgba(236, 72, 153, 0.12);
+}
+.orders-table tbody tr.row-assigned {
+    background: rgba(190, 24, 93, 0.1);
+    border-left: 3px solid #be185d;
+}
+.orders-table tbody tr.row-assigned:hover {
+    background: rgba(190, 24, 93, 0.18);
+}
+.orders-table tbody tr.row-onroute {
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 3px solid #3b82f6;
+}
+.orders-table tbody tr.row-onroute:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+.orders-table tbody tr.row-arrived {
+    background: rgba(250, 204, 21, 0.12);
+    border-left: 3px solid #facc15;
+    animation: pulseRow 2s infinite;
+}
+@keyframes pulseRow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(250, 204, 21, 0); }
+}
+.orders-table tbody tr.row-taximeter {
+    background: rgba(59, 130, 246, 0.14);
+    border-left: 3px solid #3b82f6;
+}
+.orders-table tbody tr.row-taximeter:hover {
+    background: rgba(59, 130, 246, 0.22);
+}
+.orders-table tbody tr.row-fixed {
+    background: rgba(239, 68, 68, 0.14);
+    border-left: 3px solid #ef4444;
+}
+.orders-table tbody tr.row-fixed:hover {
+    background: rgba(239, 68, 68, 0.22);
+}
+
+/* KOLONA SHËNIM */
+.orders-table td.remark-cell {
+    font-size: 10.5px;
+    color: var(--text-secondary);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-style: italic;
+}
+.orders-table td.remark-cell.empty {
+    color: var(--text-muted);
+    font-style: normal;
+}
+
+/* BUTONI PËRFUNDO */
+.btn-finish {
+    padding: 5px 10px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: var(--radius-xs);
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.btn-finish:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(34, 197, 94, 0.4);
+}
+
+.orders-table td.actions-cell {
+    padding: 6px 8px !important;
+}
+.orders-table td.actions-cell .row-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+/* NAV-RAIL */
+.rail-item {
+    cursor: pointer;
+    position: relative;
+}
+.rail-item:active {
+    transform: scale(0.95);
+}
