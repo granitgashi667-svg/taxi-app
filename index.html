@@ -410,85 +410,44 @@
     <script src="data.js"></script>
     <script src="script.js"></script>
 
-    <!-- INIT: FIREBASE + LOGIN + ORDERS + CLIENT HISTORY -->
+    <!-- INIT -->
     <script>
-       <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Inicializo Firebase
-            if (window.TaxiFirebase) {
-                window.TaxiFirebase.init();
+            if (!window.TaxiFirebase) return;
 
-                if (window.TaxiOrders) {
-                    window.TaxiOrders.subscribe();
-                }
+            window.TaxiFirebase.init();
 
-                setTimeout(() => {
-                    if (window.TaxiOrdersBridge) {
-                        window.TaxiOrdersBridge.init();
-                    }
-                }, 500);
+            if (window.TaxiOrders) {
+                window.TaxiOrders.subscribe();
             }
 
-            // 2. Klik GD → hap login modal
+            setTimeout(() => {
+                if (window.TaxiOrdersBridge) {
+                    window.TaxiOrdersBridge.init();
+                }
+            }, 500);
+
+            // Klik GD → Login
             const railUser = document.getElementById('rail-user');
             if (railUser) {
                 railUser.addEventListener('click', () => {
-                    if (window.TaxiAuth?.currentUser()) {
-                        // Nëse është loguar → shfaq statistikat
-                        console.log('👤 Klik GD → Statistikat');
-                        if (typeof showOperatorStats === 'function') {
-                            showOperatorStats();
-                        } else {
-                            // Nëse nuk ka funksion, hap modal login
-                            document.getElementById('modal-login')?.classList.add('active');
-                        }
-                    } else {
-                        // Nëse s'është loguar → hap login
-                        document.getElementById('modal-login')?.classList.add('active');
-                        setTimeout(() => document.getElementById('login-email')?.focus(), 200);
-                    }
+                    document.getElementById('modal-login')?.classList.add('active');
+                    setTimeout(() => document.getElementById('login-email')?.focus(), 200);
                 });
             }
 
-            // 3. MONITORO SESIONIN — KJO ËSHTË E RËNDËSISHME
+            // Monitoro login-in
             if (window.TaxiAuth) {
                 window.TaxiAuth.onAuthChange((user) => {
                     if (user) {
                         console.log('👤 User aktiv:', user.email);
-
-                        // Update rail-user me inicialet
-                        const railUser = document.getElementById('rail-user');
-                        if (railUser) {
-                            const name = user.email.split('@')[0];
-                            railUser.textContent = name.slice(0, 2).toUpperCase();
-                            railUser.title = user.email;
-                        }
-
-                        // Ruaj në state
-                        if (window.TaxiState) {
-                            window.TaxiState.set('currentOperator', {
-                                ...window.TaxiState.get('currentOperator'),
-                                email: user.email,
-                                uid: user.uid,
-                                loggedIn: true,
-                                loginTime: Date.now()
-                            });
-                        }
-
                     } else {
                         console.log('👤 Asnjë user aktiv');
-
-                        // Kthe në GD
-                        const railUser = document.getElementById('rail-user');
-                        if (railUser) {
-                            railUser.textContent = 'GD';
-                            railUser.title = 'Login';
-                        }
                     }
                 });
             }
 
-            // 4. Butoni LOGIN
+            // Butoni LOGIN
             const btnLogin = document.getElementById('btn-do-login');
             if (btnLogin) {
                 const newBtn = btnLogin.cloneNode(true);
@@ -516,13 +475,12 @@
 
                         document.getElementById('modal-login')?.classList.remove('active');
 
+                        const railUser = document.getElementById('rail-user');
+                        if (railUser) railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
+
                         if (typeof showToast === 'function') {
                             showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
                         }
-
-                        // Pastro fushat
-                        document.getElementById('login-email').value = '';
-                        document.getElementById('login-password').value = '';
 
                     } catch (e) {
                         let msg = 'Gabim gjatë login-it';
@@ -542,58 +500,51 @@
                         newBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Hyr';
                     }
                 });
-
-                // Enter → login
-                document.getElementById('login-password')?.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') newBtn.click();
-                });
             }
 
-            // 5. Butoni LOGOUT
+            // Butoni LOGOUT
             const btnLogout = document.getElementById('btn-logout');
             if (btnLogout) {
                 btnLogout.addEventListener('click', async () => {
-                    if (confirm('A jeni i sigurt që dëshironi të dilni?')) {
-                        await window.TaxiAuth.logout();
-                        document.getElementById('modal-operator-stats')?.classList.remove('active');
-                        if (typeof showToast === 'function') {
-                            showToast('info', 'U dilni', 'Deri herën tjetër!');
-                        }
+                    await window.TaxiAuth.logout();
+                    document.getElementById('modal-operator-stats')?.classList.remove('active');
+                    document.getElementById('rail-user').textContent = 'GD';
+                    if (typeof showToast === 'function') {
+                        showToast('info', 'U dilni', 'Deri herën tjetër!');
                     }
                 });
             }
 
-            // 6. Butonat e modal-close
+            // Modal-close
             document.querySelectorAll('[data-close]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.getElementById(btn.dataset.close)?.classList.remove('active');
                 });
             });
 
-            // 7. Klik jashtë modalit → mbyll
+            // Klik jashtë modalit
             document.querySelectorAll('.modal-overlay').forEach(ov => {
                 ov.addEventListener('click', (e) => {
                     if (e.target === ov) ov.classList.remove('active');
                 });
             });
 
-            // 8. AUTO-KËRKIM KLIENTI KUR SHKRUAN NUMRIN
+            // AUTO-KËRKIM KLIENTI
             const phoneInput = document.getElementById('client-phone');
             if (phoneInput && window.TaxiClients) {
                 let searchTimer = null;
 
                 phoneInput.addEventListener('input', (e) => {
                     const phone = e.target.value.trim();
-
                     clearTimeout(searchTimer);
 
                     if (phone.length < 6) {
-                        document.getElementById('client-history-panel').style.display = 'none';
+                        const p = document.getElementById('client-history-panel');
+                        if (p) p.style.display = 'none';
                         return;
                     }
 
                     searchTimer = setTimeout(async () => {
-                        console.log('🔍 Duke kërkuar klientin:', phone);
                         const result = await window.TaxiClients.searchByPhone(phone);
                         window.TaxiClients.renderPanel(phone, result);
 
@@ -602,10 +553,10 @@
                         }
                     }, 500);
                 });
-
-                console.log('✅ Auto-search i klientit u aktivizua');
             }
 
             console.log('🚀 Init komplet përfundoi');
         });
-    </script>  
+    </script>
+</body>
+</html>
