@@ -413,19 +413,19 @@
     <!-- INIT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (!window.TaxiFirebase) return;
+                   if (window.TaxiFirebase) {
+                window.TaxiFirebase.init();
 
-            window.TaxiFirebase.init();
-
-            if (window.TaxiOrders) {
-                window.TaxiOrders.subscribe();
-            }
-
-            setTimeout(() => {
+                // 1. KRIJO BRIDGE E PARA (që të dëgjojë eventet)
                 if (window.TaxiOrdersBridge) {
                     window.TaxiOrdersBridge.init();
                 }
-            }, 500);
+
+                // 2. PASTAJ SUBSCRIBE (eventet do të kapen nga bridge)
+                if (window.TaxiOrders) {
+                    window.TaxiOrders.subscribe();
+                }
+            }
 
             // Klik GD → Login
             const railUser = document.getElementById('rail-user');
