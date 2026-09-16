@@ -11,22 +11,22 @@ window.ClientProfile = (() => {
         const db = window.TaxiFirebase?.db;
         if (!db) return;
 
+        const el = document.getElementById('client-profile-page');
+        if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;"></i></div>';
+
         try {
             const snap = await db.collection('clients').doc(user.uid).get();
             profile = snap.exists ? snap.data() : {};
             render();
-        } catch (e) { console.error('❌ load profile:', e); }
+        } catch (e) {
+            console.error('❌ load profile:', e);
+            render();
+        }
     }
 
     function render() {
-        let el = document.getElementById('client-profile-page');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'client-profile-page';
-            el.className = 'client-page';
-            el.dataset.page = 'profile';
-            document.getElementById('screen-main')?.appendChild(el);
-        }
+        const el = document.getElementById('client-profile-page');
+        if (!el) return;
 
         const user = firebase.auth().currentUser;
         const initials = (profile?.name || 'K').slice(0, 2).toUpperCase();
