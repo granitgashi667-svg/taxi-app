@@ -10,6 +10,7 @@ window.TaxiOrdersBridge = (() => {
 
     const WAITING_STATUSES = ['waiting', 'new', 'pending'];
     const ACTIVE_STATUSES = ['assigned', 'onroute', 'arrived', 'taximeter', 'fixed', 'delay'];
+    const PREORDER_STATUSES = ['preorder'];
 
     function init() {
         if (isInitialized) return;
@@ -17,7 +18,6 @@ window.TaxiOrdersBridge = (() => {
 
         console.log('🔗 Duke lidhur porositë me Firestore...');
 
-        // Event handlers
         window.TaxiEvents.on('firestore:order_added', (orders) => {
             console.log('📥 Bridge: added', orders.length);
             orders.forEach(order => addToLocalState(order));
@@ -36,7 +36,6 @@ window.TaxiOrdersBridge = (() => {
             rerender();
         });
 
-        // Pas 1 sekonde, bëj një sync manual (në rast se eventet u harruan)
         setTimeout(() => {
             syncFromFirestore();
         }, 1000);
@@ -44,17 +43,15 @@ window.TaxiOrdersBridge = (() => {
         console.log('✅ Bridge u aktivizua');
     }
 
-    // Sync manual nga Firestore (për çdo rast)
     async function syncFromFirestore() {
         try {
             const allOrders = await window.TaxiOrders.getAll();
             console.log('🔄 Sync: mora', allOrders.length, 'porosi');
 
-            // Pastro state-in lokal
             AppState.orders = [];
             AppState.waitingOrders = [];
+            AppState.preOrders = [];
 
-            // Ri-shto të gjitha
             allOrders.forEach(order => addToLocalState(order));
             rerender();
         } catch (e) {
@@ -64,12 +61,11 @@ window.TaxiOrdersBridge = (() => {
 
     function addToLocalState(fsOrder) {
         const order = mapToLocal(fsOrder);
-
-        // Hiq nga të dyja listat (parandalon dublime)
         removeFromLocalState(order.firestoreId);
 
-        // Shto në listën e saktë
-        if (WAITING_STATUSES.includes(order.status)) {
+        if (PREORDER_STATUSES.includes(order.status)) {
+            AppState.preOrders.unshift(order);
+        } else if (WAITING_STATUSES.includes(order.status)) {
             AppState.waitingOrders.unshift(order);
         } else if (ACTIVE_STATUSES.includes(order.status)) {
             AppState.orders.unshift(order);
@@ -79,6 +75,7 @@ window.TaxiOrdersBridge = (() => {
     function removeFromLocalState(id) {
         AppState.waitingOrders = AppState.waitingOrders.filter(o => o.firestoreId !== id && o.id !== id);
         AppState.orders = AppState.orders.filter(o => o.firestoreId !== id && o.id !== id);
+        AppState.preOrders = AppState.preOrders.filter(o => o.firestoreId !== id && o.id !== id);
     }
 
     function mapToLocal(fsOrder) {
@@ -93,6 +90,12 @@ window.TaxiOrdersBridge = (() => {
             vehicle: fsOrder.vehicleNum || '',
             driverName: fsOrder.driverName || '',
             time: fsOrder.createdTimeStr || '',
+            // Për preorder, përdor orën e termin-it
+            date: fsOrder.terminDate || fsOrder.createdDateStr || '',
+            terminDate: fsOrder.terminDate || null,
+            terminTime: fsOrder.terminTime || null,
+            terminLead: fsOrder.terminLead || 15,
+            terminRepeat: fsOrder.terminRepeat || 'none',
             zone: fsOrder.zone || 'auto',
             tariff: fsOrder.tariff || 'standard',
             operator: fsOrder.operatorName || '',
@@ -102,13 +105,15 @@ window.TaxiOrdersBridge = (() => {
             price: fsOrder.price || 0,
             remark: fsOrder.remark || '',
             createdAtLocal: fsOrder.createdAtLocal || Date.now(),
-            waitStart: fsOrder.createdAtLocal || Date.now()
+            waitStart: fsOrder.createdAtLocal || Date.now(),
+            isPreorder: fsOrder.isPreorder || false
         };
     }
 
     function rerender() {
         if (typeof renderOrders === 'function') renderOrders();
         if (typeof renderWaitingOrders === 'function') renderWaitingOrders();
+        if (typeof renderPreOrders === 'function') renderPreOrders();
         if (typeof updateStats === 'function') updateStats();
     }
 
@@ -123,7 +128,14 @@ window.TaxiOrdersBridge = (() => {
                 zone: orderData.zone,
                 tariff: orderData.tariff,
                 remark: orderData.remark,
-                status: orderData.status || 'waiting'
+                status: orderData.status || 'waiting',
+                // Termin
+                isPreorder: orderData.isPreorder || false,
+                terminDate: orderData.terminDate || null,
+                terminTime: orderData.terminTime || null,
+                terminLead: orderData.terminLead || 15,
+                terminRepeat: orderData.terminRepeat || 'none',
+                terminDateTime: orderData.terminDateTime || null
             });
             console.log('✅ Porosia u ruajt:', order.id);
             return order;
