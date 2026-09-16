@@ -361,15 +361,26 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- FIREBASE SDK -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 1. FIREBASE SDK                                         -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-    <!-- FIREBASE CONFIG -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 2. EXTERNAL LIBS                                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 3. FIREBASE CONFIG                                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="firebase-config.js"></script>
 
-    <!-- CORE MODULES -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 4. CORE MODULES                                         -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -377,236 +388,53 @@
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
 
-    <!-- SERVICES -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 5. DATA                                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="data.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 6. SERVICES                                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
     <script src="js/services/clients.js"></script>
     <script src="js/services/operators.js"></script>
+    <script src="js/services/calls.js"></script>
+    <script src="js/services/messages.js"></script>
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/stats.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/sms.js"></script>
+    <script src="js/services/taximeter.js"></script>
+    <script src="js/services/dispatch.js"></script>
+    <script src="js/services/navigation.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/shifts.js"></script>
 
-    <!-- EXISTING MODULES -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="data.js"></script>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 7. SCRIPT.JS (UI LOGIC)                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="script.js"></script>
 
-    <!-- INIT -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 8. APP BOOTSTRAP                                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="js/app.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 9. INIT                                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            if (!window.TaxiFirebase) return;
-
-            window.TaxiFirebase.init();
-
-            if (window.TaxiOrdersBridge) window.TaxiOrdersBridge.init();
-            if (window.TaxiOrders) window.TaxiOrders.subscribe();
-
-            // Klik GD → Stats ose Login
-            const railUser = document.getElementById('rail-user');
-            if (railUser) {
-                railUser.addEventListener('click', async () => {
-                    if (window.TaxiAuth?.currentUser()) {
-                        showOperatorStatsModal();
-                    } else {
-                        document.getElementById('modal-login')?.classList.add('active');
-                        setTimeout(() => document.getElementById('login-email')?.focus(), 200);
-                    }
-                });
+            // Nis app-in
+            if (window.TaxiApp) {
+                window.TaxiApp.init();
+            } else {
+                console.error('❌ TaxiApp nuk u ngarkua!');
             }
-
-            // Auth state
-            if (window.TaxiAuth) {
-                window.TaxiAuth.onAuthChange(async (user) => {
-                    if (user) {
-                        console.log('👤 User aktiv:', user.email);
-
-                        if (window.TaxiOperators) {
-                            const operator = await window.TaxiOperators.getOrCreate({
-                                uid: user.uid, email: user.email
-                            });
-                            if (operator) {
-                                if (railUser) {
-                                    railUser.textContent = (operator.name || 'OP').slice(0, 2).toUpperCase();
-                                    railUser.title = operator.name;
-                                }
-                                window.TaxiOperators.setupTracking();
-                                if (window.TaxiState) {
-                                    window.TaxiState.set('currentOperator', {
-                                        ...window.TaxiState.get('currentOperator'),
-                                        id: operator.uid, name: operator.name,
-                                        email: operator.email, role: operator.role,
-                                        loggedIn: true, loginTime: Date.now()
-                                    });
-                                }
-                            }
-                        }
-                    } else {
-                        console.log('👤 Asnjë user aktiv');
-                        if (window.TaxiOperators) window.TaxiOperators.stopSession();
-                        if (railUser) {
-                            railUser.textContent = 'GD';
-                            railUser.title = 'Login';
-                        }
-                    }
-                });
-            }
-
-            // Butoni LOGIN
-            const btnLogin = document.getElementById('btn-do-login');
-            if (btnLogin) {
-                const newBtn = btnLogin.cloneNode(true);
-                btnLogin.parentNode.replaceChild(newBtn, btnLogin);
-
-                newBtn.addEventListener('click', async () => {
-                    const email = document.getElementById('login-email').value.trim();
-                    const password = document.getElementById('login-password').value;
-                    const errBox = document.getElementById('login-error');
-                    errBox.style.display = 'none';
-
-                    if (!email || !password) {
-                        errBox.textContent = 'Shkruaj email dhe fjalëkalim';
-                        errBox.style.display = 'block';
-                        return;
-                    }
-
-                    try {
-                        newBtn.disabled = true;
-                        newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Duke hyrë...';
-                        const user = await window.TaxiAuth.login(email, password);
-                        console.log('✅ U loguat:', user);
-                        document.getElementById('modal-login')?.classList.remove('active');
-                        if (typeof showToast === 'function') showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
-                    } catch (e) {
-                        let msg = 'Gabim gjatë login-it';
-                        if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') msg = 'Email ose fjalëkalim i gabuar';
-                        else if (e.code === 'auth/user-not-found') msg = 'Ky user nuk ekziston';
-                        else if (e.code === 'auth/invalid-email') msg = 'Email-i nuk është valid';
-                        else if (e.code === 'auth/network-request-failed') msg = 'Problem me internetin';
-                        errBox.textContent = '❌ ' + msg;
-                        errBox.style.display = 'block';
-                    } finally {
-                        newBtn.disabled = false;
-                        newBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Hyr';
-                    }
-                });
-            }
-
-            // Butoni LOGOUT
-            const btnLogout = document.getElementById('btn-logout');
-            if (btnLogout) {
-                btnLogout.addEventListener('click', async () => {
-                    await window.TaxiAuth.logout();
-                    document.getElementById('modal-operator-stats')?.classList.remove('active');
-                    if (typeof showToast === 'function') showToast('info', 'U dilni', 'Deri herën tjetër!');
-                });
-            }
-
-            // Modal close
-            document.querySelectorAll('[data-close]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.getElementById(btn.dataset.close)?.classList.remove('active');
-                });
-            });
-            document.querySelectorAll('.modal-overlay').forEach(ov => {
-                ov.addEventListener('click', (e) => {
-                    if (e.target === ov) ov.classList.remove('active');
-                });
-            });
-
-            // Auto-search client
-            const phoneInput = document.getElementById('client-phone');
-            if (phoneInput && window.TaxiClients) {
-                let searchTimer = null;
-                phoneInput.addEventListener('input', (e) => {
-                    const phone = e.target.value.trim();
-                    clearTimeout(searchTimer);
-                    if (phone.length < 6) {
-                        const p = document.getElementById('client-history-panel');
-                        if (p) p.style.display = 'none';
-                        return;
-                    }
-                    searchTimer = setTimeout(async () => {
-                        const result = await window.TaxiClients.searchByPhone(phone);
-                        window.TaxiClients.renderPanel(phone, result);
-                        if (result && result.lastOrder && result.lastOrder.name && !document.getElementById('client-name').value) {
-                            document.getElementById('client-name').value = result.lastOrder.name;
-                        }
-                    }, 500);
-                });
-            }
-
-            // ═══ FUNKSIONI I STATISTIKAVE ═══
-            async function showOperatorStatsModal() {
-                const user = window.TaxiAuth?.currentUser();
-                if (!user) return;
-
-                const body = document.getElementById('operator-stats-body');
-                body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Duke ngarkuar...</div>';
-                document.getElementById('modal-operator-stats')?.classList.add('active');
-
-                const stats = await window.TaxiOperators.getStats(user.uid);
-                if (!stats) {
-                    body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--accent-red);">Nuk u gjetën statistikat</div>';
-                    return;
-                }
-
-                function fmt(min) {
-                    const h = Math.floor(min / 60), m = min % 60;
-                    return h > 0 ? `${h}h ${m}min` : `${m}min`;
-                }
-
-                const box = (label, val, color) => `
-                    <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:10px;padding:14px;">
-                        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">${label}</div>
-                        <div style="font-size:22px;font-weight:800;font-family:monospace;color:${color};margin-top:4px;">${val}</div>
-                    </div>`;
-
-                body.innerHTML = `
-                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg-tertiary);border-radius:12px;border-left:4px solid var(--accent-purple);">
-                        <div style="width:56px;height:56px;border-radius:50%;background:var(--gradient-primary);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:white;">
-                            ${(stats.name || 'OP').slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                            <div style="font-size:16px;font-weight:800;">${stats.name}</div>
-                            <div style="font-size:12px;color:var(--text-muted);">${stats.email} · ${stats.role}</div>
-                            <div style="font-size:11px;color:var(--accent-green);margin-top:4px;">
-                                <i class="fa-solid fa-circle" style="font-size:6px;"></i> Aktiv tani
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="font-size:11px;font-weight:800;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
-                        <i class="fa-solid fa-clock"></i> KOHËT
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-                        ${box('⏱️ Sesioni aktual', fmt(stats.sessionMinutes), 'var(--accent-purple)')}
-                        ${box('📊 Total', fmt(stats.totalMinutes), 'var(--accent-purple)')}
-                    </div>
-
-                    <div style="font-size:11px;font-weight:800;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
-                        <i class="fa-solid fa-phone"></i> THIRRJET
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-                        ${box('📞 Të marra', stats.callsTaken, 'var(--accent-pink)')}
-                        ${box('🚗 Udhëtime', stats.trips, 'var(--accent-green)')}
-                        ${box('❌ Anuluar', stats.callsCancelled, 'var(--accent-red)')}
-                        ${box('💰 Të ardhura', '€' + (stats.revenue || 0).toFixed(2), 'var(--accent-green)')}
-                    </div>
-
-                    <div style="font-size:11px;font-weight:800;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
-                        <i class="fa-solid fa-umbrella-beach"></i> PUSHIMET
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
-                        ${box('Total', stats.vacations.totalDays, 'var(--text-primary)')}
-                        ${box('Shfrytëzuar', stats.vacations.usedDays, 'var(--accent-yellow)')}
-                        ${box('Të mbetura', stats.vacations.remainingDays, 'var(--accent-green)')}
-                    </div>
-
-                    <div style="text-align:center;padding:12px;background:rgba(168,85,247,.08);border-radius:8px;font-size:11px;color:var(--text-muted);">
-                        <i class="fa-solid fa-clock"></i> Hyrja e fundit: ${stats.lastLogin || '—'}
-                    </div>
-                `;
-            }
-
-            console.log('🚀 Init komplet përfundoi');
         });
     </script>
 </body>
