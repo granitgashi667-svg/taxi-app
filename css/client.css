@@ -840,3 +840,154 @@ textarea.input-field { resize: vertical; font-family: inherit; }
     0%, 100% { box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4); }
     50% { box-shadow: 0 4px 24px rgba(244, 63, 94, 0.8); }
 }
+/* ═══ CLIENT PAGE (multi-tab) ═══ */
+.client-page {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 70px;
+    overflow-y: auto;
+    background: #0a0416;
+    z-index: 10;
+}
+.client-page.active { display: block; }
+
+/* ═══ BOTTOM NAV 5 tabs ═══ */
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+.bottom-nav .nav-item {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px;
+    font-size: 9px;
+}
+.bottom-nav .nav-item i { font-size: 16px; }
+.bottom-nav .nav-item span {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ═══ KPI GRID në client ═══ */
+.client-page .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.client-page .kpi-card {
+    padding: 12px;
+    border-radius: 12px;
+    background: #1e293b;
+    text-align: center;
+}
+.client-page .kpi-label {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+.client-page .kpi-value {
+    font-size: 18px;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    margin-top: 4px;
+}
+.client-page .kpi-value.blue { color: #3b82f6; }
+.client-page .kpi-value.green { color: #10b981; }
+.client-page .kpi-value.yellow { color: #f59e0b; }
+
+/* ═══ DB PANEL në client ═══ */
+.client-page .db-panel {
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.client-page .db-panel-header {
+    padding: 12px 14px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.client-page .db-panel-header h3 {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #f1f5f9;
+    margin: 0;
+}
+.client-page .db-panel-header i { color: #a855f7; }
+.client-page .db-panel-body { padding: 14px; }
+
+/* ═══ FILTER BAR në client ═══ */
+.client-page .filter-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+.client-page .filter-btn {
+    padding: 6px 12px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .15s;
+}
+.client-page .filter-btn.active {
+    background: rgba(168,85,247,.2);
+    border-color: #a855f7;
+    color: #a855f7;
+}
+
+/* ═══ INPUT në client ═══ */
+.client-page .input {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    color: #f1f5f9;
+    font-size: 13px;
+    outline: none;
+}
+.client-page .input:focus {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168,85,247,.15);
+}
+
+/* ═══ BUTTON në client ═══ */
+.client-page .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg,#a855f7,#ec4899);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    width: 100%;
+    cursor: pointer;
+    transition: all .15s;
+}
+.client-page .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(168,85,247,.4);
+}
