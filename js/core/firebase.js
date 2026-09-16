@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * firebase.js — Lidhja me Firebase (Auth + Firestore) me persistence
+ * firebase.js — Lidhja me Firebase (Auth + Firestore)
  */
 
 window.TaxiFirebase = (() => {
@@ -9,7 +9,6 @@ window.TaxiFirebase = (() => {
     let auth = null;
     let db = null;
     let ready = false;
-    let persistenceSet = false;
 
     function init() {
         if (ready) return { app, auth, db };
@@ -29,20 +28,6 @@ window.TaxiFirebase = (() => {
             auth = firebase.auth();
             db   = firebase.firestore();
 
-            // 🔑 PERSISTENCE: Mbaj sesionin edhe pas rifreskimit
-            if (!persistenceSet) {
-                persistenceSet = true;
-
-                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                    .then(() => {
-                        console.log('✅ Session persistence: LOCAL');
-                    })
-                    .catch((err) => {
-                        console.warn('⚠️ Persistence error:', err);
-                    });
-            }
-
-            // Firestore offline persistence
             db.enablePersistence({ synchronizeTabs: true })
                 .catch((err) => {
                     if (err.code === 'failed-precondition') {
