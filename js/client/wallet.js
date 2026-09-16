@@ -12,6 +12,9 @@ window.ClientWallet = (() => {
         const db = window.TaxiFirebase?.db;
         if (!db) return;
 
+        const el = document.getElementById('client-wallet-page');
+        if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;"></i></div>';
+
         try {
             const snap = await db.collection('wallets').doc(user.uid).get();
             if (snap.exists) {
@@ -29,18 +32,15 @@ window.ClientWallet = (() => {
                 .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
             render();
-        } catch (e) { console.error('❌ load wallet:', e); }
+        } catch (e) {
+            console.error('❌ load wallet:', e);
+            render();
+        }
     }
 
     function render() {
-        let el = document.getElementById('client-wallet-page');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'client-wallet-page';
-            el.className = 'client-page';
-            el.dataset.page = 'wallet';
-            document.getElementById('screen-main')?.appendChild(el);
-        }
+        const el = document.getElementById('client-wallet-page');
+        if (!el) return;
 
         el.innerHTML = `
             <div style="padding:16px;">
