@@ -13,21 +13,16 @@ window.AdminApp = (() => {
     async function init() {
         console.log('👔 Admin App: Init...');
 
-        // Init modulet
         if (window.TaxiLocale) window.TaxiLocale.init();
         if (window.TaxiOffline) window.TaxiOffline.init();
         if (window.TaxiSound) window.TaxiSound.init();
 
-        // Firebase
         if (window.TaxiFirebase) window.TaxiFirebase.init();
 
-        // AdminLogin init
         if (window.AdminLogin) window.AdminLogin.init();
 
-        // Nis orën
         startClock();
 
-        // Kontrollo sesion ekzistues
         const existing = await window.AdminLogin?.checkExistingSession();
         if (existing) {
             console.log('✅ Sesion ekzistues:', existing.name);
@@ -36,7 +31,6 @@ window.AdminApp = (() => {
             showScreen('login');
         }
 
-        // Fshij loading
         setTimeout(() => {
             document.getElementById('loading-overlay')?.classList.add('hidden');
         }, 600);
@@ -48,18 +42,14 @@ window.AdminApp = (() => {
     function onLoginSuccess(operator) {
         currentOperator = operator;
 
-        // Update UI
         updateOperatorUI(operator);
-
-        // Switch screen
         showScreen('main');
 
-        // Nis pages
         if (window.TaxiPermissions) {
             window.TaxiPermissions.setRole(operator.role);
         }
 
-        // Setup modules
+        // ═══ MODULET EKZISTUESE ═══
         if (window.AdminDashboard) window.AdminDashboard.init();
         if (window.AdminOperators) window.AdminOperators.init();
         if (window.AdminDrivers) window.AdminDrivers.init();
@@ -69,21 +59,29 @@ window.AdminApp = (() => {
         if (window.AdminVacations) window.AdminVacations.init();
         if (window.AdminBlacklist) window.AdminBlacklist.init();
 
-        // Aktivizo audit
+        // ═══ MODULET E REJA ═══
+        if (window.AdminTargets)       try { window.AdminTargets.init(); } catch(e) { console.error('AdminTargets:', e); }
+        if (window.AdminLoyalty)       try { window.AdminLoyalty.init(); } catch(e) { console.error('AdminLoyalty:', e); }
+        if (window.AdminFuel)          try { window.AdminFuel.init(); } catch(e) { console.error('AdminFuel:', e); }
+        if (window.AdminSalaries)      try { window.AdminSalaries.init(); } catch(e) { console.error('AdminSalaries:', e); }
+        if (window.AdminAutoDispatch)  try { window.AdminAutoDispatch.init(); } catch(e) { console.error('AdminAutoDispatch:', e); }
+        if (window.AdminSmsTemplates)  try { window.AdminSmsTemplates.init(); } catch(e) { console.error('AdminSmsTemplates:', e); }
+        if (window.AdminFixedRoutes)   try { window.AdminFixedRoutes.init(); } catch(e) { console.error('AdminFixedRoutes:', e); }
+        if (window.AdminImport)        try { window.AdminImport.init(); } catch(e) { console.error('AdminImport:', e); }
+        if (window.AdminIntegrations)  try { window.AdminIntegrations.init(); } catch(e) { console.error('AdminIntegrations:', e); }
+        if (window.AdminTrackers)      try { window.AdminTrackers.init(); } catch(e) { console.error('AdminTrackers:', e); }
+        if (window.AdminStreets)       try { window.AdminStreets.init(); } catch(e) { console.error('AdminStreets:', e); }
+        if (window.AdminMobileUsers)   try { window.AdminMobileUsers.init(); } catch(e) { console.error('AdminMobileUsers:', e); }
+
         if (window.TaxiAuditLog) {
             window.TaxiAuditLog.log('admin_login', { id: operator.id, role: operator.role });
         }
 
-        // Nis sesionin
         if (window.TaxiSession) window.TaxiSession.init();
-
-        // Sound
         if (window.TaxiSound) window.TaxiSound.activate();
 
-        // Toast
         showToast('success', '👋 Mirë se vjen', operator.name);
 
-        // Shfaq dashboard
         switchPage('dashboard');
     }
 
@@ -106,33 +104,53 @@ window.AdminApp = (() => {
     function switchPage(page) {
         currentPage = page;
 
-        // Sidebar active
         document.querySelectorAll('.sidebar-item').forEach(i => {
             i.classList.toggle('active', i.dataset.page === page);
         });
 
-        // Pages
         document.querySelectorAll('.admin-page').forEach(p => {
             p.classList.toggle('active', p.dataset.page === page);
         });
 
-        // Update title
         const titles = {
-            dashboard: { title: 'Dashboard', subtitle: 'Pamja e përgjithshme' },
-            operators: { title: 'Operatorët', subtitle: 'Statistikat e operatorëve' },
-            drivers: { title: 'Shoferët', subtitle: 'Menaxhimi i shoferëve' },
-            vehicles: { title: 'Veturat', subtitle: 'Flota e veturave' },
-            orders: { title: 'Porositë', subtitle: 'Historiku i plotë' },
-            reports: { title: 'Raporte', subtitle: 'Raportet ditore / javore / mujore' },
-            vacations: { title: 'Pushimet', subtitle: 'Kërkesat për pushim' },
-            blacklist: { title: 'Blacklist', subtitle: 'Numrat e bllokuar' }
+            // ═══ KRYESORE ═══
+            dashboard:      { title: 'Dashboard',       subtitle: 'Pamja e përgjithshme' },
+            operators:      { title: 'Operatorët',      subtitle: 'Statistikat e operatorëve' },
+            drivers:        { title: 'Shoferët',        subtitle: 'Menaxhimi i shoferëve' },
+            vehicles:       { title: 'Veturat',         subtitle: 'Flota e veturave' },
+            orders:         { title: 'Porositë',        subtitle: 'Historiku i plotë' },
+
+            // ═══ MARKETING ═══
+            targets:        { title: 'Targets',         subtitle: 'Company orders · Target history · Preorders · iPay · Mobile' },
+            loyalty:        { title: 'Loyalty Cards',   subtitle: 'Kartat e besnikërisë dhe pikët' },
+            'mobile-users': { title: 'Mobile Users',    subtitle: 'Përdoruesit e aplikacionit mobil' },
+            'sms-templates':{ title: 'SMS Templates',   subtitle: 'Template-t e SMS-ve me variabla' },
+
+            // ═══ OPERACIONE ═══
+            'auto-dispatch':{ title: 'Auto-Dispatch',   subtitle: 'Konfigurimi i shpërndarjes automatike' },
+            'fixed-routes': { title: 'Fixed Routes',    subtitle: 'Rrugë me çmim fiks' },
+            streets:        { title: 'Streets & Stands',subtitle: 'Rrugët dhe stendat e taksi' },
+            trackers:       { title: 'Trackers',        subtitle: 'GPS tracking live' },
+
+            // ═══ FINANCA ═══
+            fuel:           { title: 'Fuel / Refill',   subtitle: 'Çmimet e karburantit dhe refill-et' },
+            salaries:       { title: 'Salaries',        subtitle: 'Menaxhimi i pagave, bonuseve dhe zbritjeve' },
+            reports:        { title: 'Raporte',         subtitle: 'Raportet ditore / javore / mujore / punëtorët' },
+
+            // ═══ SISTEMI ═══
+            integrations:   { title: 'Integrations',    subtitle: 'Viber, Twitter, WhatsApp, Telegram' },
+            import:         { title: 'Import',          subtitle: 'Importo nga CSV / Excel' },
+            vacations:      { title: 'Pushimet',        subtitle: 'Kërkesat për pushim' },
+            blacklist:      { title: 'Blacklist',       subtitle: 'Numrat e bllokuar' },
+            administration: { title: 'Administration',  subtitle: 'Cilësimet e sistemit' }
         };
 
-        const info = titles[page] || titles.dashboard;
-        document.getElementById('page-title').textContent = info.title;
-        document.getElementById('page-subtitle').textContent = info.subtitle;
+        const info = titles[page] || { title: 'Dashboard', subtitle: '' };
+        const titleEl = document.getElementById('page-title');
+        const subEl = document.getElementById('page-subtitle');
+        if (titleEl) titleEl.textContent = info.title;
+        if (subEl) subEl.textContent = info.subtitle;
 
-        // Load content
         loadPageContent(page);
 
         console.log('📄 Faqja:', page);
@@ -141,6 +159,7 @@ window.AdminApp = (() => {
     // ═══ LOAD CONTENT ═══
     function loadPageContent(page) {
         switch (page) {
+            // ═══ EKZISTUESE ═══
             case 'dashboard':
                 if (window.AdminDashboard) window.AdminDashboard.load();
                 break;
@@ -165,6 +184,53 @@ window.AdminApp = (() => {
             case 'blacklist':
                 if (window.AdminBlacklist) window.AdminBlacklist.load();
                 break;
+            case 'administration':
+                if (window.AdminAdministration) window.AdminAdministration.load();
+                break;
+
+            // ═══ MARKETING ═══
+            case 'targets':
+                if (window.AdminTargets) window.AdminTargets.load();
+                break;
+            case 'loyalty':
+                if (window.AdminLoyalty) window.AdminLoyalty.load();
+                break;
+            case 'mobile-users':
+                if (window.AdminMobileUsers) window.AdminMobileUsers.load();
+                break;
+            case 'sms-templates':
+                if (window.AdminSmsTemplates) window.AdminSmsTemplates.load();
+                break;
+
+            // ═══ OPERACIONE ═══
+            case 'auto-dispatch':
+                if (window.AdminAutoDispatch) window.AdminAutoDispatch.load();
+                break;
+            case 'fixed-routes':
+                if (window.AdminFixedRoutes) window.AdminFixedRoutes.load();
+                break;
+            case 'streets':
+                if (window.AdminStreets) window.AdminStreets.load();
+                break;
+            case 'trackers':
+                if (window.AdminTrackers) window.AdminTrackers.load();
+                break;
+
+            // ═══ FINANCA ═══
+            case 'fuel':
+                if (window.AdminFuel) window.AdminFuel.load();
+                break;
+            case 'salaries':
+                if (window.AdminSalaries) window.AdminSalaries.load();
+                break;
+
+            // ═══ SISTEMI ═══
+            case 'integrations':
+                if (window.AdminIntegrations) window.AdminIntegrations.load();
+                break;
+            case 'import':
+                if (window.AdminImport) window.AdminImport.load();
+                break;
         }
     }
 
@@ -173,11 +239,9 @@ window.AdminApp = (() => {
         const sidebar = document.getElementById('admin-sidebar');
         if (!sidebar) return;
 
-        // Në mobile → klasa mobile-open
         if (window.innerWidth <= 768) {
             sidebar.classList.toggle('mobile-open');
         } else {
-            // Në desktop → collapsed
             sidebar.classList.toggle('collapsed');
         }
     }
