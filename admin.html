@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Taxi Admin | Menagjer Panel</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a855f7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +17,6 @@
 </head>
 <body class="theme-2">
 
-    <!-- ═══ LOADING ═══ -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -23,7 +24,7 @@
         </div>
     </div>
 
-    <!-- ═══ LOGIN SCREEN ═══ -->
+    <!-- LOGIN SCREEN -->
     <div class="screen login-screen active" id="screen-login">
         <div class="login-box">
             <div class="login-logo">
@@ -54,10 +55,9 @@
         </div>
     </div>
 
-    <!-- ═══ MAIN SCREEN ═══ -->
+    <!-- MAIN SCREEN -->
     <div class="screen main-screen" id="screen-main">
 
-        <!-- SIDEBAR -->
         <aside class="admin-sidebar" id="admin-sidebar">
             <div class="sidebar-logo">
                 <i class="fa-solid fa-user-tie"></i>
@@ -97,6 +97,10 @@
                     <i class="fa-solid fa-ban"></i>
                     <span>Blacklist</span>
                 </a>
+                <a href="#" class="sidebar-item" data-page="administration" onclick="AdminApp.switchPage('administration'); return false;">
+                    <i class="fa-solid fa-cogs"></i>
+                    <span>Administration</span>
+                </a>
             </nav>
 
             <div class="sidebar-bottom">
@@ -113,10 +117,7 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="admin-content" id="admin-content">
-
-            <!-- TOP BAR -->
             <header class="admin-topbar">
                 <button class="topbar-toggle" onclick="AdminApp.toggleSidebar()">
                     <i class="fa-solid fa-bars"></i>
@@ -128,6 +129,12 @@
                 </div>
 
                 <div class="topbar-actions">
+                    <button class="topbar-toggle" id="btn-theme-toggle" title="Dark/Light">
+                        <i class="fa-solid fa-sun"></i>
+                    </button>
+                    <button class="topbar-toggle" id="btn-voice-toggle" title="Komanda me zë">
+                        <i class="fa-solid fa-microphone-slash"></i>
+                    </button>
                     <div class="topbar-time">
                         <div class="time-clock" id="clock-time">--:--:--</div>
                         <div class="time-date" id="clock-date">--/--/----</div>
@@ -135,7 +142,6 @@
                 </div>
             </header>
 
-            <!-- PAGE: DASHBOARD -->
             <div class="admin-page active" data-page="dashboard">
                 <div class="kpi-grid">
                     <div class="kpi-card green">
@@ -167,42 +173,30 @@
                             <h3>Top Operatorët (Sot)</h3>
                         </div>
                         <div class="db-panel-body" id="top-operators-list">
-                            <div class="empty-state">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
-                                <p>Duke ngarkuar...</p>
-                            </div>
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                         </div>
                     </div>
-
                     <div class="db-panel">
                         <div class="db-panel-header">
                             <i class="fa-solid fa-car-side"></i>
                             <h3>Top Shoferët (Sot)</h3>
                         </div>
                         <div class="db-panel-body" id="top-drivers-list">
-                            <div class="empty-state">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
-                                <p>Duke ngarkuar...</p>
-                            </div>
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                         </div>
                     </div>
-
                     <div class="db-panel full">
                         <div class="db-panel-header">
                             <i class="fa-solid fa-clock"></i>
                             <h3>Aktiviteti i fundit</h3>
                         </div>
                         <div class="db-panel-body" id="recent-activity-list">
-                            <div class="empty-state">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
-                                <p>Duke ngarkuar...</p>
-                            </div>
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- PAGE: OPERATORS -->
             <div class="admin-page" data-page="operators">
                 <div class="page-actions">
                     <div class="filter-bar">
@@ -213,80 +207,55 @@
                     </div>
                 </div>
                 <div id="operators-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar operatorët...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: DRIVERS -->
             <div class="admin-page" data-page="drivers">
                 <div id="drivers-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar shoferët...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: VEHICLES -->
             <div class="admin-page" data-page="vehicles">
                 <div id="vehicles-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar veturat...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: ORDERS -->
             <div class="admin-page" data-page="orders">
                 <div id="orders-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar porositë...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: REPORTS -->
             <div class="admin-page" data-page="reports">
                 <div id="reports-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar raportet...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: VACATIONS -->
             <div class="admin-page" data-page="vacations">
                 <div id="vacations-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar pushimet...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
-            <!-- PAGE: BLACKLIST -->
             <div class="admin-page" data-page="blacklist">
                 <div id="blacklist-content">
-                    <div class="empty-state">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        <p>Duke ngarkuar blacklist...</p>
-                    </div>
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <div class="admin-page" data-page="administration">
+                <div id="administration-content"></div>
+            </div>
         </main>
     </div>
 
-    <!-- ═══ TOAST ═══ -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ SCRIPTS ═══ -->
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -311,6 +280,7 @@
     <script src="js/services/orders.js"></script>
     <script src="js/services/operators.js"></script>
     <script src="js/services/drivers.js"></script>
+    <script src="js/services/messages.js"></script>
     <script src="js/services/sound.js"></script>
     <script src="js/services/logger.js"></script>
     <script src="js/services/audit-log.js"></script>
@@ -320,6 +290,28 @@
     <script src="js/services/export.js"></script>
     <script src="js/services/history.js"></script>
     <script src="js/services/session.js"></script>
+    <script src="js/services/maps.js"></script>
+    <script src="js/services/control-unit.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/shifts.js"></script>
+    <script src="js/services/zones.js"></script>
+    <script src="js/services/sms.js"></script>
+    <script src="js/services/notifications.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/responsive.js"></script>
+    <script src="js/services/shortcuts.js"></script>
+    <script src="js/services/pwa.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/voice-commands.js"></script>
+    <script src="js/services/email-notifications.js"></script>
+    <script src="js/services/two-factor.js"></script>
+    <script src="js/services/validation.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/backup.js"></script>
+    <script src="js/services/sync.js"></script>
 
     <!-- ADMIN APP -->
     <script src="js/admin/login.js"></script>
@@ -332,11 +324,24 @@
     <script src="js/admin/reports.js"></script>
     <script src="js/admin/vacations.js"></script>
     <script src="js/admin/blacklist.js"></script>
+    <script src="js/admin/administration.js"></script>
 
-    <!-- INIT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            AdminApp.init();
+            if (window.AdminApp) AdminApp.init();
+            if (window.TaxiPWA) TaxiPWA.init();
+            if (window.TaxiResponsive) TaxiResponsive.init();
+            if (window.TaxiShortcuts) TaxiShortcuts.init();
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
+            if (window.TaxiVoice) {
+                TaxiVoice.init();
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => TaxiVoice.toggle());
+            }
+            document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+                if (window.TaxiDarkMode) TaxiDarkMode.toggle();
+            });
+            if (window.TaxiEmergency) TaxiEmergency.init();
+            console.log('👔 Admin Panel gati');
         });
     </script>
 </body>
