@@ -931,3 +931,49 @@ button { cursor: pointer; border: none; background: none; }
     color: var(--accent-cyan);
     margin-top: 2px;
 }
+/* ═══ SOS BUTTON ═══ */
+.sos-fab {
+    position: fixed;
+    right: 16px;
+    bottom: 170px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f43f5e, #be123c);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.5);
+    z-index: 90;
+    transition: var(--transition-fast);
+    animation: sosPulse 2s infinite;
+    border: none;
+    cursor: pointer;
+}
+.sos-fab:active {
+    transform: scale(0.92);
+}
+@keyframes sosPulse {
+    0%, 100% { box-shadow: 0 6px 20px rgba(244, 63, 94, 0.5); }
+    50% { box-shadow: 0 6px 30px rgba(244, 63, 94, 0.9); }
+}
+
+/* ═══ CHAT BUTTON ═══ */
+.ao-chat {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-purple);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-left: 6px;
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+    border: none;
+    cursor: pointer;
+}
