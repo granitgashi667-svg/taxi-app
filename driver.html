@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0416">
+    <title>Taxi Shofer | Driver App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/driver.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+</head>
+<body>
+
+    <!-- ═══ LOADING ═══ -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar...</div>
+        </div>
+    </div>
+
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div class="screen login-screen active" id="screen-login">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fa-solid fa-taxi"></i>
+            </div>
+            <h1>Taxi Shofer</h1>
+            <p class="login-sub">Hyr me llogarinë tënde</p>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="shofer@taxi.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+                </div>
+                <div id="login-error" class="login-error" style="display:none;"></div>
+                <button class="btn-login" id="btn-login">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>HYR</span>
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Version 2.0 · Powered by TaxiDispatch</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN APP SCREEN ═══ -->
+    <div class="screen main-screen" id="screen-main">
+
+        <!-- TOP BAR -->
+        <header class="driver-topbar">
+            <div class="driver-info">
+                <div class="driver-avatar" id="driver-avatar">?</div>
+                <div>
+                    <div class="driver-name" id="driver-name">Duke ngarkuar...</div>
+                    <div class="driver-vehicle" id="driver-vehicle">—</div>
+                </div>
+            </div>
+            <div class="driver-status-pill" id="driver-status-pill">
+                <span class="status-dot"></span>
+                <span id="driver-status-text">Offline</span>
+            </div>
+            <button class="btn-logout-small" onclick="DriverApp.logout()" title="Dil">
+                <i class="fa-solid fa-sign-out-alt"></i>
+            </button>
+        </header>
+
+        <!-- STATUS BANNER -->
+        <div class="status-banner" id="status-banner">
+            <div class="status-banner-content">
+                <div class="sb-icon" id="sb-icon"><i class="fa-solid fa-car"></i></div>
+                <div class="sb-text">
+                    <div class="sb-title" id="sb-title">Statusi: Lirë</div>
+                    <div class="sb-sub" id="sb-sub">Duke pritur porosi...</div>
+                </div>
+                <button class="sb-toggle" id="sb-toggle">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ACTIVE ORDER CARD -->
+        <div class="active-order" id="active-order" style="display:none;">
+            <div class="ao-header">
+                <div class="ao-badge" id="ao-badge">POROSIA JOTE</div>
+                <div class="ao-time" id="ao-time">00:00</div>
+            </div>
+            <div class="ao-body">
+                <div class="ao-row">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <div class="ao-label">Klienti</div>
+                        <div class="ao-value" id="ao-phone">—</div>
+                    </div>
+                    <button class="ao-call" onclick="DriverApp.callClient()">
+                        <i class="fa-solid fa-phone"></i>
+                    </button>
+                </div>
+                <div class="ao-row">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <div class="ao-label">Marrja</div>
+                        <div class="ao-value" id="ao-pickup">—</div>
+                    </div>
+                </div>
+                <div class="ao-row">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                    <div>
+                        <div class="ao-label">Destinacioni</div>
+                        <div class="ao-value" id="ao-destination">—</div>
+                    </div>
+                </div>
+                <div class="ao-remark" id="ao-remark" style="display:none;">
+                    <i class="fa-solid fa-note-sticky"></i>
+                    <span id="ao-remark-text"></span>
+                </div>
+            </div>
+            <div class="ao-actions">
+                <button class="ao-btn ao-btn-nav" id="btn-navigate">
+                    <i class="fa-solid fa-diamond-turn-right"></i>
+                    <span>NAVIGO</span>
+                </button>
+                <button class="ao-btn ao-btn-arrived" id="btn-arrived">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>KËTU JAM</span>
+                </button>
+                <button class="ao-btn ao-btn-finish" id="btn-finish" style="display:none;">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                    <span>PËRFUNDO</span>
+                </button>
+                <button class="ao-btn ao-btn-cancel" id="btn-cancel-order">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>ANULO</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- QUEUE (NË PRITJE) -->
+        <div class="queue-section" id="queue-section">
+            <div class="queue-header">
+                <div class="queue-title">
+                    <i class="fa-solid fa-list-ol"></i>
+                    <span>Porositë në Radhë</span>
+                    <span class="queue-count" id="queue-count">0</span>
+                </div>
+            </div>
+            <div class="queue-list" id="queue-list">
+                <div class="queue-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>Nuk ka porosi në pritje</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAP BUTTON -->
+        <button class="map-fab" onclick="DriverApp.toggleMap()">
+            <i class="fa-solid fa-map"></i>
+        </button>
+
+        <!-- BOTTOM NAV -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="orders" onclick="DriverApp.switchTab('orders'); return false;">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Porositë</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="map" onclick="DriverApp.switchTab('map'); return false;">
+                <i class="fa-solid fa-map"></i>
+                <span>Harta</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="stats" onclick="DriverApp.switchTab('stats'); return false;">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Statistika</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="profile" onclick="DriverApp.switchTab('profile'); return false;">
+                <i class="fa-solid fa-user"></i>
+                <span>Profili</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- ═══ MODAL: POROSI E RE ═══ -->
+    <div class="order-modal" id="modal-new-order">
+        <div class="order-modal-content">
+            <div class="order-modal-header">
+                <div class="pulse-ring"></div>
+                <i class="fa-solid fa-bell"></i>
+                <h2>POROSI E RE!</h2>
+            </div>
+            <div class="order-modal-body">
+                <div class="om-row">
+                    <i class="fa-solid fa-phone"></i>
+                    <div>
+                        <div class="om-label">Klienti</div>
+                        <div class="om-value" id="om-phone">—</div>
+                    </div>
+                </div>
+                <div class="om-row">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <div class="om-label">Marrja</div>
+                        <div class="om-value" id="om-pickup">—</div>
+                    </div>
+                </div>
+                <div class="om-row">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                    <div>
+                        <div class="om-label">Destinacioni</div>
+                        <div class="om-value" id="om-destination">—</div>
+                    </div>
+                </div>
+                <div class="om-remark" id="om-remark" style="display:none;">
+                    <i class="fa-solid fa-note-sticky"></i>
+                    <span id="om-remark-text"></span>
+                </div>
+                <div class="om-timer">
+                    <div class="om-timer-text">Kohë për pranim:</div>
+                    <div class="om-timer-value" id="om-timer">30</div>
+                </div>
+            </div>
+            <div class="order-modal-footer">
+                <button class="om-btn om-btn-reject" id="btn-reject-order">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>REFUZO</span>
+                </button>
+                <button class="om-btn om-btn-accept" id="btn-accept-order">
+                    <i class="fa-solid fa-check"></i>
+                    <span>PRANO</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODAL: STATUS ═══ -->
+    <div class="status-modal" id="modal-status">
+        <div class="status-modal-content">
+            <h3>Zgjidh statusin</h3>
+            <div class="status-options">
+                <button class="status-option" data-status="free">
+                    <div class="so-icon free"><i class="fa-solid fa-circle"></i></div>
+                    <div class="so-text">
+                        <div class="so-title">LIRË</div>
+                        <div class="so-sub">Gati për porosi</div>
+                    </div>
+                </button>
+                <button class="status-option" data-status="pause">
+                    <div class="so-icon pause"><i class="fa-solid fa-pause"></i></div>
+                    <div class="so-text">
+                        <div class="so-title">PAUZË</div>
+                        <div class="so-sub">Pushim i shkurtër</div>
+                    </div>
+                </button>
+                <button class="status-option" data-status="inactive">
+                    <div class="so-icon inactive"><i class="fa-solid fa-power-off"></i></div>
+                    <div class="so-text">
+                        <div class="so-title">OFFLINE</div>
+                        <div class="so-sub">Jashtë turnit</div>
+                    </div>
+                </button>
+            </div>
+            <button class="btn-ghost full" onclick="DriverApp.closeStatusModal()">Anulo</button>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══ SCRIPTS ═══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SERVICES (të përbashkëtat) -->
+    <script src="js/services/auth.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/operators.js"></script>
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/sms.js"></script>
+    <script src="js/services/navigation.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/audit-log.js"></script>
+
+    <!-- DRIVER APP -->
+    <script src="js/driver/login.js"></script>
+    <script src="js/driver/app.js"></script>
+    <script src="js/driver/queue.js"></script>
+    <script src="js/driver/navigation.js"></script>
+
+    <!-- INIT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            DriverApp.init();
+        });
+    </script>
+</body>
+</html>
