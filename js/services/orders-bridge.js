@@ -2,6 +2,7 @@
 
 /**
  * orders-bridge.js — Lidh sistemin me Firestore + rrugëtim sipas statusit
+ * SHKRUAN DIREKT NË AppState (script.js)
  */
 
 window.TaxiOrdersBridge = (() => {
@@ -9,7 +10,6 @@ window.TaxiOrdersBridge = (() => {
 
     const WAITING_STATUSES = ['waiting', 'new', 'pending'];
     const ACTIVE_STATUSES = ['assigned', 'onroute', 'arrived', 'taximeter', 'fixed', 'delay'];
-    const HIDDEN_STATUSES = ['completed', 'cancelled'];
 
     function init() {
         if (isInitialized) return;
@@ -17,42 +17,68 @@ window.TaxiOrdersBridge = (() => {
 
         console.log('🔗 Duke lidhur porositë me Firestore...');
 
+        // Event handlers
         window.TaxiEvents.on('firestore:order_added', (orders) => {
+            console.log('📥 Bridge: added', orders.length);
             orders.forEach(order => addToLocalState(order));
             rerender();
         });
 
         window.TaxiEvents.on('firestore:order_updated', (orders) => {
+            console.log('✏️ Bridge: updated', orders.length);
             orders.forEach(order => addToLocalState(order));
             rerender();
         });
 
         window.TaxiEvents.on('firestore:order_removed', (orders) => {
+            console.log('🗑️ Bridge: removed', orders.length);
             orders.forEach(order => removeFromLocalState(order.id));
             rerender();
         });
 
+        // Pas 1 sekonde, bëj një sync manual (në rast se eventet u harruan)
+        setTimeout(() => {
+            syncFromFirestore();
+        }, 1000);
+
         console.log('✅ Bridge u aktivizua');
+    }
+
+    // Sync manual nga Firestore (për çdo rast)
+    async function syncFromFirestore() {
+        try {
+            const allOrders = await window.TaxiOrders.getAll();
+            console.log('🔄 Sync: mora', allOrders.length, 'porosi');
+
+            // Pastro state-in lokal
+            AppState.orders = [];
+            AppState.waitingOrders = [];
+
+            // Ri-shto të gjitha
+            allOrders.forEach(order => addToLocalState(order));
+            rerender();
+        } catch (e) {
+            console.error('❌ Sync error:', e);
+        }
     }
 
     function addToLocalState(fsOrder) {
         const order = mapToLocal(fsOrder);
+
+        // Hiq nga të dyja listat (parandalon dublime)
         removeFromLocalState(order.firestoreId);
 
+        // Shto në listën e saktë
         if (WAITING_STATUSES.includes(order.status)) {
-            window.TaxiState.get('waitingOrders').unshift(order);
+            AppState.waitingOrders.unshift(order);
         } else if (ACTIVE_STATUSES.includes(order.status)) {
-            window.TaxiState.get('orders').unshift(order);
+            AppState.orders.unshift(order);
         }
     }
 
     function removeFromLocalState(id) {
-        window.TaxiState.set('waitingOrders',
-            window.TaxiState.get('waitingOrders').filter(o => o.firestoreId !== id && o.id !== id)
-        );
-        window.TaxiState.set('orders',
-            window.TaxiState.get('orders').filter(o => o.firestoreId !== id && o.id !== id)
-        );
+        AppState.waitingOrders = AppState.waitingOrders.filter(o => o.firestoreId !== id && o.id !== id);
+        AppState.orders = AppState.orders.filter(o => o.firestoreId !== id && o.id !== id);
     }
 
     function mapToLocal(fsOrder) {
@@ -140,7 +166,8 @@ window.TaxiOrdersBridge = (() => {
         init,
         createFromData,
         assignOrder,
-        cancelOrderFs
+        cancelOrderFs,
+        syncFromFirestore
     };
 })();
 
