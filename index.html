@@ -71,7 +71,6 @@
 
         <div class="page-container">
 
-            <!-- PAGE: DISPATCH -->
             <div class="page active" data-page="dispatch">
                 <div class="dispatch-layout">
                     <div class="col-left">
@@ -303,7 +302,6 @@
                 </div>
             </div>
 
-            <!-- Pages të tjera -->
             <div class="page" data-page="calls"></div>
             <div class="page" data-page="orders"></div>
             <div class="page" data-page="drivers"></div>
@@ -320,7 +318,6 @@
         </div>
     </main>
 
-    <!-- MODAL: TARGET EDIT -->
     <div class="modal-overlay" id="modal-order-detail">
         <div class="modal modal-lg">
             <div class="modal-header">
@@ -391,23 +388,14 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- FIREBASE SDK                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-    <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- FIREBASE CONFIG -->
     <script src="firebase-config.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- CORE (7)                                                -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -419,9 +407,7 @@
     <!-- DATA -->
     <script src="data.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SERVICES (të gjitha)                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
@@ -452,6 +438,8 @@
     <script src="js/services/export.js"></script>
     <script src="js/services/releases.js"></script>
     <script src="js/services/rewind.js"></script>
+    <script src="js/services/rewind-ui.js"></script>
+    <script src="js/services/zones-ui.js"></script>
     <script src="js/services/analytics.js"></script>
     <script src="js/services/validation.js"></script>
     <script src="js/services/cache.js"></script>
@@ -476,66 +464,43 @@
     <script src="js/services/responsive.js"></script>
     <script src="js/services/shortcuts.js"></script>
     <script src="js/services/pwa.js"></script>
+    <script src="js/services/system-health.js"></script>
+    <script src="js/services/onboarding.js"></script>
+    <script src="js/services/help-center.js"></script>
+    <script src="js/services/feedback.js"></script>
+    <script src="js/services/api-keys.js"></script>
+    <script src="js/services/print.js"></script>
+    <script src="js/services/wallet.js"></script>
+    <script src="js/services/qr-generator.js"></script>
+    <script src="js/services/referral.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SCRIPT.JS (Main Logic)                                  -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SCRIPT.JS -->
     <script src="script.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- APP BOOTSTRAP                                           -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- APP BOOTSTRAP -->
     <script src="js/app.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- INIT                                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Init app
             if (window.TaxiApp) window.TaxiApp.init();
-
-            // Init PWA
             if (window.TaxiPWA) window.TaxiPWA.init();
-
-            // Init responsive
             if (window.TaxiResponsive) window.TaxiResponsive.init();
-
-            // Init shortcuts
             if (window.TaxiShortcuts) window.TaxiShortcuts.init();
-
-            // Init dark mode
             if (window.TaxiDarkMode) window.TaxiDarkMode.init();
-
-            // Init map context menu
-            if (window.TaxiMapContextMenu) {
-                setTimeout(() => {
-                    if (window.AppState?.map) {
-                        window.TaxiMapContextMenu.init();
-                        window.TaxiMapContextMenu.attachToMap(window.AppState.map);
-                    }
-                }, 3000);
-            }
-
-            // Init voice commands
             if (window.TaxiVoice) {
                 window.TaxiVoice.init();
-                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => {
-                    window.TaxiVoice.toggle();
-                });
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => window.TaxiVoice.toggle());
             }
-
-            // Init dark mode toggle
             document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
                 if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
             });
-
-            // Init 2FA
-            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
-
-            // Emergency listener
             if (window.TaxiEmergency) window.TaxiEmergency.init();
-
+            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
+            if (window.TaxiHealth) window.TaxiHealth.start();
+            if (window.TaxiApiKeys) window.TaxiApiKeys.init();
+            if (window.TaxiOnboarding) {
+                setTimeout(() => window.TaxiOnboarding.start('index'), 3000);
+            }
             console.log('🚀 Të gjitha modulet u inicializuan');
         });
     </script>
