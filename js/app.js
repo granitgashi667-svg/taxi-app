@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * app.js — Bootstrap: Nisja e të gjitha moduleve
+ * js/app.js — Bootstrap: Nisja e të gjitha moduleve
  */
 
 window.TaxiApp = (() => {
@@ -13,11 +13,13 @@ window.TaxiApp = (() => {
 
         console.log('🚀 TaxiApp: Fillimi i inicializimit...');
 
-        // ═══ 1. INIT MODULES ═══
-        if (window.TaxiLocale) window.TaxiLocale.init();
-        if (window.TaxiThemes) window.TaxiThemes.init();
-        if (window.TaxiOffline) window.TaxiOffline.init();
-        if (window.TaxiCallCenter) window.TaxiCallCenter.init();
+        // ═══ 1. CORE MODULES ═══
+        try {
+            if (window.TaxiLocale) window.TaxiLocale.init();
+            if (window.TaxiThemes) window.TaxiThemes.init();
+            if (window.TaxiOffline) window.TaxiOffline.init();
+            if (window.TaxiSound) window.TaxiSound.init();
+        } catch (e) { console.warn('Core init:', e); }
 
         // ═══ 2. FIREBASE ═══
         if (!window.TaxiFirebase) {
@@ -26,23 +28,57 @@ window.TaxiApp = (() => {
         }
         window.TaxiFirebase.init();
 
-        // ═══ 3. ORDER BRIDGE (para subscribe) ═══
+        // ═══ 3. PERMISSIONS ═══
+        if (window.TaxiPermissions) window.TaxiPermissions.init();
+
+        // ═══ 4. ORDER BRIDGE (para subscribe) ═══
         if (window.TaxiOrdersBridge) window.TaxiOrdersBridge.init();
 
-        // ═══ 4. SUBSCRIBE FIRESTORE ═══
+        // ═══ 5. SUBSCRIBE FIRESTORE ═══
         if (window.TaxiOrders) window.TaxiOrders.subscribe();
         if (window.TaxiMessages) window.TaxiMessages.subscribe();
 
-        // ═══ 5. BLACKLIST CACHE ═══
+        // ═══ 6. BLACKLIST CACHE ═══
         if (window.TaxiBlacklist) window.TaxiBlacklist.loadCache();
 
-        // ═══ 6. GEOFENCING ═══
+        // ═══ 7. GEOFENCING ═══
         if (window.TaxiGeofencing) window.TaxiGeofencing.start();
 
-        // ═══ 7. AUTO-SYNC ═══
+        // ═══ 8. AUTO-SYNC ═══
         if (window.TaxiSync) window.TaxiSync.startAutoSync(5 * 60 * 1000);
 
-        // ═══ 8. AUTH STATE ═══
+        // ═══ 9. CALL CENTER ═══
+        if (window.TaxiCallCenter) window.TaxiCallCenter.init();
+
+        // ═══ 10. MAPS ═══
+        if (window.TaxiMaps) window.TaxiMaps.init();
+
+        // ═══ 11. AUDIT LOG ═══
+        if (window.TaxiAuditLog) console.log('🔐 Audit Log gati');
+
+        // ═══ 12. IP WHITELIST ═══
+        if (window.TaxiIpWhitelist) {
+            // Bypass në dev mode
+            window.TaxiIpWhitelist.setBypass(true);
+            window.TaxiIpWhitelist.init();
+        }
+
+        // ═══ 13. SESSION (auto-logout) ═══
+        if (window.TaxiSession) window.TaxiSession.init();
+
+        // ═══ 14. EMERGENCY (SOS listener) ═══
+        if (window.TaxiEmergency) window.TaxiEmergency.init();
+
+        // ═══ 15. REWIND ═══
+        if (window.TaxiRewindUI) window.TaxiRewindUI.init();
+
+        // ═══ 16. ZONES UI ═══
+        if (window.TaxiZonesUI) window.TaxiZonesUI.init();
+
+        // ═══ 17. TV DISPLAY ═══
+        if (window.TaxiTvDisplay) window.TaxiTvDisplay.init();
+
+        // ═══ 18. AUTH STATE ═══
         if (window.TaxiAuth) {
             window.TaxiAuth.onAuthChange(async (user) => {
                 if (user) {
@@ -70,6 +106,12 @@ window.TaxiApp = (() => {
                                 });
                             }
 
+                            // Set role in permissions
+                            if (window.TaxiPermissions) {
+                                window.TaxiPermissions.setRole(operator.role || 'dispatcher');
+                                setTimeout(() => window.TaxiPermissions.applyToUI(), 500);
+                            }
+
                             if (window.TaxiLogger) {
                                 window.TaxiLogger.success('login', { email: user.email });
                             }
@@ -83,30 +125,65 @@ window.TaxiApp = (() => {
             });
         }
 
-        // ═══ 9. RAIL USER KLIK ═══
+        // ═══ 19. RAIL USER KLIK ═══
         setupRailUserClick();
 
-        // ═══ 10. LOGIN/LOGOUT ═══
+        // ═══ 20. LOGIN / LOGOUT ═══
         setupLoginButton();
         setupLogoutButton();
 
-        // ═══ 11. MODAL CLOSE ═══
+        // ═══ 21. MODAL CLOSE ═══
         setupModalClose();
 
-        // ═══ 12. CLIENT AUTO-SEARCH ═══
+        // ═══ 22. CLIENT AUTO-SEARCH ═══
         setupClientSearch();
 
-        // ═══ 13. NOTIFICATIONS ═══
+        // ═══ 23. NOTIFICATIONS ═══
         if (window.TaxiNotifications) {
             window.TaxiNotifications.requestPermission();
         }
 
-        // ═══ 14. EVENT LISTENERS ═══
+        // ═══ 24. MAP CONTEXT MENU ═══
+        if (window.TaxiMapContextMenu && window.AppState?.map) {
+            window.TaxiMapContextMenu.init();
+            window.TaxiMapContextMenu.attachToMap(window.AppState.map);
+        }
+
+        // ═══ 25. VOICE COMMANDS ═══
+        if (window.TaxiVoice) {
+            window.TaxiVoice.init();
+            document.getElementById('btn-voice-toggle')?.addEventListener('click', () => {
+                window.TaxiVoice.toggle();
+            });
+        }
+
+        // ═══ 26. DARK MODE TOGGLE ═══
+        document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+            if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
+        });
+
+        // ═══ 27. EVENT LISTENERS ═══
         setupEventListeners();
+
+        // ═══ 28. PWA ═══
+        if (window.TaxiPWA) window.TaxiPWA.init();
+
+        // ═══ 29. RESPONSIVE ═══
+        if (window.TaxiResponsive) window.TaxiResponsive.init();
+
+        // ═══ 30. SHORTCUTS ═══
+        if (window.TaxiShortcuts) window.TaxiShortcuts.init();
+
+        // ═══ 31. DARK MODE ═══
+        if (window.TaxiDarkMode) window.TaxiDarkMode.init();
+
+        // ═══ 32. 2FA ═══
+        if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
 
         console.log('✅ TaxiApp: Init komplet përfundoi');
     }
 
+    // ═══ HELPER: Rail User ═══
     function updateRailUser(name) {
         const el = document.getElementById('rail-user');
         if (el) {
@@ -123,6 +200,7 @@ window.TaxiApp = (() => {
         }
     }
 
+    // ═══ RAIL USER KLIK ═══
     function setupRailUserClick() {
         const railUser = document.getElementById('rail-user');
         if (!railUser) return;
@@ -136,6 +214,7 @@ window.TaxiApp = (() => {
         });
     }
 
+    // ═══ LOGIN BUTTON ═══
     function setupLoginButton() {
         const btn = document.getElementById('btn-do-login');
         if (!btn) return;
@@ -159,18 +238,30 @@ window.TaxiApp = (() => {
             try {
                 newBtn.disabled = true;
                 newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Duke hyrë...';
+
                 const user = await window.TaxiAuth.login(email, password);
                 console.log('✅ U loguat:', user);
+
                 document.getElementById('modal-login')?.classList.remove('active');
-                if (typeof showToast === 'function') showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
+
+                if (typeof showToast === 'function') {
+                    showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
+                }
+
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-password').value = '';
+
             } catch (e) {
                 let msg = 'Gabim gjatë login-it';
-                if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') msg = 'Email ose fjalëkalim i gabuar';
-                else if (e.code === 'auth/user-not-found') msg = 'Ky user nuk ekziston';
-                else if (e.code === 'auth/invalid-email') msg = 'Email-i nuk është valid';
-                else if (e.code === 'auth/network-request-failed') msg = 'Problem me internetin';
+                if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') {
+                    msg = 'Email ose fjalëkalim i gabuar';
+                } else if (e.code === 'auth/user-not-found') {
+                    msg = 'Ky user nuk ekziston';
+                } else if (e.code === 'auth/invalid-email') {
+                    msg = 'Email-i nuk është valid';
+                } else if (e.code === 'auth/network-request-failed') {
+                    msg = 'Problem me internetin';
+                }
                 errBox.textContent = '❌ ' + msg;
                 errBox.style.display = 'block';
             } finally {
@@ -184,6 +275,7 @@ window.TaxiApp = (() => {
         });
     }
 
+    // ═══ LOGOUT ═══
     function setupLogoutButton() {
         const btn = document.getElementById('btn-logout');
         if (!btn) return;
@@ -191,11 +283,14 @@ window.TaxiApp = (() => {
             if (confirm('A jeni i sigurt që dëshironi të dilni?')) {
                 await window.TaxiAuth.logout();
                 document.getElementById('modal-operator-stats')?.classList.remove('active');
-                if (typeof showToast === 'function') showToast('info', 'U dilni', 'Deri herën tjetër!');
+                if (typeof showToast === 'function') {
+                    showToast('info', 'U dilni', 'Deri herën tjetër!');
+                }
             }
         });
     }
 
+    // ═══ MODAL CLOSE ═══
     function setupModalClose() {
         document.querySelectorAll('[data-close]').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -209,6 +304,7 @@ window.TaxiApp = (() => {
         });
     }
 
+    // ═══ CLIENT AUTO-SEARCH ═══
     function setupClientSearch() {
         const phoneInput = document.getElementById('client-phone');
         if (!phoneInput || !window.TaxiClients) return;
@@ -232,17 +328,26 @@ window.TaxiApp = (() => {
         });
     }
 
+    // ═══ EVENT LISTENERS ═══
     function setupEventListeners() {
-        // Njofto kur porosi e re vjen
         if (window.TaxiEvents) {
             window.TaxiEvents.on('firestore:order_added', (orders) => {
                 orders.forEach(o => {
                     if (window.TaxiNotifications) window.TaxiNotifications.orderNew(o);
                 });
             });
+
+            // Kur porosia arrin në 20m → njoftim
+            window.TaxiEvents.on('order:arrived', (data) => {
+                console.log('📍 Porosia arriti:', data.orderId);
+                if (typeof showToast === 'function') {
+                    showToast('info', '📍 Shoferi arriti', `${data.distance}m larg`);
+                }
+            });
         }
     }
 
+    // ═══ OPERATOR STATS ═══
     async function showOperatorStats() {
         const user = window.TaxiAuth?.currentUser();
         if (!user) return;
