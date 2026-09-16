@@ -627,112 +627,75 @@ function submitOrder() {
 
     if (!phone || !pickup) { showToast('error', 'Gabim', 'Plotëso numrin dhe adresën'); return; }
 
-    AppState.currentOperator.stats.callsTaken++;
-    AppState.currentOperator.stats.callsOpened++;
-    AppState.currentOperator.stats.callsWaiting++;
+    // 🔍 KONTROLLO A ËSHTË TERMIN
+    const terminActive = document.getElementById('termin-options')?.classList.contains('active');
+    const terminDate = document.getElementById('termin-date')?.value;
+    const terminTime = document.getElementById('termin-time')?.value;
+    const terminLead = parseInt(document.getElementById('termin-lead')?.value) || 15;
+    const terminRepeat = document.getElementById('termin-repeat')?.value || 'none';
 
-    // RUAJ NË FIRESTORE me status 'waiting'
-    if (window.TaxiOrdersBridge) {
-        window.TaxiOrdersBridge.createFromData({
-            phone: phone,
-            name: name || 'Klient',
-            pickup: pickup,
-            destination: dest || 'N/A',
-            zone: zone === 'auto' ? 'zona1' : zone,
-            tariff: tariff || 'standard',
-            remark: remark || '',
-            status: 'waiting'
-        });
+    const isPreorder = terminActive && terminDate && terminTime;
+
+    // Validim për termin
+    if (isPreorder) {
+        const terminDT = new Date(`${terminDate}T${terminTime}`);
+        if (terminDT < new Date()) {
+            showToast('error', 'Gabim', 'Data e terminit është në të kaluarën!');
+            return;
+        }
     }
 
-    showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
+    AppState.currentOperator.stats.callsTaken++;
+    AppState.currentOperator.stats.callsOpened++;
+
+    if (isPreorder) {
+        // ⏰ KRIJO PREORDER
+        const dateStr = terminDate.split('-').reverse().slice(0, 2).join('/');
+
+        if (window.TaxiOrdersBridge) {
+            window.TaxiOrdersBridge.createFromData({
+                phone: phone,
+                name: name || 'Klient',
+                pickup: pickup,
+                destination: dest || 'N/A',
+                zone: zone === 'auto' ? 'zona1' : zone,
+                tariff: tariff || 'standard',
+                remark: remark || '',
+                status: 'preorder',
+                isPreorder: true,
+                terminDate: dateStr,
+                terminTime: terminTime,
+                terminLead: terminLead,
+                terminRepeat: terminRepeat,
+                terminDateTime: new Date(`${terminDate}T${terminTime}`).getTime()
+            });
+        }
+
+        showToast('success', 'Termini u ruajt', `${phone} — ${dateStr} në ${terminTime}`);
+    } else {
+        // 📞 KRIJO POROSI NORMALE
+        AppState.currentOperator.stats.callsWaiting++;
+
+        if (window.TaxiOrdersBridge) {
+            window.TaxiOrdersBridge.createFromData({
+                phone: phone,
+                name: name || 'Klient',
+                pickup: pickup,
+                destination: dest || 'N/A',
+                zone: zone === 'auto' ? 'zona1' : zone,
+                tariff: tariff || 'standard',
+                remark: remark || '',
+                status: 'waiting'
+            });
+        }
+
+        showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
+    }
 
     // Reset formës
     document.getElementById('order-form')?.reset();
     document.getElementById('manual-vehicle-picker').style.display = 'none';
+    document.getElementById('termin-options')?.classList.remove('active');
     const chp = document.getElementById('client-history-panel');
     if (chp) chp.style.display = 'none';
 }
-
-// ═══ STATS ═══
-function updateStats() {
-    const online = AppState.drivers.filter(d => d.mode === 'free').length;
-    const pending = AppState.waitingOrders.length;
-    const trips = AppState.orders.length;
-    const revenue = AppState.orders.reduce((s, o) => s + (o.tariff === 'airport' ? 15 : 4.5), 0);
-    setText('stat-online', online);
-    setText('stat-pending', pending);
-    setText('stat-trips', trips);
-    setText('stat-revenue', `€${revenue.toFixed(0)}`);
-}
-
-function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
-
-// ═══ TOAST ═══
-function showToast(type, title, msg) {
-    const c = document.getElementById('toast-container');
-    if (!c) return;
-    const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${msg}</div></div>`;
-    c.appendChild(t);
-    setTimeout(() => {
-        t.style.opacity = '0'; t.style.transform = 'translateX(400px)';
-        setTimeout(() => t.remove(), 300);
-    }, 3500);
-}
-
-// ═══ SIMULATION ═══
-function startCallSimulation() {
-    setTimeout(() => generateCall(), 5000);
-    setInterval(() => { if (AppState.incomingCalls.length < 3) generateCall(); }, 30000);
-}
-
-function generateCall() {
-    const phones = ['+383 44 111 001', '+383 44 222 002', '+383 49 333 003', '+383 45 444 004'];
-    const names = ['Klient i Ri', 'Ardit Krasniqi', 'Blerim Hoxha', 'Driton Berisha'];
-    const addrs = ['Grand Hotel Prishtina', 'Newborn Monument', 'Rr. UÇK Dardani', 'Albi Mall'];
-    const i = Math.floor(Math.random() * phones.length);
-    const call = {
-        id: Date.now(), phone: phones[i],
-        name: Math.random() > 0.4 ? names[i] : '',
-        lastAddress: Math.random() > 0.5 ? addrs[Math.floor(Math.random() * addrs.length)] : '',
-        time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        ringing: true
-    };
-    AppState.incomingCalls.push(call);
-    renderIncomingCalls();
-    startRing();
-    setTimeout(() => { call.ringing = false; renderIncomingCalls(); }, 5000);
-}
-
-function startOrderSimulation() {
-    setInterval(() => {
-        AppState.vehicleMarkers.forEach((m, id) => {
-            const d = AppState.drivers.find(x => x.id === id);
-            if (!d || d.mode === 'inactive') return;
-            const p = m.getLatLng();
-            const nl = p.lat + (Math.random() - 0.5) * 0.0015;
-            const ng = p.lng + (Math.random() - 0.5) * 0.0015;
-            m.setLatLng([nl, ng]);
-            d.lat = nl; d.lng = ng;
-        });
-    }, 4000);
-
-    setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
-}
-
-// ═══ GLOBAL ═══
-window.acceptCall = acceptCall;
-window.rejectCall = rejectCall;
-window.autoAssignWaiting = autoAssignWaiting;
-window.manualAssignWaiting = manualAssignWaiting;
-window.closestAssignWaiting = closestAssignWaiting;
-window.cancelWaiting = cancelWaiting;
-window.cancelOrder = cancelOrder;
-window.openOrderDetail = openOrderDetail;
-window.activatePre = activatePre;
-window.cancelPre = cancelPre;
-
-console.log('✅ TaxiDispatch Pro Ready');
