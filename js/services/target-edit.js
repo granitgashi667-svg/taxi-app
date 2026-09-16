@@ -292,7 +292,11 @@ window.TaxiTargetEdit = (() => {
         document.getElementById('modal-order-detail')?.classList.remove('active');
     }
 
-    return { open, save, remove };
+    function getCurrentOrderId() {
+        return currentOrder?.firestoreId || null;
+    }
+
+    return { open, save, remove, getCurrentOrderId };
 })();
 
 console.log('✅ target-edit.js ngarkuar');
