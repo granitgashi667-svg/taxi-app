@@ -2,10 +2,6 @@
 
 /**
  * call-center.js — Call Center i plotë
- * - Queue (radha)
- * - On Hold (në pritje)
- * - History (A/R/M)
- * - Shkurtesat F1-F4
  */
 
 window.TaxiCallCenter = (() => {
@@ -15,6 +11,8 @@ window.TaxiCallCenter = (() => {
         history: [],
         activeCall: null
     };
+    const pendingTransfers = new Map();
+    const operatorsBusy = new Set();
 
     const KEYS = {
         F1: 'pickup',
@@ -27,20 +25,48 @@ window.TaxiCallCenter = (() => {
     function init() {
         setupKeyboard();
         loadHistoryFromFirestore();
+        setTimeout(() => listenIncomingTransfers(), 2000);
         console.log('✅ Call Center aktivizuar');
     }
 
+    // ═══ KEYBOARD F1-F4 GLOBAL (BLLOKON CHROME HELP) ═══
     function setupKeyboard() {
+        // KAP TË GJITHA F1-F4 GLOBALISHT (para Chrome)
         document.addEventListener('keydown', (e) => {
-            // Vetëm nëse jemi në faqen "calls"
-            if (window.AppState?.currentPage !== 'calls') return;
-
             const action = KEYS[e.key];
             if (action) {
+                // BLLOKO CHROME NGA HAPJA E HELP
                 e.preventDefault();
-                runAction(action);
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                // Nëse jemi në faqen e thirrjeve → ekzekuto
+                if (window.AppState?.currentPage === 'calls') {
+                    runAction(action);
+                }
+                return false;
             }
-        });
+        }, true); // ← capture phase (para çdo listeneri tjetër)
+
+        // Gjithashtu blloko keyup
+        document.addEventListener('keyup', (e) => {
+            if (KEYS[e.key]) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, true);
+
+        // Dhe keypress
+        document.addEventListener('keypress', (e) => {
+            if (KEYS[e.key]) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, true);
+
+        console.log('⌨️ Shkurtesat F1-F4 të aktivizuara');
     }
 
     function runAction(action) {
@@ -68,7 +94,7 @@ window.TaxiCallCenter = (() => {
         return item;
     }
 
-    // ═══ PRANO THIRRJEN E PARË ═══
+    // ═══ PRANO THIRRJEN E PARË (F1) ═══
     function pickup() {
         if (state.activeCall) {
             showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
@@ -92,7 +118,7 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ MBYLL THIRRJEN ═══
+    // ═══ MBYLL THIRRJEN (F2) ═══
     function hangup() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -115,7 +141,7 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ VENDOS NË PRITJE ═══
+    // ═══ VENDOS NË PRITJE (F3) ═══
     function hold() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -147,28 +173,238 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ TRANSFER ═══
+    // ═══ TRANSFER (F4) ═══
     function openTransfer() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
             return;
         }
-        const target = prompt('Transfero te operatori (emri ose email):');
-        if (!target) return;
-        logEvent('call_transfer', { phone: state.activeCall.phone, to: target });
+        openTransferModal();
+    }
+
+    async function openTransferModal() {
+        const existing = document.getElementById('modal-transfer-call');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'modal-transfer-call';
+
+        let operators = [];
+        try {
+            const db = window.TaxiFirebase?.db;
+            if (db) {
+                const snap = await db.collection('operators').get();
+                operators = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }
+        } catch (e) { console.warn('Operators load:', e); }
+
+        const myUid = window.TaxiAuth?.currentUser()?.uid;
+        operators = operators.filter(o => o.uid !== myUid);
+
+        operators = operators.map(op => {
+            const busy = isOperatorBusy(op.uid);
+            return { ...op, busy };
+        });
+
+        modal.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <i class="fa-solid fa-share"></i>
+                        <h3>Transfero thirrjen</h3>
+                    </div>
+                    <button class="modal-close" onclick="document.getElementById('modal-transfer-call').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="transfer-call-info">
+                        <i class="fa-solid fa-phone"></i>
+                        <div>
+                            <div style="font-weight:700;font-size:13px;">${state.activeCall.phone}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">${state.activeCall.name || 'Klient'}</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section-title" style="margin-top:16px;">
+                        <i class="fa-solid fa-users"></i> Zgjedh operatorin
+                    </div>
+
+                    <div class="operator-list">
+                        ${operators.length === 0 ? `
+                            <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">
+                                <i class="fa-solid fa-user-slash" style="font-size:32px;opacity:0.3;display:block;margin-bottom:12px;"></i>
+                                Nuk ka operatorë të tjerë
+                            </div>
+                        ` : operators.map(op => `
+                            <div class="operator-item ${op.busy ? 'busy' : 'free'}" onclick="TaxiCallCenter.transferToOperator('${op.uid}', '${(op.name || op.email || 'Operator').replace(/'/g, "\\'")}')">
+                                <div class="op-avatar">${(op.name || op.email || 'OP').slice(0, 2).toUpperCase()}</div>
+                                <div class="op-info">
+                                    <div class="op-name">${op.name || op.email}</div>
+                                    <div class="op-role">${op.role || 'Dispatcher'}</div>
+                                </div>
+                                <div class="op-status ${op.busy ? 'busy' : 'free'}">
+                                    ${op.busy
+                                        ? '<i class="fa-solid fa-circle"></i> I ZËNË'
+                                        : '<i class="fa-solid fa-circle"></i> I LIRË'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-ghost" onclick="document.getElementById('modal-transfer-call').remove()">Anulo</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    }
+
+    function isOperatorBusy(uid) {
+        if (!uid) return false;
+        for (const [targetUid, calls] of pendingTransfers.entries()) {
+            if (targetUid === uid && calls.length > 0) return true;
+        }
+        if (operatorsBusy.has(uid)) return true;
+        return false;
+    }
+
+    function transferToOperator(targetUid, targetName) {
+        if (!state.activeCall) return;
+
+        const call = state.activeCall;
+
         state.history.unshift({
-            id: state.activeCall.id,
-            phone: state.activeCall.phone,
-            name: state.activeCall.name,
+            id: call.id,
+            phone: call.phone,
+            name: call.name,
             status: 'T',
-            statusLabel: 'Transferuar',
-            time: state.activeCall.time,
-            duration: Math.floor((Date.now() - state.activeCall.startTime) / 1000),
+            statusLabel: `Transferuar → ${targetName}`,
+            time: call.time,
+            duration: Math.floor((Date.now() - call.startTime) / 1000),
             timestamp: Date.now()
         });
+
+        saveTransferToFirestore(call, targetUid, targetName);
+
         state.activeCall = null;
-        showToast('success', '🔄 U transferua', `Tek ${target}`);
+
+        document.getElementById('modal-transfer-call')?.remove();
+
+        showToast('success', '🔄 U transferua', `Tek ${targetName}`);
+        logEvent('call_transfer', { phone: call.phone, to: targetName, targetUid });
         render();
+    }
+
+    async function saveTransferToFirestore(call, targetUid, targetName) {
+        const db = window.TaxiFirebase?.db;
+        if (!db) return;
+        try {
+            await db.collection('transfers').add({
+                callId: call.id,
+                phone: call.phone,
+                name: call.name,
+                targetUid,
+                targetName,
+                fromUid: window.TaxiAuth?.currentUser()?.uid || null,
+                fromName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
+                createdAt: Date.now(),
+                status: 'pending'
+            });
+        } catch (e) { console.warn('Transfer save:', e); }
+    }
+
+    function listenIncomingTransfers() {
+        const db = window.TaxiFirebase?.db;
+        if (!db) return;
+        const myUid = window.TaxiAuth?.currentUser()?.uid;
+        if (!myUid) return;
+
+        db.collection('transfers')
+            .where('targetUid', '==', myUid)
+            .where('status', '==', 'pending')
+            .onSnapshot((snap) => {
+                snap.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const t = { id: change.doc.id, ...change.doc.data() };
+                        showTransferNotification(t);
+                    }
+                });
+            });
+    }
+
+    function showTransferNotification(transfer) {
+        if (window.TaxiSound) window.TaxiSound.playNotification();
+
+        const c = document.getElementById('toast-container');
+        if (!c) return;
+
+        const t = document.createElement('div');
+        t.className = 'toast warning';
+        t.style.minWidth = '320px';
+        t.innerHTML = `
+            <i class="fa-solid fa-share"></i>
+            <div class="toast-content" style="flex:1;">
+                <div class="toast-title">🔄 Transferim i re</div>
+                <div class="toast-message">${transfer.fromName} → ${transfer.phone}</div>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                    <button class="btn-primary" style="padding:5px 12px;font-size:11px;" onclick="TaxiCallCenter.acceptTransfer('${transfer.id}', '${transfer.phone}', '${(transfer.name || '').replace(/'/g, "\\'")}')">
+                        <i class="fa-solid fa-check"></i> Prano
+                    </button>
+                    <button class="btn-ghost" style="padding:5px 12px;font-size:11px;" onclick="TaxiCallCenter.rejectTransfer('${transfer.id}')">
+                        Refuzo
+                    </button>
+                </div>
+            </div>
+        `;
+        c.appendChild(t);
+    }
+
+    async function acceptTransfer(transferId, phone, name) {
+        const db = window.TaxiFirebase?.db;
+        if (db) {
+            try {
+                await db.collection('transfers').doc(transferId).update({
+                    status: 'accepted',
+                    acceptedAt: Date.now()
+                });
+            } catch (e) { console.warn(e); }
+        }
+
+        if (!state.activeCall) {
+            state.activeCall = {
+                id: Date.now(),
+                phone: phone,
+                name: name || 'Transferuar',
+                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                startTime: Date.now()
+            };
+            showToast('success', '📞 Thirrje e re', phone);
+            render();
+        } else {
+            state.queue.unshift({
+                id: Date.now(),
+                phone: phone,
+                name: name + ' (transferuar)',
+                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                waitStart: Date.now()
+            });
+            showToast('info', '⏸️ Në radhë', 'Thirrja u vu në radhë');
+            render();
+        }
+    }
+
+    async function rejectTransfer(transferId) {
+        const db = window.TaxiFirebase?.db;
+        if (db) {
+            try {
+                await db.collection('transfers').doc(transferId).update({
+                    status: 'rejected',
+                    rejectedAt: Date.now()
+                });
+            } catch (e) {}
+        }
+        showToast('info', 'Refuzuar', 'Transferimi u refuzua');
     }
 
     // ═══ REFUZO THIRRJEN ═══
@@ -190,7 +426,6 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ MBIJ / HUMB ═══
     function missCall(call) {
         state.history.unshift({
             id: call.id || Date.now(),
@@ -231,7 +466,6 @@ window.TaxiCallCenter = (() => {
         } catch (e) { console.warn('History load:', e); }
     }
 
-    // ═══ LOG NË FIRESTORE ═══
     async function logEvent(type, data) {
         if (!window.TaxiFirebase?.db) return;
         try {
@@ -245,7 +479,6 @@ window.TaxiCallCenter = (() => {
         } catch (e) { /* silent */ }
     }
 
-    // ═══ FORMAT KOHË ═══
     function formatDuration(sec) {
         const m = Math.floor(sec / 60);
         const s = sec % 60;
@@ -330,7 +563,6 @@ window.TaxiCallCenter = (() => {
             ` : ''}
 
             <div class="call-center-grid">
-                <!-- QUEUE -->
                 <div class="cc-panel">
                     <div class="cc-panel-header">
                         <div class="cc-panel-title">
@@ -367,7 +599,6 @@ window.TaxiCallCenter = (() => {
                     </div>
                 </div>
 
-                <!-- ON HOLD -->
                 <div class="cc-panel">
                     <div class="cc-panel-header">
                         <div class="cc-panel-title">
@@ -400,7 +631,6 @@ window.TaxiCallCenter = (() => {
                     </div>
                 </div>
 
-                <!-- HISTORY -->
                 <div class="cc-panel">
                     <div class="cc-panel-header">
                         <div class="cc-panel-title">
@@ -430,7 +660,6 @@ window.TaxiCallCenter = (() => {
         startTimers();
     }
 
-    // ═══ PËRDITËSO TIMER-AT ═══
     let timerInterval = null;
     function startTimers() {
         if (timerInterval) clearInterval(timerInterval);
@@ -446,17 +675,19 @@ window.TaxiCallCenter = (() => {
         }, 1000);
     }
 
-    // Prano thirrje specifike
     function pickupSpecific(id) {
         const idx = state.queue.findIndex(c => c.id === id);
         if (idx < 0) return;
+        if (state.activeCall) {
+            showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
+            return;
+        }
         const call = state.queue.splice(idx, 1)[0];
         state.activeCall = { ...call, startTime: Date.now() };
         showToast('success', '📞 U pranua', call.phone);
         render();
     }
 
-    // Fshij nga pritja (pa u kthyer)
     function dropHold(id) {
         const idx = state.onHold.findIndex(h => h.id === id);
         if (idx < 0) return;
@@ -475,7 +706,9 @@ window.TaxiCallCenter = (() => {
         pickup, pickupSpecific,
         hangup, hold, unhold, dropHold,
         openTransfer, reject,
-        state
+        transferToOperator, acceptTransfer, rejectTransfer,
+        state,
+        operatorsBusy
     };
 })();
 
