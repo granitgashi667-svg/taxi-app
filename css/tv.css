@@ -1,0 +1,186 @@
+/* ═══ TV DISPLAY MODE ═══ */
+
+body.tv-mode {
+    overflow: hidden;
+    font-size: 16px;
+}
+
+.tv-layout {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-primary);
+}
+
+/* HEADER */
+.tv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.tv-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+.tv-brand i {
+    color: var(--accent-purple);
+    font-size: 24px;
+}
+.tv-live-badge {
+    font-size: 12px;
+    color: var(--accent-red);
+    font-weight: 800;
+    padding: 4px 10px;
+    background: rgba(244, 63, 94, 0.15);
+    border-radius: 999px;
+    animation: livePulse 2s infinite;
+}
+@keyframes livePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.tv-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.tv-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+}
+.tv-stat i { font-size: 18px; }
+.tv-stat span {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.tv-stat small {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-sans);
+    font-weight: 700;
+}
+
+.tv-clock {
+    text-align: right;
+    font-family: var(--font-mono);
+}
+.tv-clock-time {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent-purple);
+    line-height: 1;
+}
+.tv-clock-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: capitalize;
+    margin-top: 4px;
+}
+
+/* MAIN */
+.tv-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    overflow: hidden;
+}
+
+.tv-map-wrap {
+    position: relative;
+    background: #0d0618;
+}
+#tv-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* CONTROL PANEL */
+.tv-control {
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TV MARKER */
+.tv-marker {
+    background: transparent;
+    border: none;
+}
+.tv-marker-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 800;
+    color: white;
+    border: 3px solid white;
+    box-shadow: 0 0 20px currentColor;
+    transition: transform 0.3s;
+}
+.tv-marker-inner.free {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #22c55e;
+}
+.tv-marker-inner.taximeter {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #3b82f6;
+}
+.tv-marker-inner.fixed {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ef4444;
+}
+.tv-marker-inner.pause {
+    background: linear-gradient(135deg, #facc15, #eab308);
+    color: #facc15;
+}
+.tv-marker-inner.inactive {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: #6b7280;
+    opacity: 0.6;
+}
+
+.tv-marker-inner:hover {
+    transform: scale(1.15);
+}
+
+/* KONTROLL PANEL — NË TV */
+.tv-control .tv-panel-header {
+    padding: 16px 20px;
+}
+.tv-control .tv-panel-header h3 { font-size: 14px; }
+.tv-control .tv-section-title { font-size: 11px; }
+.tv-control .tv-check { font-size: 13px; }
+.tv-control .input-field { font-size: 13px; padding: 10px 12px; }
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .tv-main { grid-template-columns: 1fr 260px; }
+    .tv-stat span { font-size: 18px; }
+}
+@media (max-width: 900px) {
+    .tv-main { grid-template-columns: 1fr; }
+    .tv-control { display: none; }
+    .tv-stats { display: none; }
+}
