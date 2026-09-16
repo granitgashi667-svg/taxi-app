@@ -32,9 +32,11 @@ window.TaxiCallCenter = (() => {
 
     // ═══ KEYBOARD F1-F4 GLOBAL ═══
     function setupKeyboard() {
-        document.addEventListener('keydown', (e) => {
+        const handler = (e) => {
             const action = KEYS[e.key];
             if (!action) return;
+
+            console.log('⌨️ Tast u shtyp:', e.key, '| Page:', window.AppState?.currentPage);
 
             // BLLOKO CHROME HELP
             e.preventDefault();
@@ -43,41 +45,40 @@ window.TaxiCallCenter = (() => {
 
             const page = window.AppState?.currentPage;
 
+            // FAQJA DISPATCH
+            if (page === 'dispatch') {
+                if (action === 'pickup')   { console.log('→ F1: Prano thirrjen'); acceptIncomingCallFromDispatch(); }
+                if (action === 'hangup')   { console.log('→ F2: Refuzo'); rejectIncomingCallFromDispatch(); }
+                if (action === 'hold')     { console.log('→ F3: Pritje'); holdIncomingCallFromDispatch(); }
+                if (action === 'transfer') { console.log('→ F4: Transfer'); transferIncomingCallFromDispatch(); }
+                return false;
+            }
+
             // FAQJA CALL CENTER
             if (page === 'calls') {
                 runAction(action);
                 return false;
             }
 
-            // FAQJA DISPATCH
-            if (page === 'dispatch') {
-                if (action === 'pickup')   acceptIncomingCallFromDispatch();
-                if (action === 'hangup')   rejectIncomingCallFromDispatch();
-                if (action === 'hold')     holdIncomingCallFromDispatch();
-                if (action === 'transfer') transferIncomingCallFromDispatch();
-                return false;
-            }
-
             return false;
-        }, true);
+        };
 
-        document.addEventListener('keyup', (e) => {
+        // KAP ME CAPTURE — window dhe document
+        window.addEventListener('keydown', handler, true);
+        document.addEventListener('keydown', handler, true);
+
+        // Blloko keyup
+        const keyupHandler = (e) => {
             if (KEYS[e.key]) {
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
             }
-        }, true);
+        };
+        window.addEventListener('keyup', keyupHandler, true);
+        document.addEventListener('keyup', keyupHandler, true);
 
-        document.addEventListener('keypress', (e) => {
-            if (KEYS[e.key]) {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-            }
-        }, true);
-
-        console.log('⌨️ Shkurtesat F1-F4 të aktivizuara');
+        console.log('⌨️ Shkurtesat F1-F4 të aktivizuara GLOBALISHT');
     }
 
     function runAction(action) {
