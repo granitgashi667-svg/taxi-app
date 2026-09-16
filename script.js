@@ -221,6 +221,23 @@ function initEventListeners() {
     document.getElementById('btn-close-termin')?.addEventListener('click', () => {
         document.getElementById('termin-options')?.classList.remove('active');
     });
+
+    // Butoni ANULO POROSINË (në modal)
+    setTimeout(() => {
+        const btnCancelOrder = document.getElementById('btn-cancel-order');
+        if (btnCancelOrder) {
+            btnCancelOrder.addEventListener('click', async () => {
+                const firestoreId = window.TaxiTargetEdit?.getCurrentOrderId?.();
+                if (!firestoreId) { showToast('error', 'Gabim', 'Nuk ka porosi aktive'); return; }
+                if (!confirm('A jeni i sigurt që dëshironi të ANULONI porosinë?')) return;
+
+                if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
+                if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
+                document.getElementById('modal-order-detail')?.classList.remove('active');
+                showToast('info', 'Anuluar', 'Porosia u anulua me sukses');
+            });
+        }
+    }, 500);
 }
 
 // ═══ NAV RAIL ═══
@@ -231,50 +248,22 @@ function setupNavRail() {
             e.preventDefault();
             railItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-
             const nav = item.dataset.nav;
             switch (nav) {
-                case 'dispatch':
-                    showToast('info', 'Dispatch', 'Pamja kryesore');
-                    break;
-                case 'calls':
-                    document.getElementById('panel-calls')?.scrollIntoView({ behavior: 'smooth' });
-                    showToast('info', 'Thirrjet', `${AppState.incomingCalls.length} thirrje`);
-                    break;
-                case 'orders':
-                    document.getElementById('panel-orders')?.scrollIntoView({ behavior: 'smooth' });
-                    showToast('info', 'Porositë', `${AppState.orders.length} aktive · ${AppState.waitingOrders.length} në pritje`);
-                    break;
-                case 'drivers':
-                    showToast('info', 'Shoferët', `${AppState.drivers.length} shoferë`);
-                    break;
-                case 'vehicles':
-                    showToast('info', 'Veturat', `${AppState.vehicles.length} vetura`);
-                    break;
-                case 'map':
-                    document.getElementById('panel-map')?.scrollIntoView({ behavior: 'smooth' });
-                    setTimeout(() => AppState.map?.invalidateSize(), 300);
-                    showToast('info', 'Harta', 'Pamja e hartës');
-                    break;
-                case 'zones':
-                    showToast('info', 'Zonat', `${AppState.zones.length} zona`);
-                    break;
-                case 'clients':
-                    showToast('info', 'Klientët', 'Lista e klientëve');
-                    break;
-                case 'reports':
-                    showToast('info', 'Raporte', 'Raportet e plota');
-                    break;
-                case 'finance':
-                    showToast('info', 'Financa', 'Të ardhurat dhe shpenzimet');
-                    break;
-                case 'settings':
-                    showToast('info', 'Cilësimet', 'Konfigurimi');
-                    break;
+                case 'dispatch': showToast('info', 'Dispatch', 'Pamja kryesore'); break;
+                case 'calls': document.getElementById('panel-calls')?.scrollIntoView({ behavior: 'smooth' }); showToast('info', 'Thirrjet', `${AppState.incomingCalls.length} thirrje`); break;
+                case 'orders': document.getElementById('panel-orders')?.scrollIntoView({ behavior: 'smooth' }); showToast('info', 'Porositë', `${AppState.orders.length} aktive`); break;
+                case 'drivers': showToast('info', 'Shoferët', `${AppState.drivers.length} shoferë`); break;
+                case 'vehicles': showToast('info', 'Veturat', `${AppState.vehicles.length} vetura`); break;
+                case 'map': document.getElementById('panel-map')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => AppState.map?.invalidateSize(), 300); break;
+                case 'zones': showToast('info', 'Zonat', `${AppState.zones.length} zona`); break;
+                case 'clients': showToast('info', 'Klientët', 'Lista e klientëve'); break;
+                case 'reports': showToast('info', 'Raporte', 'Raportet e plota'); break;
+                case 'finance': showToast('info', 'Financa', 'Të ardhurat'); break;
+                case 'settings': showToast('info', 'Cilësimet', 'Konfigurimi'); break;
             }
         });
     });
-    console.log('✅ Nav-rail aktivizuar:', railItems.length, 'butona');
 }
 
 // ═══ TARGET EDIT BUTTONS ═══
@@ -282,16 +271,8 @@ function setupTargetEditButtons() {
     setTimeout(() => {
         const btnSave = document.getElementById('btn-save-order');
         const btnDelete = document.getElementById('btn-delete-order');
-        if (btnSave) {
-            btnSave.addEventListener('click', () => {
-                if (window.TaxiTargetEdit) window.TaxiTargetEdit.save();
-            });
-        }
-        if (btnDelete) {
-            btnDelete.addEventListener('click', () => {
-                if (window.TaxiTargetEdit) window.TaxiTargetEdit.remove();
-            });
-        }
+        if (btnSave) btnSave.addEventListener('click', () => window.TaxiTargetEdit?.save());
+        if (btnDelete) btnDelete.addEventListener('click', () => window.TaxiTargetEdit?.remove());
     }, 500);
 }
 
@@ -382,10 +363,7 @@ function rejectCall(callId) {
 // ═══ SOUND ═══
 let ringInterval = null;
 function playRing() {
-    if (window.TaxiSound) {
-        window.TaxiSound.playRing();
-        return;
-    }
+    if (window.TaxiSound) { window.TaxiSound.playRing(); return; }
 }
 function startRing() {
     if (ringInterval) return;
@@ -420,7 +398,6 @@ function renderWaitingOrders() {
                 <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
                 <button class="action-btn manual" onclick="manualAssignWaiting('${o.firestoreId}')">MANUAL</button>
                 <button class="action-btn closest" onclick="closestAssignWaiting('${o.firestoreId}')">AFËRTI</button>
-                <button class="action-btn cancel" onclick="cancelWaiting('${o.firestoreId}')">X</button>
             </div></td>
         </tr>`;
     }).join('');
@@ -429,11 +406,8 @@ function renderWaitingOrders() {
 async function autoAssignWaiting(firestoreId) {
     if (window.TaxiDispatch) {
         const result = await window.TaxiDispatch.assignOrder(firestoreId, 'auto');
-        if (result) {
-            showToast('success', 'Auto-caktuar', `🚗 ${result.vehicle} — ${result.driver.name}`);
-        } else {
-            showToast('warning', 'Nuk ka taksi', 'Të gjitha të zëna');
-        }
+        if (result) showToast('success', 'Auto-caktuar', `🚗 ${result.vehicle} — ${result.driver.name}`);
+        else showToast('warning', 'Nuk ka taksi', 'Të gjitha të zëna');
     }
 }
 
@@ -462,7 +436,6 @@ async function confirmManualAssign() {
     if (!num) { showToast('error', 'Gabim', 'Zgjedh një veturë'); return; }
     const firestoreId = AppState.manualAssignOrderId;
     if (!firestoreId) return;
-
     if (window.TaxiDispatch) {
         const result = await window.TaxiDispatch.assignOrder(firestoreId, 'manual', null, null, num);
         if (result) {
@@ -478,23 +451,11 @@ async function closestAssignWaiting(firestoreId) {
     const target = AppState.addresses.find(a => a.name === o.pickup);
     const lat = target ? target.lat : 42.6629;
     const lng = target ? target.lng : 21.1655;
-
     if (window.TaxiDispatch) {
         const result = await window.TaxiDispatch.assignOrder(firestoreId, 'closest', lat, lng);
-        if (result) {
-            showToast('success', 'Më i afërti', `🚗 ${result.vehicle} — ${result.driver.name}`);
-        } else {
-            showToast('warning', 'Nuk ka taksi', 'Asnjë e lirë në afërsi');
-        }
+        if (result) showToast('success', 'Më i afërti', `🚗 ${result.vehicle} — ${result.driver.name}`);
+        else showToast('warning', 'Nuk ka taksi', 'Asnjë e lirë në afërsi');
     }
-}
-
-async function cancelWaiting(firestoreId) {
-    if (window.TaxiOrdersBridge) {
-        await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
-    }
-    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
-    showToast('info', 'Anuluar', `Porosia u anulua`);
 }
 
 // ═══ ORDERS ═══
@@ -518,7 +479,7 @@ function renderOrders() {
 
         const showFinish = o.status === 'taximeter' || o.status === 'fixed' || o.status === 'onroute' || o.status === 'arrived';
         const finishBtn = showFinish
-            ? `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')" title="Përfundo"><i class="fa-solid fa-check"></i> PËRFUNDO</button>`
+            ? `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')"><i class="fa-solid fa-check"></i> PËRFUNDO</button>`
             : '';
 
         return `<tr onclick="openOrderDetail('${o.firestoreId}')" class="${rowClass}" style="cursor:pointer;">
@@ -531,10 +492,7 @@ function renderOrders() {
             <td>${o.driverName || '<span style="color:var(--text-muted)">—</span>'}</td>
             <td class="remark-cell ${o.remark ? '' : 'empty'}">${o.remark || '—'}</td>
             <td class="actions-cell" onclick="event.stopPropagation()">
-                <div class="row-actions">
-                    ${finishBtn}
-                    <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')" title="Anulo"><i class="fa-solid fa-xmark"></i></button>
-                </div>
+                <div class="row-actions">${finishBtn}</div>
             </td>
         </tr>`;
     }).join('');
@@ -556,12 +514,8 @@ async function finishOrder(firestoreId) {
             completedAt: new Date().getTime()
         });
     }
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:revenue', price);
 
-    if (window.TaxiEvents) {
-        window.TaxiEvents.emit('operator:revenue', price);
-    }
-
-    // Liruar shoferin
     if (o && o.driverId) {
         const driver = AppState.drivers.find(d => d.id === o.driverId);
         if (driver) {
@@ -570,7 +524,6 @@ async function finishOrder(firestoreId) {
             updateVehicleMarker(driver.id);
         }
     }
-
     showToast('success', 'U përfundua', `€${price.toFixed(2)}`);
 }
 
@@ -579,16 +532,7 @@ function openOrderDetail(firestoreId) {
            || AppState.waitingOrders.find(x => x.firestoreId === firestoreId)
            || AppState.preOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
-
-    if (window.TaxiTargetEdit) {
-        window.TaxiTargetEdit.open(o);
-    }
-}
-
-async function cancelOrder(firestoreId) {
-    if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
-    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
-    showToast('info', 'Anuluar', `Porosia u anulua`);
+    if (window.TaxiTargetEdit) window.TaxiTargetEdit.open(o);
 }
 
 function filterOrders(q) {
@@ -609,7 +553,7 @@ function filterOrders(q) {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '—'}</td>
             <td class="remark-cell">${o.remark || '—'}</td>
-            <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button></div></td>
+            <td></td>
         </tr>
     `).join('');
 }
@@ -630,7 +574,6 @@ function renderPreOrders() {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="activatePre('${o.firestoreId}')">AKTIVIZO</button>
-                <button class="action-btn cancel" onclick="cancelPre('${o.firestoreId}')">X</button>
             </div></td>
         </tr>
     `).join('');
@@ -641,12 +584,6 @@ async function activatePre(firestoreId) {
         await window.TaxiOrdersBridge.assignOrder(firestoreId, { status: 'waiting' });
     }
     showToast('info', 'Aktivizuar', `Pre-order u aktivizua`);
-}
-
-async function cancelPre(firestoreId) {
-    if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
-    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
-    showToast('info', 'Anuluar', `Pre-order u anulua`);
 }
 
 // ═══ NEW ORDER ═══
@@ -708,17 +645,11 @@ function submitOrder() {
 
 // ═══ STATS ═══
 function updateStats() {
-    // Online = të gjithë që nuk janë inactive
     const online = AppState.drivers.filter(d => d.mode !== 'inactive').length;
     const pending = AppState.waitingOrders.length;
-
-    // Udhëtime = totali i porosive
     const allOrders = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders];
     const trips = allOrders.length;
-
-    // Të ardhura
     const revenue = allOrders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
-
     setText('stat-online', online);
     setText('stat-pending', pending);
     setText('stat-trips', trips);
@@ -737,7 +668,6 @@ function showToast(type, title, msg) {
     t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${msg}</div></div>`;
     c.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(400px)'; setTimeout(() => t.remove(), 300); }, 3500);
-
     if (window.TaxiSound) {
         if (type === 'success') window.TaxiSound.playSuccess();
         else if (type === 'error') window.TaxiSound.playError();
@@ -790,11 +720,9 @@ window.rejectCall = rejectCall;
 window.autoAssignWaiting = autoAssignWaiting;
 window.manualAssignWaiting = manualAssignWaiting;
 window.closestAssignWaiting = closestAssignWaiting;
-window.cancelWaiting = cancelWaiting;
 window.cancelOrder = cancelOrder;
 window.openOrderDetail = openOrderDetail;
 window.activatePre = activatePre;
-window.cancelPre = cancelPre;
 window.finishOrder = finishOrder;
 
 console.log('✅ TaxiDispatch Pro Ready');
