@@ -11,6 +11,9 @@ window.ClientLoyalty = (() => {
         const db = window.TaxiFirebase?.db;
         if (!db) return;
 
+        const el = document.getElementById('client-loyalty-page');
+        if (el) el.innerHTML = '<div style="text-align:center;padding:60px;color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;"></i></div>';
+
         try {
             const phone = user.phoneNumber || '';
             let snap = await db.collection('loyalty_cards').where('phone', '==', phone).limit(1).get();
@@ -21,18 +24,15 @@ window.ClientLoyalty = (() => {
 
             myCard = snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
             render();
-        } catch (e) { console.error('❌ load loyalty:', e); }
+        } catch (e) {
+            console.error('❌ load loyalty:', e);
+            render();
+        }
     }
 
     function render() {
-        let el = document.getElementById('client-loyalty-page');
-        if (!el) {
-            el = document.createElement('div');
-            el.id = 'client-loyalty-page';
-            el.className = 'client-page';
-            el.dataset.page = 'loyalty';
-            document.getElementById('screen-main')?.appendChild(el);
-        }
+        const el = document.getElementById('client-loyalty-page');
+        if (!el) return;
 
         if (!myCard) {
             el.innerHTML = `
@@ -161,10 +161,10 @@ window.ClientLoyalty = (() => {
     }
 
     const LEVELS = {
-        bronze:   { label: 'Bronze',   icon: '🥉', min: 0,    color1: '#cd7f32', color2: '#8b5a2b' },
-        silver:   { label: 'Silver',   icon: '🥈', min: 100,  color1: '#94a3b8', color2: '#64748b' },
-        gold:     { label: 'Gold',     icon: '🥇', min: 500,  color1: '#f59e0b', color2: '#d97706' },
-        platinum: { label: 'Platinum', icon: '💎', min: 1000, color1: '#a855f7', color2: '#7c3aed' }
+        bronze:   { label: 'Bronze',   icon: '🥉', color1: '#cd7f32', color2: '#8b5a2b' },
+        silver:   { label: 'Silver',   icon: '🥈', color1: '#94a3b8', color2: '#64748b' },
+        gold:     { label: 'Gold',     icon: '🥇', color1: '#f59e0b', color2: '#d97706' },
+        platinum: { label: 'Platinum', icon: '💎', color1: '#a855f7', color2: '#7c3aed' }
     };
 
     function getLevel(points) {
