@@ -49,7 +49,7 @@
             </div>
 
             <div class="login-footer">
-                <p>Version 2.0 · TaxiDispatch Pro</p>
+                <p>Version 3.0 · TaxiDispatch Pro</p>
             </div>
         </div>
     </div>
@@ -63,6 +63,7 @@
             </div>
 
             <nav class="sidebar-nav">
+                <!-- KRYESORE -->
                 <a href="#" class="sidebar-item active" data-page="dashboard" onclick="AdminApp.switchPage('dashboard'); return false;">
                     <i class="fa-solid fa-gauge-high"></i>
                     <span>Dashboard</span>
@@ -83,9 +84,69 @@
                     <i class="fa-solid fa-clipboard-list"></i>
                     <span>Porositë</span>
                 </a>
+
+                <!-- KATEGORIA: TARGETS & LOYALTY -->
+                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Marketing</div>
+                <a href="#" class="sidebar-item" data-page="targets" onclick="AdminApp.switchPage('targets'); return false;">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Targets</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="loyalty" onclick="AdminApp.switchPage('loyalty'); return false;">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>Loyalty Cards</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="mobile-users" onclick="AdminApp.switchPage('mobile-users'); return false;">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Mobile Users</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="sms-templates" onclick="AdminApp.switchPage('sms-templates'); return false;">
+                    <i class="fa-solid fa-comment-sms"></i>
+                    <span>SMS Templates</span>
+                </a>
+
+                <!-- KATEGORIA: OPERACIONET -->
+                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Operacione</div>
+                <a href="#" class="sidebar-item" data-page="auto-dispatch" onclick="AdminApp.switchPage('auto-dispatch'); return false;">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>Auto-Dispatch</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="fixed-routes" onclick="AdminApp.switchPage('fixed-routes'); return false;">
+                    <i class="fa-solid fa-route"></i>
+                    <span>Fixed Routes</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="streets" onclick="AdminApp.switchPage('streets'); return false;">
+                    <i class="fa-solid fa-road"></i>
+                    <span>Streets & Stands</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="trackers" onclick="AdminApp.switchPage('trackers'); return false;">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Trackers</span>
+                </a>
+
+                <!-- KATEGORIA: FINANCA -->
+                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Financa</div>
+                <a href="#" class="sidebar-item" data-page="fuel" onclick="AdminApp.switchPage('fuel'); return false;">
+                    <i class="fa-solid fa-gas-pump"></i>
+                    <span>Fuel / Refill</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="salaries" onclick="AdminApp.switchPage('salaries'); return false;">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span>Salaries</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="reports" onclick="AdminApp.switchPage('reports'); return false;">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Raporte</span>
+                </a>
+
+                <!-- KATEGORIA: SISTEMI -->
+                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Sistemi</div>
+                <a href="#" class="sidebar-item" data-page="integrations" onclick="AdminApp.switchPage('integrations'); return false;">
+                    <i class="fa-solid fa-plug"></i>
+                    <span>Integrations</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="import" onclick="AdminApp.switchPage('import'); return false;">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Import</span>
                 </a>
                 <a href="#" class="sidebar-item" data-page="vacations" onclick="AdminApp.switchPage('vacations'); return false;">
                     <i class="fa-solid fa-umbrella-beach"></i>
@@ -242,6 +303,20 @@
                 </div>
             </div>
 
+            <!-- PAGE CONTAINERS TË REJA -->
+            <div class="admin-page" data-page="targets"></div>
+            <div class="admin-page" data-page="loyalty"></div>
+            <div class="admin-page" data-page="fuel"></div>
+            <div class="admin-page" data-page="salaries"></div>
+            <div class="admin-page" data-page="auto-dispatch"></div>
+            <div class="admin-page" data-page="sms-templates"></div>
+            <div class="admin-page" data-page="fixed-routes"></div>
+            <div class="admin-page" data-page="import"></div>
+            <div class="admin-page" data-page="integrations"></div>
+            <div class="admin-page" data-page="trackers"></div>
+            <div class="admin-page" data-page="streets"></div>
+            <div class="admin-page" data-page="mobile-users"></div>
+
             <div class="admin-page" data-page="vacations">
                 <div id="vacations-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
@@ -324,7 +399,7 @@
     <script src="js/services/print.js"></script>
     <script src="js/services/api-keys.js"></script>
 
-    <!-- ADMIN APP -->
+    <!-- ADMIN CORE -->
     <script src="js/admin/login.js"></script>
     <script src="js/admin/app.js"></script>
     <script src="js/admin/dashboard.js"></script>
@@ -336,6 +411,20 @@
     <script src="js/admin/vacations.js"></script>
     <script src="js/admin/blacklist.js"></script>
     <script src="js/admin/administration.js"></script>
+
+    <!-- ADMIN MODULES TË REJA -->
+    <script src="js/admin/targets.js"></script>
+    <script src="js/admin/loyalty.js"></script>
+    <script src="js/admin/fuel.js"></script>
+    <script src="js/admin/salaries.js"></script>
+    <script src="js/admin/auto-dispatch.js"></script>
+    <script src="js/admin/sms-templates.js"></script>
+    <script src="js/admin/fixed-routes.js"></script>
+    <script src="js/admin/import.js"></script>
+    <script src="js/admin/integrations.js"></script>
+    <script src="js/admin/trackers.js"></script>
+    <script src="js/admin/streets.js"></script>
+    <script src="js/admin/mobile-users.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -354,7 +443,22 @@
             if (window.TaxiEmergency) TaxiEmergency.init();
             if (window.TaxiHealth) TaxiHealth.start();
             if (window.TaxiApiKeys) TaxiApiKeys.init();
-            console.log('👔 Admin Panel gati');
+
+            // ═══ INIT MODULES TË REJA ═══
+            if (window.AdminTargets) AdminTargets.init();
+            if (window.AdminLoyalty) AdminLoyalty.init();
+            if (window.AdminFuel) AdminFuel.init();
+            if (window.AdminSalaries) AdminSalaries.init();
+            if (window.AdminAutoDispatch) AdminAutoDispatch.init();
+            if (window.AdminSmsTemplates) AdminSmsTemplates.init();
+            if (window.AdminFixedRoutes) AdminFixedRoutes.init();
+            if (window.AdminImport) AdminImport.init();
+            if (window.AdminIntegrations) AdminIntegrations.init();
+            if (window.AdminTrackers) AdminTrackers.init();
+            if (window.AdminStreets) AdminStreets.init();
+            if (window.AdminMobileUsers) AdminMobileUsers.init();
+
+            console.log('👔 Admin Panel v3.0 gati');
         });
     </script>
 </body>
