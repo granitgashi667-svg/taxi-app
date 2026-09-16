@@ -31,6 +31,14 @@ function loadData() {
     AppState.vehicles = window.TaxiData.vehicles || [];
     AppState.config = window.TaxiData.config || {};
 
+    // Sync me TaxiState
+    if (window.TaxiState) {
+        window.TaxiState.set('drivers', AppState.drivers);
+        window.TaxiState.set('vehicles', AppState.vehicles);
+        window.TaxiState.set('zones', AppState.zones);
+        window.TaxiState.set('addresses', AppState.addresses);
+    }
+
     const manualSelect = document.getElementById('manual-vehicle-select');
     if (manualSelect) {
         AppState.vehicles.forEach(v => {
@@ -66,6 +74,9 @@ function initMap() {
     renderZonesOnMap();
     renderVehiclesOnMap();
     renderAddressMarkers();
+
+    // Ruaj në TaxiState
+    if (window.TaxiState) window.TaxiState.set('map', AppState.map);
 }
 
 function renderZonesOnMap() {
@@ -158,6 +169,7 @@ function initEventListeners() {
 
     document.getElementById('btn-sound-toggle')?.addEventListener('click', (e) => {
         AppState.soundEnabled = !AppState.soundEnabled;
+        if (window.TaxiSound) window.TaxiSound.toggle();
         const btn = e.currentTarget;
         btn.classList.toggle('sound-on', AppState.soundEnabled);
         btn.classList.toggle('sound-off', !AppState.soundEnabled);
@@ -287,6 +299,8 @@ function acceptCall(callId) {
     AppState.incomingCalls = AppState.incomingCalls.filter(c => c.id !== callId);
     renderIncomingCalls();
     stopRing();
+    // Emit event për operatorin
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:call_taken');
 }
 
 function rejectCall(callId) {
@@ -298,6 +312,10 @@ function rejectCall(callId) {
 // ═══ SOUND ═══
 let ringInterval = null;
 function playRing() {
+    if (window.TaxiSound) {
+        window.TaxiSound.playRing();
+        return;
+    }
     if (!AppState.soundEnabled) return;
     try {
         if (!AppState.audioContext) AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -316,7 +334,11 @@ function playRing() {
         playBeep(now, 880); playBeep(now + 0.5, 660); playBeep(now + 1.0, 880);
     } catch (e) {}
 }
-function startRing() { if (ringInterval) return; playRing(); ringInterval = setInterval(playRing, 2000); }
+function startRing() {
+    if (ringInterval) return;
+    playRing();
+    ringInterval = setInterval(playRing, 2000);
+}
 function stopRing() { if (ringInterval) { clearInterval(ringInterval); ringInterval = null; } }
 
 // ═══ WAITING ═══
@@ -351,26 +373,14 @@ function renderWaitingOrders() {
 }
 
 async function autoAssignWaiting(firestoreId) {
-    const o = AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
-    if (!o) return;
-    const d = AppState.drivers.find(x => x.mode === 'free');
-    if (!d) { showToast('warning', 'Nuk ka taksi', 'Të gjitha të zëna'); return; }
-    const v = AppState.vehicles.find(x => x.id === d.vehicleId);
-    const num = v ? String(v.id).padStart(2, '0') : '??';
-
-    if (window.TaxiOrdersBridge) {
-        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
-            driverId: d.id, driverName: d.name
-        });
+    if (window.TaxiDispatch) {
+        const result = await window.TaxiDispatch.assignOrder(firestoreId, 'auto');
+        if (result) {
+            showToast('success', 'Auto-caktuar', `🚗 ${result.vehicle} — ${result.driver.name}`);
+        } else {
+            showToast('warning', 'Nuk ka taksi', 'Të gjitha të zëna');
+        }
     }
-    d.mode = 'taximeter'; d.status = 'busy';
-    updateVehicleMarker(d.id);
-    if (window.TaxiEvents) {
-        window.TaxiEvents.emit('operator:trip_done');
-        window.TaxiEvents.emit('operator:revenue', 4.5);
-    }
-    showToast('success', 'Auto-caktuar', `🚗 ${num} — ${d.name}`);
 }
 
 function manualAssignWaiting(firestoreId) {
@@ -387,7 +397,7 @@ function manualAssignWaiting(firestoreId) {
         opt.textContent = `🚗 ${num} — ${v.plate} — ${d ? d.name : ''}`;
         sel.appendChild(opt);
     });
-    const wsec = Math.floor((Date.now() - o.waitStart) / 1000);
+    const wsec = Math.floor((Date.now() - (o.waitStart || Date.now())) / 1000);
     document.getElementById('assign-wait-time').value = `${Math.floor(wsec / 60)} minuta`;
     document.getElementById('assign-driver-name').value = '';
     document.getElementById('modal-manual-assign')?.classList.add('active');
@@ -398,51 +408,31 @@ async function confirmManualAssign() {
     if (!num) { showToast('error', 'Gabim', 'Zgjedh një veturë'); return; }
     const firestoreId = AppState.manualAssignOrderId;
     if (!firestoreId) return;
-    const v = AppState.vehicles.find(x => String(x.id).padStart(2, '0') === num);
-    const d = v ? AppState.drivers.find(x => x.vehicleId === v.id) : null;
 
-    if (window.TaxiOrdersBridge) {
-        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
-            driverId: d ? d.id : null, driverName: d ? d.name : 'N/A'
-        });
+    if (window.TaxiDispatch) {
+        const result = await window.TaxiDispatch.assignOrder(firestoreId, 'manual', null, null, num);
+        if (result) {
+            document.getElementById('modal-manual-assign')?.classList.remove('active');
+            showToast('success', 'Manual', `🚗 ${num} caktuar`);
+        }
     }
-    if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
-    if (window.TaxiEvents) {
-        window.TaxiEvents.emit('operator:trip_done');
-        window.TaxiEvents.emit('operator:revenue', 4.5);
-    }
-    document.getElementById('modal-manual-assign')?.classList.remove('active');
-    showToast('success', 'Manual', `🚗 ${num} caktuar`);
 }
 
 async function closestAssignWaiting(firestoreId) {
     const o = AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     const target = AppState.addresses.find(a => a.name === o.pickup);
-    const lat = target ? target.lat : 42.6629, lng = target ? target.lng : 21.1655;
-    let best = null, minD = Infinity;
-    AppState.drivers.filter(d => d.mode === 'free').forEach(d => {
-        const dist = Math.hypot(d.lat - lat, d.lng - lng);
-        if (dist < minD) { minD = dist; best = d; }
-    });
-    if (!best) { showToast('warning', 'Nuk ka taksi', 'Asnjë e lirë'); return; }
-    const v = AppState.vehicles.find(x => x.id === best.vehicleId);
-    const num = v ? String(v.id).padStart(2, '0') : '??';
+    const lat = target ? target.lat : 42.6629;
+    const lng = target ? target.lng : 21.1655;
 
-    if (window.TaxiOrdersBridge) {
-        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
-            driverId: best.id, driverName: best.name
-        });
+    if (window.TaxiDispatch) {
+        const result = await window.TaxiDispatch.assignOrder(firestoreId, 'closest', lat, lng);
+        if (result) {
+            showToast('success', 'Më i afërti', `🚗 ${result.vehicle} — ${result.driver.name}`);
+        } else {
+            showToast('warning', 'Nuk ka taksi', 'Asnjë e lirë në afërsi');
+        }
     }
-    best.mode = 'taximeter'; best.status = 'busy';
-    updateVehicleMarker(best.id);
-    if (window.TaxiEvents) {
-        window.TaxiEvents.emit('operator:trip_done');
-        window.TaxiEvents.emit('operator:revenue', 4.5);
-    }
-    showToast('success', 'Më i afërti', `🚗 ${num} — ${best.name}`);
 }
 
 async function cancelWaiting(firestoreId) {
@@ -478,7 +468,9 @@ function renderOrders() {
 }
 
 function openOrderDetail(firestoreId) {
-    const o = AppState.orders.find(x => x.firestoreId === firestoreId) || AppState.waitingOrders.find(x => x.firestoreId === firestoreId) || AppState.preOrders.find(x => x.firestoreId === firestoreId);
+    const o = AppState.orders.find(x => x.firestoreId === firestoreId)
+           || AppState.waitingOrders.find(x => x.firestoreId === firestoreId)
+           || AppState.preOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje', arrived: 'Në Vend', taximeter: 'Taksimetër', fixed: 'Çmim Fiks', preorder: 'Me Termin' };
     document.getElementById('order-detail-body').innerHTML = `
@@ -634,7 +626,7 @@ function updateStats() {
     const online = AppState.drivers.filter(d => d.mode === 'free').length;
     const pending = AppState.waitingOrders.length;
     const trips = AppState.orders.length;
-    const revenue = AppState.orders.reduce((s, o) => s + (o.tariff === 'airport' ? 15 : 4.5), 0);
+    const revenue = AppState.orders.reduce((s, o) => s + (o.price || (o.tariff === 'airport' ? 15 : 4.5)), 0);
     setText('stat-online', online);
     setText('stat-pending', pending);
     setText('stat-trips', trips);
@@ -653,6 +645,13 @@ function showToast(type, title, msg) {
     t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${msg}</div></div>`;
     c.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(400px)'; setTimeout(() => t.remove(), 300); }, 3500);
+
+    // Luaj zërin
+    if (window.TaxiSound) {
+        if (type === 'success') window.TaxiSound.playSuccess();
+        else if (type === 'error') window.TaxiSound.playError();
+        else window.TaxiSound.playNotification();
+    }
 }
 
 // ═══ SIMULATION ═══
