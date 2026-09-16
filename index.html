@@ -412,17 +412,16 @@
 
     <!-- INIT: FIREBASE + LOGIN + ORDERS + CLIENT HISTORY -->
     <script>
+       <script>
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Inicializo Firebase
             if (window.TaxiFirebase) {
                 window.TaxiFirebase.init();
 
-                // Dëgjo porositë live nga Firestore
                 if (window.TaxiOrders) {
                     window.TaxiOrders.subscribe();
                 }
 
-                // Aktivizo bridge
                 setTimeout(() => {
                     if (window.TaxiOrdersBridge) {
                         window.TaxiOrdersBridge.init();
@@ -430,26 +429,61 @@
                 }, 500);
             }
 
-            // 2. HAP MODALIN E LOGIN-IT kur klikohet GD
+            // 2. Klik GD → hap login modal
             const railUser = document.getElementById('rail-user');
             if (railUser) {
                 railUser.addEventListener('click', () => {
-                    const modal = document.getElementById('modal-login');
-                    if (modal) {
-                        modal.classList.add('active');
+                    if (window.TaxiAuth?.currentUser()) {
+                        // Nëse është loguar → shfaq statistikat
+                        console.log('👤 Klik GD → Statistikat');
+                        if (typeof showOperatorStats === 'function') {
+                            showOperatorStats();
+                        } else {
+                            // Nëse nuk ka funksion, hap modal login
+                            document.getElementById('modal-login')?.classList.add('active');
+                        }
+                    } else {
+                        // Nëse s'është loguar → hap login
+                        document.getElementById('modal-login')?.classList.add('active');
                         setTimeout(() => document.getElementById('login-email')?.focus(), 200);
                     }
                 });
-                console.log('✅ Klik GD → Login aktivizuar');
             }
 
-            // 3. Monitoro login-in
+            // 3. MONITORO SESIONIN — KJO ËSHTË E RËNDËSISHME
             if (window.TaxiAuth) {
                 window.TaxiAuth.onAuthChange((user) => {
                     if (user) {
                         console.log('👤 User aktiv:', user.email);
+
+                        // Update rail-user me inicialet
+                        const railUser = document.getElementById('rail-user');
+                        if (railUser) {
+                            const name = user.email.split('@')[0];
+                            railUser.textContent = name.slice(0, 2).toUpperCase();
+                            railUser.title = user.email;
+                        }
+
+                        // Ruaj në state
+                        if (window.TaxiState) {
+                            window.TaxiState.set('currentOperator', {
+                                ...window.TaxiState.get('currentOperator'),
+                                email: user.email,
+                                uid: user.uid,
+                                loggedIn: true,
+                                loginTime: Date.now()
+                            });
+                        }
+
                     } else {
                         console.log('👤 Asnjë user aktiv');
+
+                        // Kthe në GD
+                        const railUser = document.getElementById('rail-user');
+                        if (railUser) {
+                            railUser.textContent = 'GD';
+                            railUser.title = 'Login';
+                        }
                     }
                 });
             }
@@ -482,12 +516,13 @@
 
                         document.getElementById('modal-login')?.classList.remove('active');
 
-                        const railUser = document.getElementById('rail-user');
-                        if (railUser) railUser.textContent = (user.name || 'OP').slice(0, 2).toUpperCase();
-
                         if (typeof showToast === 'function') {
                             showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
                         }
+
+                        // Pastro fushat
+                        document.getElementById('login-email').value = '';
+                        document.getElementById('login-password').value = '';
 
                     } catch (e) {
                         let msg = 'Gabim gjatë login-it';
@@ -507,17 +542,23 @@
                         newBtn.innerHTML = '<i class="fa-solid fa-sign-in-alt"></i> Hyr';
                     }
                 });
+
+                // Enter → login
+                document.getElementById('login-password')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') newBtn.click();
+                });
             }
 
             // 5. Butoni LOGOUT
             const btnLogout = document.getElementById('btn-logout');
             if (btnLogout) {
                 btnLogout.addEventListener('click', async () => {
-                    await window.TaxiAuth.logout();
-                    document.getElementById('modal-operator-stats')?.classList.remove('active');
-                    document.getElementById('rail-user').textContent = 'GD';
-                    if (typeof showToast === 'function') {
-                        showToast('info', 'U dilni', 'Deri herën tjetër!');
+                    if (confirm('A jeni i sigurt që dëshironi të dilni?')) {
+                        await window.TaxiAuth.logout();
+                        document.getElementById('modal-operator-stats')?.classList.remove('active');
+                        if (typeof showToast === 'function') {
+                            showToast('info', 'U dilni', 'Deri herën tjetër!');
+                        }
                     }
                 });
             }
@@ -567,6 +608,4 @@
 
             console.log('🚀 Init komplet përfundoi');
         });
-    </script>
-</body>
-</html>
+    </script>  
