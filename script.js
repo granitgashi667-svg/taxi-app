@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
     startCallSimulation();
     startOrderSimulation();
-    startMessageSimulation();
 });
 
 // ═══ DATA ═══
@@ -44,34 +43,7 @@ function loadData() {
     AppState.vehicles = window.TaxiData.vehicles || [];
     AppState.config = window.TaxiData.config || {};
 
-    AppState.orders = [
-        { id: 1001, phone: '+383 44 123 456', name: 'Ardit Krasniqi', pickup: 'Grand Hotel Prishtina', destination: 'Aeroporti Ndërkombëtar', status: 'assigned', vehicle: '01', driverName: 'Arben Krasniqi', time: '19:04', zone: 'zona1', tariff: 'airport', operator: 'Granit Gashi', takenAt: '19:04', doneAt: '', nearbyCars: 3 },
-        { id: 1002, phone: '+383 49 987 654', name: 'Blerim Hoxha', pickup: 'Newborn Monument', destination: 'Albi Mall', status: 'onroute', vehicle: '04', driverName: 'Endrit Morina', time: '19:02', zone: 'zona1', tariff: 'standard', operator: 'Granit Gashi', takenAt: '19:02', doneAt: '', nearbyCars: 5 },
-        { id: 1003, phone: '+383 44 555 222', name: 'Driton Berisha', pickup: 'QKUK Spitali', destination: 'Aeroporti Ndërkombëtar', status: 'delay', vehicle: '05', driverName: 'Fisnik Gashi', time: '18:55', zone: 'zona2', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:55', doneAt: '', nearbyCars: 2 },
-        { id: 1004, phone: '+383 45 111 222', name: 'Endrit Morina', pickup: 'Katedralja Nënë Tereza', destination: 'Kalabria', status: 'assigned', vehicle: '07', driverName: 'Hekuran Zeka', time: '18:50', zone: 'zona1', tariff: 'standard', operator: 'Granit Gashi', takenAt: '18:50', doneAt: '', nearbyCars: 4 }
-    ];
-
-    AppState.waitingOrders = [
-        { id: 2001, phone: '+383 44 777 888', name: 'Genc Rama', pickup: 'Qendra Tregtare Kalabria', destination: 'Arbëria', waitStart: Date.now() - 45000, time: '19:08', zone: 'zona5', operator: 'Granit Gashi' },
-        { id: 2002, phone: '+383 49 333 444', name: 'Ilir Thaçi', pickup: 'Hotel Swiss Diamond', destination: 'Stacioni i Autobusëve', waitStart: Date.now() - 120000, time: '19:10', zone: 'zona1', operator: 'Granit Gashi' },
-        { id: 2003, phone: '+383 45 222 333', name: 'Jeton Bytyqi', pickup: 'QKUK Spitali', destination: 'Fushë Kosova', waitStart: Date.now() - 280000, time: '18:48', zone: 'zona1', operator: 'Granit Gashi' }
-    ];
-
-    AppState.preOrders = [
-        { id: 3001, phone: '+383 44 111 999', name: 'Kreshnik Dema', pickup: 'Aeroporti Ndërkombëtar', destination: 'Grand Hotel Prishtina', date: '15/09', time: '06:30', zone: 'zona3', vehicle: '', operator: 'Granit Gashi' },
-        { id: 3002, phone: '+383 44 222 888', name: 'Luan Ahmeti', pickup: 'Grand Hotel Prishtina', destination: 'QKUK Spitali', date: '15/09', time: '07:15', zone: 'zona1', vehicle: '', operator: 'Granit Gashi' },
-        { id: 3003, phone: '+383 44 333 777', name: 'Mentor Bekteshi', pickup: 'Emerald Hotel', destination: 'Albi Mall', date: '15/09', time: '08:00', zone: 'zona2', vehicle: '', operator: 'Granit Gashi' }
-    ];
-
-    AppState.incomingCalls = [
-        { id: Date.now() + 1, phone: '+383 44 555 001', name: 'Klient i Ri', lastAddress: 'Grand Hotel Prishtina', time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }), ringing: true }
-    ];
-
-    AppState.messages = [
-        { id: 1, driverId: 1, name: 'Arben Krasniqi', text: 'JASHT VETURE', time: '19:12', unread: true },
-        { id: 2, driverId: 2, name: 'Blerim Hoxha', text: 'DUKE PRITUR', time: '19:10', unread: true },
-        { id: 3, driverId: 3, name: 'Driton Berisha', text: 'KËRKESË PËR PAUZË', time: '19:05', unread: true }
-    ];
+    // NUK ka demo data më — gjithçka vjen nga Firestore
 
     // Popullo manual vehicle select
     const manualSelect = document.getElementById('manual-vehicle-select');
@@ -296,7 +268,6 @@ function renderAll() {
     renderWaitingOrders();
     renderOrders();
     renderPreOrders();
-    renderMessages();
     updateStats();
 }
 
@@ -373,7 +344,7 @@ function startRing() {
 }
 function stopRing() { if (ringInterval) { clearInterval(ringInterval); ringInterval = null; } }
 
-// ═══ WAITING ═══
+// ═══ WAITING ORDERS ═══
 function renderWaitingOrders() {
     const tb = document.getElementById('waiting-tbody');
     const cnt = document.getElementById('waiting-count');
@@ -384,11 +355,12 @@ function renderWaitingOrders() {
         return;
     }
     tb.innerHTML = AppState.waitingOrders.map(o => {
-        const wsec = Math.floor((Date.now() - o.waitStart) / 1000);
+        const waitStart = o.waitStart || Date.now();
+        const wsec = Math.floor((Date.now() - waitStart) / 1000);
         const wmin = Math.floor(wsec / 60);
         const cls = wmin < 1 ? 'fresh' : wmin < 3 ? 'medium' : 'old';
         return `<tr>
-            <td><strong>#${o.id}</strong></td>
+            <td><strong>#${String(o.firestoreId).slice(-6)}</strong></td>
             <td class="time">${o.time}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
@@ -396,41 +368,44 @@ function renderWaitingOrders() {
             <td><span class="wait-time ${cls}">${wmin}min</span></td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn auto" onclick="autoAssignWaiting(${o.id})">AUTO</button>
-                    <button class="action-btn manual" onclick="manualAssignWaiting(${o.id})">MANUAL</button>
-                    <button class="action-btn closest" onclick="closestAssignWaiting(${o.id})">AFËRTI</button>
-                    <button class="action-btn cancel" onclick="cancelWaiting(${o.id})">X</button>
+                    <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
+                    <button class="action-btn manual" onclick="manualAssignWaiting('${o.firestoreId}')">MANUAL</button>
+                    <button class="action-btn closest" onclick="closestAssignWaiting('${o.firestoreId}')">AFËRTI</button>
+                    <button class="action-btn cancel" onclick="cancelWaiting('${o.firestoreId}')">X</button>
                 </div>
             </td>
         </tr>`;
     }).join('');
 }
 
-function autoAssignWaiting(id) {
-    const o = AppState.waitingOrders.find(x => x.id === id);
+async function autoAssignWaiting(firestoreId) {
+    const o = AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     const d = AppState.drivers.find(x => x.mode === 'free');
     if (!d) { showToast('warning', 'Nuk ka taksi', 'Të gjitha të zëna'); return; }
     const v = AppState.vehicles.find(x => x.id === d.vehicleId);
     const num = v ? String(v.id).padStart(2, '0') : '??';
-    AppState.orders.unshift({
-        id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
-        status: 'assigned', vehicle: num, driverName: d.name, time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
-    });
-    AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
-    d.mode = Math.random() > 0.5 ? 'taximeter' : 'fixed';
-    d.status = 'busy';
+
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
+            status: 'assigned',
+            vehicleNum: num,
+            vehicleId: v ? v.id : null,
+            driverId: d.id,
+            driverName: d.name
+        });
+    }
+
+    d.mode = 'taximeter'; d.status = 'busy';
     updateVehicleMarker(d.id);
     AppState.currentOperator.stats.trips++;
     AppState.currentOperator.stats.revenue += 4.5;
-    renderWaitingOrders(); renderOrders(); updateStats();
     showToast('success', 'Auto-caktuar', `🚗 ${num} — ${d.name}`);
 }
 
-function manualAssignWaiting(id) {
-    AppState.manualAssignOrderId = id;
-    const o = AppState.waitingOrders.find(x => x.id === id);
+function manualAssignWaiting(firestoreId) {
+    AppState.manualAssignOrderId = firestoreId;
+    const o = AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     const sel = document.getElementById('assign-vehicle-select');
     sel.innerHTML = '<option value="">-- Zgjedh --</option>';
@@ -439,7 +414,7 @@ function manualAssignWaiting(id) {
         const num = String(v.id).padStart(2, '0');
         const opt = document.createElement('option');
         opt.value = num;
-        opt.textContent = `🚗 ${num} — ${v.plate} — ${d ? d.name : ''} (${d ? d.mode : ''})`;
+        opt.textContent = `🚗 ${num} — ${v.plate} — ${d ? d.name : ''}`;
         sel.appendChild(opt);
     });
     const wsec = Math.floor((Date.now() - o.waitStart) / 1000);
@@ -448,30 +423,34 @@ function manualAssignWaiting(id) {
     document.getElementById('modal-manual-assign')?.classList.add('active');
 }
 
-function confirmManualAssign() {
+async function confirmManualAssign() {
     const num = document.getElementById('assign-vehicle-select').value;
     if (!num) { showToast('error', 'Gabim', 'Zgjedh një veturë'); return; }
-    const id = AppState.manualAssignOrderId;
-    const o = AppState.waitingOrders.find(x => x.id === id);
-    if (!o) return;
+    const firestoreId = AppState.manualAssignOrderId;
+    if (!firestoreId) return;
+
     const v = AppState.vehicles.find(x => String(x.id).padStart(2, '0') === num);
     const d = v ? AppState.drivers.find(x => x.vehicleId === v.id) : null;
-    AppState.orders.unshift({
-        id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
-        status: 'assigned', vehicle: num, driverName: d ? d.name : 'N/A', time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1
-    });
-    AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
+
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
+            status: 'assigned',
+            vehicleNum: num,
+            vehicleId: v ? v.id : null,
+            driverId: d ? d.id : null,
+            driverName: d ? d.name : 'N/A'
+        });
+    }
+
     if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
     AppState.currentOperator.stats.trips++;
     AppState.currentOperator.stats.revenue += 4.5;
-    renderWaitingOrders(); renderOrders(); updateStats();
     document.getElementById('modal-manual-assign')?.classList.remove('active');
     showToast('success', 'Manual', `🚗 ${num} caktuar`);
 }
 
-function closestAssignWaiting(id) {
-    const o = AppState.waitingOrders.find(x => x.id === id);
+async function closestAssignWaiting(firestoreId) {
+    const o = AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     const target = AppState.addresses.find(a => a.name === o.pickup);
     const lat = target ? target.lat : 42.6629, lng = target ? target.lng : 21.1655;
@@ -483,37 +462,42 @@ function closestAssignWaiting(id) {
     if (!best) { showToast('warning', 'Nuk ka taksi', 'Asnjë e lirë'); return; }
     const v = AppState.vehicles.find(x => x.id === best.vehicleId);
     const num = v ? String(v.id).padStart(2, '0') : '??';
-    AppState.orders.unshift({
-        id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination,
-        status: 'assigned', vehicle: num, driverName: best.name, time: o.time, zone: o.zone,
-        tariff: 'standard', operator: AppState.currentOperator.name, takenAt: o.time, doneAt: '', nearbyCars: 1
-    });
-    AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
+
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
+            status: 'assigned',
+            vehicleNum: num,
+            vehicleId: v ? v.id : null,
+            driverId: best.id,
+            driverName: best.name
+        });
+    }
+
     best.mode = 'taximeter'; best.status = 'busy';
     updateVehicleMarker(best.id);
     AppState.currentOperator.stats.trips++;
     AppState.currentOperator.stats.revenue += 4.5;
-    renderWaitingOrders(); renderOrders(); updateStats();
     showToast('success', 'Më i afërti', `🚗 ${num} — ${best.name}`);
 }
 
-function cancelWaiting(id) {
-    AppState.waitingOrders = AppState.waitingOrders.filter(x => x.id !== id);
+async function cancelWaiting(firestoreId) {
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
+    }
     AppState.currentOperator.stats.cancelled++;
-    renderWaitingOrders(); updateStats();
-    showToast('info', 'Anuluar', `Porosia #${id}`);
+    showToast('info', 'Anuluar', `Porosia u anulua`);
 }
 
-// ═══ ORDERS ═══
+// ═══ ACTIVE ORDERS ═══
 function renderOrders() {
     const tb = document.getElementById('orders-tbody');
     const cnt = document.getElementById('orders-count');
     if (cnt) cnt.textContent = AppState.orders.length;
     if (!tb) return;
-    if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi</td></tr>`; return; }
-    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
+    if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi aktive</td></tr>`; return; }
+    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje', arrived: 'Në vend', taximeter: 'Taksimetër', fixed: 'Fiks' };
     tb.innerHTML = AppState.orders.map(o => `
-        <tr onclick="openOrderDetail('${o.id}')">
+        <tr onclick="openOrderDetail('${o.firestoreId}')">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : `<span class="vehicle-badge empty">—</span>`}</td>
@@ -523,25 +507,25 @@ function renderOrders() {
             <td>${o.driverName || '<span style="color:var(--text-muted)">—</span>'}</td>
             <td onclick="event.stopPropagation()">
                 <div class="row-actions">
-                    <button class="row-btn danger" onclick="cancelOrder('${o.id}')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </td>
         </tr>
     `).join('');
 }
 
-function openOrderDetail(id) {
-    const o = AppState.orders.find(x => String(x.id) === String(id));
+function openOrderDetail(firestoreId) {
+    const o = AppState.orders.find(x => x.firestoreId === firestoreId) || AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
-    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje' };
+    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje', arrived: 'Në Vend', taximeter: 'Taksimetër', fixed: 'Çmim Fiks' };
     document.getElementById('order-detail-body').innerHTML = `
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-receipt"></i> INFORMACION BAZË</div>
             <div class="detail-grid">
-                <div class="detail-item"><label>ID e Porosisë</label><span class="mono">#${o.id}</span></div>
+                <div class="detail-item"><label>ID</label><span class="mono">#${String(o.firestoreId).slice(-6)}</span></div>
                 <div class="detail-item"><label>Statusi</label><span><span class="status-badge ${o.status}">${statusLbl[o.status] || o.status}</span></span></div>
                 <div class="detail-item"><label>Telefon</label><span class="mono">${o.phone}</span></div>
-                <div class="detail-item"><label>Emri Klientit</label><span>${o.name || 'N/A'}</span></div>
+                <div class="detail-item"><label>Emri</label><span>${o.name || 'N/A'}</span></div>
                 <div class="detail-item"><label>Operatori</label><span style="color:var(--accent-purple);font-weight:700;">${o.operator || AppState.currentOperator.name}</span></div>
                 <div class="detail-item"><label>Tarifa</label><span>${o.tariff || 'standard'}</span></div>
             </div>
@@ -549,32 +533,24 @@ function openOrderDetail(id) {
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-route"></i> RRUGËTIMI</div>
             <div class="detail-grid">
-                <div class="detail-item" style="grid-column:1/-1;"><label>Adresa e Marrjes</label><span>📍 ${o.pickup}</span></div>
+                <div class="detail-item" style="grid-column:1/-1;"><label>Marrja</label><span>📍 ${o.pickup}</span></div>
                 <div class="detail-item" style="grid-column:1/-1;"><label>Destinacioni</label><span>🏁 ${o.destination}</span></div>
                 <div class="detail-item"><label>Zona</label><span>${o.zone || 'N/A'}</span></div>
                 <div class="detail-item"><label>Vetura</label><span class="mono">${o.vehicle ? '🚗 ' + o.vehicle : '—'}</span></div>
                 <div class="detail-item"><label>Shoferi</label><span>${o.driverName || '—'}</span></div>
-                <div class="detail-item"><label>Vetura afër</label><span>${o.nearbyCars || 0} taksi</span></div>
-            </div>
-        </div>
-        <div class="detail-section">
-            <div class="detail-section-title"><i class="fa-solid fa-clock"></i> KOHËT</div>
-            <div class="detail-grid">
-                <div class="detail-item"><label>U mor në</label><span class="mono">${o.takenAt || o.time}</span></div>
-                <div class="detail-item"><label>U lëshua në</label><span class="mono">${o.doneAt || '—'}</span></div>
-                <div class="detail-item"><label>Statusi</label><span>${statusLbl[o.status] || o.status}</span></div>
-                <div class="detail-item"><label>Operatori</label><span>${o.operator || '—'}</span></div>
+                <div class="detail-item"><label>Shënim</label><span>${o.remark || '—'}</span></div>
             </div>
         </div>
     `;
     document.getElementById('modal-order-detail')?.classList.add('active');
 }
 
-function cancelOrder(id) {
-    AppState.orders = AppState.orders.filter(x => String(x.id) !== String(id));
+async function cancelOrder(firestoreId) {
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
+    }
     AppState.currentOperator.stats.cancelled++;
-    renderOrders(); updateStats();
-    showToast('info', 'Anuluar', `Porosia #${id}`);
+    showToast('info', 'Anuluar', `Porosia u anulua`);
 }
 
 function filterOrders(q) {
@@ -586,7 +562,7 @@ function filterOrders(q) {
     if (!f.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk u gjet</td></tr>`; return; }
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
     tb.innerHTML = f.map(o => `
-        <tr onclick="openOrderDetail('${o.id}')">
+        <tr onclick="openOrderDetail('${o.firestoreId}')">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
@@ -594,7 +570,7 @@ function filterOrders(q) {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '—'}</td>
-            <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder('${o.id}')"><i class="fa-solid fa-xmark"></i></button></div></td>
+            <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button></div></td>
         </tr>
     `).join('');
 }
@@ -605,7 +581,7 @@ function renderPreOrders() {
     const cnt = document.getElementById('preorders-count');
     if (!tb) return;
     if (cnt) cnt.textContent = AppState.preOrders.length;
-    if (!AppState.preOrders.length) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Asnjë pre-order</td></tr>`; return; }
+    if (!AppState.preOrders.length) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Asnjë pre-order</td></tr>`; return; }
     tb.innerHTML = AppState.preOrders.map(o => `
         <tr>
             <td><span class="preorder-date">${o.date}</span></td>
@@ -628,21 +604,15 @@ function activatePre(id) {
     const o = AppState.preOrders.find(x => x.id === id);
     if (!o) return;
     AppState.preOrders = AppState.preOrders.filter(x => x.id !== id);
-    AppState.waitingOrders.unshift({ id: o.id, phone: o.phone, name: o.name, pickup: o.pickup, destination: o.destination, waitStart: Date.now(), time: o.time, zone: o.zone, operator: AppState.currentOperator.name });
     AppState.currentOperator.stats.callsWaiting++;
     renderPreOrders(); renderWaitingOrders(); updateStats();
-    showToast('info', 'Aktivizuar', `Pre-order #${id} → pritje`);
+    showToast('info', 'Aktivizuar', `Pre-order #${id}`);
 }
 
 function cancelPre(id) {
     AppState.preOrders = AppState.preOrders.filter(x => x.id !== id);
     AppState.currentOperator.stats.cancelled++;
     renderPreOrders(); updateStats();
-}
-
-// ═══ MESSAGES ═══
-function renderMessages() {
-    // E mbajmë bosh për tani — do shtohet më vonë
 }
 
 // ═══ NEW ORDER ═══
@@ -657,71 +627,11 @@ function submitOrder() {
 
     if (!phone || !pickup) { showToast('error', 'Gabim', 'Plotëso numrin dhe adresën'); return; }
 
-    const order = {
-        id: Date.now(), phone, name: name || 'Klient', pickup, destination: dest || 'N/A',
-        status: 'new', vehicle: '', driverName: '',
-        time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        zone: zone === 'auto' ? 'zona1' : zone, tariff: tariff || 'standard',
-        operator: AppState.currentOperator.name,
-        takenAt: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-        doneAt: '', nearbyCars: Math.floor(Math.random() * 6) + 1,
-        remark: remark || ''
-    };
-
-    if (AppState.currentDispatchMode === 'manual') {
-        const num = document.getElementById('manual-vehicle-select')?.value;
-        if (num) {
-            const v = AppState.vehicles.find(x => String(x.id).padStart(2, '0') === num);
-            const d = v ? AppState.drivers.find(x => x.vehicleId === v.id) : null;
-            order.vehicle = num;
-            order.driverName = d ? d.name : 'Manual';
-            order.status = 'assigned';
-            if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
-        } else {
-            order.status = 'waiting';
-            AppState.waitingOrders.unshift({ ...order, waitStart: Date.now() });
-            AppState.currentOperator.stats.callsWaiting++;
-        }
-    } else if (AppState.currentDispatchMode === 'closest') {
-        const target = AppState.addresses.find(a => a.name === pickup);
-        const lat = target ? target.lat : 42.6629, lng = target ? target.lng : 21.1655;
-        let best = null, minD = Infinity;
-        AppState.drivers.filter(d => d.mode === 'free').forEach(d => {
-            const dist = Math.hypot(d.lat - lat, d.lng - lng);
-            if (dist < minD) { minD = dist; best = d; }
-        });
-        if (best) {
-            const v = AppState.vehicles.find(x => x.id === best.vehicleId);
-            const num = v ? String(v.id).padStart(2, '0') : '??';
-            order.vehicle = num; order.driverName = best.name; order.status = 'assigned';
-            best.mode = 'taximeter'; best.status = 'busy';
-            updateVehicleMarker(best.id);
-        }
-    } else {
-        const d = AppState.drivers.find(x => x.mode === 'free');
-        if (d) {
-            const v = AppState.vehicles.find(x => x.id === d.vehicleId);
-            const num = v ? String(v.id).padStart(2, '0') : '??';
-            order.vehicle = num; order.driverName = d.name; order.status = 'assigned';
-            d.mode = 'taximeter'; d.status = 'busy';
-            updateVehicleMarker(d.id);
-        }
-    }
-
-    if (order.status !== 'waiting') {
-        AppState.orders.unshift(order);
-        AppState.currentOperator.stats.trips++;
-        AppState.currentOperator.stats.revenue += 4.5;
-    }
-
     AppState.currentOperator.stats.callsTaken++;
     AppState.currentOperator.stats.callsOpened++;
+    AppState.currentOperator.stats.callsWaiting++;
 
-    updateStats();
-    renderOrders(); renderWaitingOrders();
-    showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
-
-    // 🔥 RUAJ NË FIRESTORE (PARA reset-imit)
+    // RUAJ NË FIRESTORE me status 'waiting'
     if (window.TaxiOrdersBridge) {
         window.TaxiOrdersBridge.createFromData({
             phone: phone,
@@ -731,20 +641,24 @@ function submitOrder() {
             zone: zone === 'auto' ? 'zona1' : zone,
             tariff: tariff || 'standard',
             remark: remark || '',
-            status: order.status
+            status: 'waiting'
         });
     }
 
-    // Reset formës (PAS ruajtjes)
+    showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
+
+    // Reset formës
     document.getElementById('order-form')?.reset();
     document.getElementById('manual-vehicle-picker').style.display = 'none';
+    const chp = document.getElementById('client-history-panel');
+    if (chp) chp.style.display = 'none';
 }
 
 // ═══ STATS ═══
 function updateStats() {
     const online = AppState.drivers.filter(d => d.mode === 'free').length;
     const pending = AppState.waitingOrders.length;
-    const trips = AppState.orders.filter(o => o.status === 'onroute' || o.status === 'completed').length;
+    const trips = AppState.orders.length;
     const revenue = AppState.orders.reduce((s, o) => s + (o.tariff === 'airport' ? 15 : 4.5), 0);
     setText('stat-online', online);
     setText('stat-pending', pending);
@@ -807,10 +721,6 @@ function startOrderSimulation() {
     }, 4000);
 
     setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
-}
-
-function startMessageSimulation() {
-    // E mbajmë bosh për tani
 }
 
 // ═══ GLOBAL ═══
