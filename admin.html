@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Taxi Admin | Menagjer Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👔</text></svg>">
+</head>
+<body class="theme-2">
+
+    <!-- ═══ LOADING ═══ -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar...</div>
+        </div>
+    </div>
+
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div class="screen login-screen active" id="screen-login">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <h1>Admin Panel</h1>
+            <p class="login-sub">Hyr me llogarinë e menagjerit</p>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="manager@taxi.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+                </div>
+                <div id="login-error" class="login-error" style="display:none;"></div>
+                <button class="btn-primary big" id="btn-login">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>HYR</span>
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Version 2.0 · TaxiDispatch Pro</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN SCREEN ═══ -->
+    <div class="screen main-screen" id="screen-main">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="sidebar-item active" data-page="dashboard" onclick="AdminApp.switchPage('dashboard'); return false;">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="operators" onclick="AdminApp.switchPage('operators'); return false;">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Operatorët</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="drivers" onclick="AdminApp.switchPage('drivers'); return false;">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Shoferët</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="vehicles" onclick="AdminApp.switchPage('vehicles'); return false;">
+                    <i class="fa-solid fa-car-side"></i>
+                    <span>Veturat</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="orders" onclick="AdminApp.switchPage('orders'); return false;">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Porositë</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="reports" onclick="AdminApp.switchPage('reports'); return false;">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Raporte</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="vacations" onclick="AdminApp.switchPage('vacations'); return false;">
+                    <i class="fa-solid fa-umbrella-beach"></i>
+                    <span>Pushimet</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="blacklist" onclick="AdminApp.switchPage('blacklist'); return false;">
+                    <i class="fa-solid fa-ban"></i>
+                    <span>Blacklist</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-user" id="sidebar-user">
+                    <div class="su-avatar" id="su-avatar">?</div>
+                    <div class="su-info">
+                        <div class="su-name" id="su-name">Menagjer</div>
+                        <div class="su-role" id="su-role">Manager</div>
+                    </div>
+                </div>
+                <button class="sidebar-logout" onclick="AdminApp.logout()" title="Dil">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="admin-content" id="admin-content">
+
+            <!-- TOP BAR -->
+            <header class="admin-topbar">
+                <button class="topbar-toggle" onclick="AdminApp.toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="topbar-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Pamja e përgjithshme</p>
+                </div>
+
+                <div class="topbar-actions">
+                    <div class="topbar-time">
+                        <div class="time-clock" id="clock-time">--:--:--</div>
+                        <div class="time-date" id="clock-date">--/--/----</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- PAGE: DASHBOARD -->
+            <div class="admin-page active" data-page="dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card green">
+                        <div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura sot</div>
+                        <div class="kpi-value green" id="kpi-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-revenue-sub">0 porosi</div>
+                    </div>
+                    <div class="kpi-card blue">
+                        <div class="kpi-label"><i class="fa-solid fa-route"></i> Udhëtime sot</div>
+                        <div class="kpi-value blue" id="kpi-trips">0</div>
+                        <div class="kpi-sub" id="kpi-trips-sub">0 të realizuara</div>
+                    </div>
+                    <div class="kpi-card pink">
+                        <div class="kpi-label"><i class="fa-solid fa-headset"></i> Operatorë aktivë</div>
+                        <div class="kpi-value pink" id="kpi-operators">0</div>
+                        <div class="kpi-sub">Tani në punë</div>
+                    </div>
+                    <div class="kpi-card yellow">
+                        <div class="kpi-label"><i class="fa-solid fa-car"></i> Shoferë aktivë</div>
+                        <div class="kpi-value yellow" id="kpi-drivers">0</div>
+                        <div class="kpi-sub" id="kpi-drivers-sub">0 online</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-trophy"></i>
+                            <h3>Top Operatorët (Sot)</h3>
+                        </div>
+                        <div class="db-panel-body" id="top-operators-list">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Duke ngarkuar...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-car-side"></i>
+                            <h3>Top Shoferët (Sot)</h3>
+                        </div>
+                        <div class="db-panel-body" id="top-drivers-list">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Duke ngarkuar...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-panel full">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-clock"></i>
+                            <h3>Aktiviteti i fundit</h3>
+                        </div>
+                        <div class="db-panel-body" id="recent-activity-list">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                <p>Duke ngarkuar...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: OPERATORS -->
+            <div class="admin-page" data-page="operators">
+                <div class="page-actions">
+                    <div class="filter-bar">
+                        <button class="filter-btn active" onclick="AdminOperators.filter('today', this)">Sot</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('week', this)">Kjo javë</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('month', this)">Ky muaj</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('year', this)">Ky vit</button>
+                    </div>
+                </div>
+                <div id="operators-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar operatorët...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: DRIVERS -->
+            <div class="admin-page" data-page="drivers">
+                <div id="drivers-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar shoferët...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: VEHICLES -->
+            <div class="admin-page" data-page="vehicles">
+                <div id="vehicles-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar veturat...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: ORDERS -->
+            <div class="admin-page" data-page="orders">
+                <div id="orders-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar porositë...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: REPORTS -->
+            <div class="admin-page" data-page="reports">
+                <div id="reports-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar raportet...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: VACATIONS -->
+            <div class="admin-page" data-page="vacations">
+                <div id="vacations-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar pushimet...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: BLACKLIST -->
+            <div class="admin-page" data-page="blacklist">
+                <div id="blacklist-content">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <p>Duke ngarkuar blacklist...</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══ SCRIPTS ═══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SERVICES -->
+    <script src="js/services/auth.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/operators.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/blacklist.js"></script>
+    <script src="js/services/reports.js"></script>
+    <script src="js/services/analytics.js"></script>
+    <script src="js/services/export.js"></script>
+    <script src="js/services/history.js"></script>
+    <script src="js/services/session.js"></script>
+
+    <!-- ADMIN APP -->
+    <script src="js/admin/login.js"></script>
+    <script src="js/admin/app.js"></script>
+    <script src="js/admin/dashboard.js"></script>
+    <script src="js/admin/operators.js"></script>
+    <script src="js/admin/drivers.js"></script>
+    <script src="js/admin/vehicles.js"></script>
+    <script src="js/admin/orders.js"></script>
+    <script src="js/admin/reports.js"></script>
+    <script src="js/admin/vacations.js"></script>
+    <script src="js/admin/blacklist.js"></script>
+
+    <!-- INIT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            AdminApp.init();
+        });
+    </script>
+</body>
+</html>
