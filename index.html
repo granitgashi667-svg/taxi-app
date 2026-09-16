@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>TaxiDispatch Pro | Dispatch Console</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a855f7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -32,12 +34,15 @@
             <a href="#" class="rail-item" data-nav="map" title="Harta"><i class="fa-solid fa-map"></i></a>
             <a href="#" class="rail-item" data-nav="zones" title="Zonat"><i class="fa-solid fa-map-location-dot"></i></a>
             <a href="#" class="rail-item" data-nav="clients" title="Klientët"><i class="fa-solid fa-address-book"></i></a>
+            <a href="#" class="rail-item" data-nav="history" title="Historiku"><i class="fa-solid fa-clock-rotate-left"></i></a>
             <a href="#" class="rail-item" data-nav="reports" title="Raporte"><i class="fa-solid fa-chart-line"></i></a>
-            <a href="#" class="rail-item" data-nav="finance" title="Financa"><i class="fa-solid fa-coins"></i></a>
+            <a href="#" class="rail-item" data-nav="blacklist" title="Blacklist"><i class="fa-solid fa-ban"></i></a>
             <a href="#" class="rail-item" data-nav="settings" title="Cilësimet"><i class="fa-solid fa-sliders"></i></a>
         </nav>
         <div class="rail-bottom">
+            <button class="rail-item" id="btn-voice-toggle" title="Komanda me zë"><i class="fa-solid fa-microphone-slash"></i></button>
             <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri"><i class="fa-solid fa-volume-high"></i></button>
+            <button class="rail-item" id="btn-theme-toggle" title="Dark/Light"><i class="fa-solid fa-sun"></i></button>
             <button class="rail-item" id="btn-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
             <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">GD</div>
         </div>
@@ -269,7 +274,7 @@
                             </div>
                             <div class="panel-body orders-table-body">
                                 <table class="orders-table">
-                                    <thead><tr><th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>Shënim</th><th>Veprime</th></tr></thead>
+                                    <thead><tr><th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>ETA</th><th>Shënim</th><th>Veprime</th></tr></thead>
                                     <tbody id="orders-tbody"></tbody>
                                 </table>
                             </div>
@@ -298,6 +303,7 @@
                 </div>
             </div>
 
+            <!-- Pages të tjera -->
             <div class="page" data-page="calls"></div>
             <div class="page" data-page="orders"></div>
             <div class="page" data-page="drivers"></div>
@@ -305,9 +311,11 @@
             <div class="page" data-page="map"></div>
             <div class="page" data-page="zones"></div>
             <div class="page" data-page="clients"></div>
+            <div class="page" data-page="history"></div>
             <div class="page" data-page="reports"></div>
-            <div class="page" data-page="finance"></div>
+            <div class="page" data-page="blacklist"></div>
             <div class="page" data-page="settings"></div>
+            <div class="page" data-page="finance"></div>
 
         </div>
     </main>
@@ -383,28 +391,44 @@
 
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- FIREBASE SDK                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FIREBASE CONFIG -->
     <script src="firebase-config.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE (7)                                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
 
+    <!-- DATA -->
     <script src="data.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES (të gjitha)                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
     <script src="js/services/clients.js"></script>
     <script src="js/services/operators.js"></script>
     <script src="js/services/calls.js"></script>
-<script src="js/services/call-center.js"></script>
+    <script src="js/services/call-center.js"></script>
     <script src="js/services/messages.js"></script>
     <script src="js/services/sound.js"></script>
     <script src="js/services/stats.js"></script>
@@ -422,6 +446,7 @@
     <script src="js/services/zones.js"></script>
     <script src="js/services/blacklist.js"></script>
     <script src="js/services/history.js"></script>
+    <script src="js/services/target-history.js"></script>
     <script src="js/services/control-unit.js"></script>
     <script src="js/services/reports.js"></script>
     <script src="js/services/export.js"></script>
@@ -431,19 +456,87 @@
     <script src="js/services/validation.js"></script>
     <script src="js/services/cache.js"></script>
     <script src="js/services/offline.js"></script>
-    <script src="js/services/permissions.js"></script>
     <script src="js/services/localization.js"></script>
     <script src="js/services/themes.js"></script>
     <script src="js/services/backup.js"></script>
     <script src="js/services/sync.js"></script>
     <script src="js/services/logger.js"></script>
+    <script src="js/services/maps.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/ip-whitelist.js"></script>
+    <script src="js/services/session.js"></script>
+    <script src="js/services/map-context-menu.js"></script>
+    <script src="js/services/tv-display.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/voice-commands.js"></script>
+    <script src="js/services/email-notifications.js"></script>
+    <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/two-factor.js"></script>
+    <script src="js/services/responsive.js"></script>
+    <script src="js/services/shortcuts.js"></script>
+    <script src="js/services/pwa.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SCRIPT.JS (Main Logic)                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="script.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- APP BOOTSTRAP                                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/app.js"></script>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- INIT                                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Init app
             if (window.TaxiApp) window.TaxiApp.init();
+
+            // Init PWA
+            if (window.TaxiPWA) window.TaxiPWA.init();
+
+            // Init responsive
+            if (window.TaxiResponsive) window.TaxiResponsive.init();
+
+            // Init shortcuts
+            if (window.TaxiShortcuts) window.TaxiShortcuts.init();
+
+            // Init dark mode
+            if (window.TaxiDarkMode) window.TaxiDarkMode.init();
+
+            // Init map context menu
+            if (window.TaxiMapContextMenu) {
+                setTimeout(() => {
+                    if (window.AppState?.map) {
+                        window.TaxiMapContextMenu.init();
+                        window.TaxiMapContextMenu.attachToMap(window.AppState.map);
+                    }
+                }, 3000);
+            }
+
+            // Init voice commands
+            if (window.TaxiVoice) {
+                window.TaxiVoice.init();
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => {
+                    window.TaxiVoice.toggle();
+                });
+            }
+
+            // Init dark mode toggle
+            document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+                if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
+            });
+
+            // Init 2FA
+            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
+
+            // Emergency listener
+            if (window.TaxiEmergency) window.TaxiEmergency.init();
+
+            console.log('🚀 Të gjitha modulet u inicializuan');
         });
     </script>
 </body>
