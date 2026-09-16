@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-extra.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👔</text></svg>">
 </head>
 <body class="theme-2">
@@ -63,6 +64,7 @@
             </div>
 
             <nav class="sidebar-nav">
+
                 <!-- KRYESORE -->
                 <a href="#" class="sidebar-item active" data-page="dashboard" onclick="AdminApp.switchPage('dashboard'); return false;">
                     <i class="fa-solid fa-gauge-high"></i>
@@ -85,8 +87,8 @@
                     <span>Porositë</span>
                 </a>
 
-                <!-- KATEGORIA: TARGETS & LOYALTY -->
-                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Marketing</div>
+                <!-- MARKETING -->
+                <div class="sidebar-section-title">Marketing</div>
                 <a href="#" class="sidebar-item" data-page="targets" onclick="AdminApp.switchPage('targets'); return false;">
                     <i class="fa-solid fa-bullseye"></i>
                     <span>Targets</span>
@@ -104,8 +106,8 @@
                     <span>SMS Templates</span>
                 </a>
 
-                <!-- KATEGORIA: OPERACIONET -->
-                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Operacione</div>
+                <!-- OPERACIONE -->
+                <div class="sidebar-section-title">Operacione</div>
                 <a href="#" class="sidebar-item" data-page="auto-dispatch" onclick="AdminApp.switchPage('auto-dispatch'); return false;">
                     <i class="fa-solid fa-robot"></i>
                     <span>Auto-Dispatch</span>
@@ -123,8 +125,8 @@
                     <span>Trackers</span>
                 </a>
 
-                <!-- KATEGORIA: FINANCA -->
-                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Financa</div>
+                <!-- FINANCA -->
+                <div class="sidebar-section-title">Financa</div>
                 <a href="#" class="sidebar-item" data-page="fuel" onclick="AdminApp.switchPage('fuel'); return false;">
                     <i class="fa-solid fa-gas-pump"></i>
                     <span>Fuel / Refill</span>
@@ -138,8 +140,8 @@
                     <span>Raporte</span>
                 </a>
 
-                <!-- KATEGORIA: SISTEMI -->
-                <div class="sidebar-section-title" style="padding:12px 16px 6px;font-size:10px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;opacity:.7;">Sistemi</div>
+                <!-- SISTEMI -->
+                <div class="sidebar-section-title">Sistemi</div>
                 <a href="#" class="sidebar-item" data-page="integrations" onclick="AdminApp.switchPage('integrations'); return false;">
                     <i class="fa-solid fa-plug"></i>
                     <span>Integrations</span>
@@ -210,6 +212,7 @@
                 </div>
             </header>
 
+            <!-- DASHBOARD -->
             <div class="admin-page active" data-page="dashboard">
                 <div class="kpi-grid">
                     <div class="kpi-card green">
@@ -265,6 +268,7 @@
                 </div>
             </div>
 
+            <!-- OPERATORS -->
             <div class="admin-page" data-page="operators">
                 <div class="page-actions">
                     <div class="filter-bar">
@@ -279,24 +283,28 @@
                 </div>
             </div>
 
+            <!-- DRIVERS -->
             <div class="admin-page" data-page="drivers">
                 <div id="drivers-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <!-- VEHICLES -->
             <div class="admin-page" data-page="vehicles">
                 <div id="vehicles-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <!-- ORDERS -->
             <div class="admin-page" data-page="orders">
                 <div id="orders-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <!-- REPORTS -->
             <div class="admin-page" data-page="reports">
                 <div id="reports-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
@@ -317,18 +325,21 @@
             <div class="admin-page" data-page="streets"></div>
             <div class="admin-page" data-page="mobile-users"></div>
 
+            <!-- VACATIONS -->
             <div class="admin-page" data-page="vacations">
                 <div id="vacations-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <!-- BLACKLIST -->
             <div class="admin-page" data-page="blacklist">
                 <div id="blacklist-content">
                     <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
                 </div>
             </div>
 
+            <!-- ADMINISTRATION -->
             <div class="admin-page" data-page="administration">
                 <div id="administration-content"></div>
             </div>
@@ -445,18 +456,18 @@
             if (window.TaxiApiKeys) TaxiApiKeys.init();
 
             // ═══ INIT MODULES TË REJA ═══
-            if (window.AdminTargets) AdminTargets.init();
-            if (window.AdminLoyalty) AdminLoyalty.init();
-            if (window.AdminFuel) AdminFuel.init();
-            if (window.AdminSalaries) AdminSalaries.init();
-            if (window.AdminAutoDispatch) AdminAutoDispatch.init();
-            if (window.AdminSmsTemplates) AdminSmsTemplates.init();
-            if (window.AdminFixedRoutes) AdminFixedRoutes.init();
-            if (window.AdminImport) AdminImport.init();
-            if (window.AdminIntegrations) AdminIntegrations.init();
-            if (window.AdminTrackers) AdminTrackers.init();
-            if (window.AdminStreets) AdminStreets.init();
-            if (window.AdminMobileUsers) AdminMobileUsers.init();
+            if (window.AdminTargets)       try { AdminTargets.init(); }       catch(e){ console.error('AdminTargets:', e); }
+            if (window.AdminLoyalty)       try { AdminLoyalty.init(); }       catch(e){ console.error('AdminLoyalty:', e); }
+            if (window.AdminFuel)          try { AdminFuel.init(); }          catch(e){ console.error('AdminFuel:', e); }
+            if (window.AdminSalaries)      try { AdminSalaries.init(); }      catch(e){ console.error('AdminSalaries:', e); }
+            if (window.AdminAutoDispatch)  try { AdminAutoDispatch.init(); }  catch(e){ console.error('AdminAutoDispatch:', e); }
+            if (window.AdminSmsTemplates)  try { AdminSmsTemplates.init(); }  catch(e){ console.error('AdminSmsTemplates:', e); }
+            if (window.AdminFixedRoutes)   try { AdminFixedRoutes.init(); }   catch(e){ console.error('AdminFixedRoutes:', e); }
+            if (window.AdminImport)        try { AdminImport.init(); }        catch(e){ console.error('AdminImport:', e); }
+            if (window.AdminIntegrations)  try { AdminIntegrations.init(); }  catch(e){ console.error('AdminIntegrations:', e); }
+            if (window.AdminTrackers)      try { AdminTrackers.init(); }      catch(e){ console.error('AdminTrackers:', e); }
+            if (window.AdminStreets)       try { AdminStreets.init(); }       catch(e){ console.error('AdminStreets:', e); }
+            if (window.AdminMobileUsers)   try { AdminMobileUsers.init(); }   catch(e){ console.error('AdminMobileUsers:', e); }
 
             console.log('👔 Admin Panel v3.0 gati');
         });
