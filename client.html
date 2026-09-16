@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
     <meta name="theme-color" content="#0a0416">
     <title>Taxi Klient | Client App</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,7 +72,6 @@
             <h1>Regjistrohu</h1>
             <p class="login-sub">Fut numrin tënd për të vazhduar</p>
 
-            <!-- STEP 1: PHONE -->
             <div class="login-step active" id="step-phone">
                 <div class="form-group">
                     <label><i class="fa-solid fa-phone"></i> Numri i telefonit</label>
@@ -94,7 +94,6 @@
                 </button>
             </div>
 
-            <!-- STEP 2: OTP -->
             <div class="login-step" id="step-otp" style="display:none;">
                 <p class="otp-info">
                     Kodi u dërgua te <strong id="otp-phone">+383 44 123 456</strong>
@@ -127,7 +126,6 @@
                 </button>
             </div>
 
-            <!-- STEP 3: NAME (i re) -->
             <div class="login-step" id="step-name" style="display:none;">
                 <div class="form-group">
                     <label><i class="fa-solid fa-user"></i> Emri i plotë</label>
@@ -150,7 +148,6 @@
     <!-- ═══ MAIN SCREEN ═══ -->
     <div class="screen main-screen" id="screen-main">
 
-        <!-- TOP BAR -->
         <header class="client-topbar">
             <div class="client-info">
                 <div class="client-avatar" id="client-avatar">?</div>
@@ -207,7 +204,7 @@
             </div>
         </div>
 
-        <!-- ACTIVE ORDER TRACKING -->
+        <!-- TRACKING -->
         <div class="tracking-section" id="tracking-section" style="display:none;">
             <div class="tracking-header">
                 <div class="th-status" id="th-status">
@@ -243,13 +240,27 @@
                 </div>
             </div>
 
-            <button class="btn-danger full" id="btn-cancel-ride">
+            <div class="tracking-actions">
+                <button class="btn-primary" id="btn-chat-driver" style="flex:1;">
+                    <i class="fa-solid fa-comments"></i> CHAT
+                </button>
+                <button class="btn-primary" id="btn-call-driver" style="flex:1;background:linear-gradient(135deg,#22c55e,#16a34a);">
+                    <i class="fa-solid fa-phone"></i> TELEFONO
+                </button>
+            </div>
+
+            <button class="btn-danger full" id="btn-cancel-ride" style="margin-top:8px;">
                 <i class="fa-solid fa-xmark"></i>
                 <span>ANULO POROSINË</span>
             </button>
+
+            <button class="btn-sos" onclick="ClientApp.activateSOS()" style="margin-top:8px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>SOS EMERGJENCË</span>
+            </button>
         </div>
 
-        <!-- RATE SCREEN -->
+        <!-- RATE -->
         <div class="rate-section" id="rate-section" style="display:none;">
             <div class="rate-card">
                 <div class="rate-header">
@@ -293,7 +304,6 @@
             </div>
         </div>
 
-        <!-- BOTTOM NAV -->
         <nav class="bottom-nav">
             <a href="#" class="nav-item active" data-tab="home" onclick="ClientApp.switchTab('home'); return false;">
                 <i class="fa-solid fa-home"></i>
@@ -311,10 +321,11 @@
 
     </div>
 
-    <!-- ═══ TOAST ═══ -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ SCRIPTS ═══ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- FIREBASE SDK                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -328,14 +339,25 @@
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
 
     <!-- DATA -->
     <script src="data.js"></script>
 
-    <!-- SHARED SERVICES -->
+    <!-- SERVICES -->
     <script src="js/services/sound.js"></script>
     <script src="js/services/logger.js"></script>
     <script src="js/services/maps.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/responsive.js"></script>
+    <script src="js/services/pwa.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/navigation.js"></script>
 
     <!-- CLIENT APP -->
     <script src="js/client/register.js"></script>
@@ -346,7 +368,11 @@
     <!-- INIT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            ClientApp.init();
+            if (window.ClientApp) ClientApp.init();
+            if (window.TaxiPWA) TaxiPWA.init();
+            if (window.TaxiResponsive) TaxiResponsive.init();
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
+            console.log('📱 Client App gati');
         });
     </script>
 </body>
