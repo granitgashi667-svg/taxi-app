@@ -2,7 +2,6 @@
 
 /**
  * call-center.js — Call Center i plotë
- * F1-F4 funksionojnë në DISPATCH dhe CALL CENTER
  */
 
 window.TaxiCallCenter = (() => {
@@ -22,6 +21,16 @@ window.TaxiCallCenter = (() => {
         F4: 'transfer'
     };
 
+    function getAppState() {
+        // Provo të dyja mënyrat
+        return window.AppState || (typeof AppState !== 'undefined' ? AppState : null);
+    }
+
+    function getCurrentPage() {
+        const s = getAppState();
+        return s?.currentPage || 'dispatch';
+    }
+
     // ═══ INIT ═══
     function init() {
         setupKeyboard();
@@ -30,27 +39,27 @@ window.TaxiCallCenter = (() => {
         console.log('✅ Call Center aktivizuar');
     }
 
-    // ═══ KEYBOARD F1-F4 GLOBAL ═══
+    // ═══ KEYBOARD F1-F4 ═══
     function setupKeyboard() {
         const handler = (e) => {
             const action = KEYS[e.key];
             if (!action) return;
 
-            console.log('⌨️ Tast u shtyp:', e.key, '| Page:', window.AppState?.currentPage);
+            console.log('⌨️ Tast:', e.key, '| Page:', getCurrentPage());
 
             // BLLOKO CHROME HELP
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
 
-            const page = window.AppState?.currentPage;
+            const page = getCurrentPage();
 
             // FAQJA DISPATCH
             if (page === 'dispatch') {
-                if (action === 'pickup')   { console.log('→ F1: Prano thirrjen'); acceptIncomingCallFromDispatch(); }
-                if (action === 'hangup')   { console.log('→ F2: Refuzo'); rejectIncomingCallFromDispatch(); }
-                if (action === 'hold')     { console.log('→ F3: Pritje'); holdIncomingCallFromDispatch(); }
-                if (action === 'transfer') { console.log('→ F4: Transfer'); transferIncomingCallFromDispatch(); }
+                if (action === 'pickup')   { console.log('→ F1'); acceptIncomingCallFromDispatch(); }
+                if (action === 'hangup')   { console.log('→ F2'); rejectIncomingCallFromDispatch(); }
+                if (action === 'hold')     { console.log('→ F3'); holdIncomingCallFromDispatch(); }
+                if (action === 'transfer') { console.log('→ F4'); transferIncomingCallFromDispatch(); }
                 return false;
             }
 
@@ -63,11 +72,9 @@ window.TaxiCallCenter = (() => {
             return false;
         };
 
-        // KAP ME CAPTURE — window dhe document
         window.addEventListener('keydown', handler, true);
         document.addEventListener('keydown', handler, true);
 
-        // Blloko keyup
         const keyupHandler = (e) => {
             if (KEYS[e.key]) {
                 e.preventDefault();
@@ -78,7 +85,7 @@ window.TaxiCallCenter = (() => {
         window.addEventListener('keyup', keyupHandler, true);
         document.addEventListener('keyup', keyupHandler, true);
 
-        console.log('⌨️ Shkurtesat F1-F4 të aktivizuara GLOBALISHT');
+        console.log('⌨️ Shkurtesat F1-F4 të aktivizuara');
     }
 
     function runAction(action) {
@@ -90,9 +97,10 @@ window.TaxiCallCenter = (() => {
         }
     }
 
-    // ═══ F1 — PRANO THIRRJEN (nga Dispatch) ═══
+    // ═══ F1 — PRANO NGA DISPATCH ═══
     function acceptIncomingCallFromDispatch() {
-        const calls = window.AppState?.incomingCalls || [];
+        const s = getAppState();
+        const calls = s?.incomingCalls || [];
         if (!calls.length) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
             return;
@@ -108,11 +116,12 @@ window.TaxiCallCenter = (() => {
         if (nameField && call.name) nameField.value = call.name;
         if (pickupField && call.lastAddress) pickupField.value = call.lastAddress;
 
-        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
+
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
 
         if (typeof stopRing === 'function') stopRing();
-        else if (window.TaxiSound) window.TaxiSound.stopRing();
+        if (window.TaxiSound) window.TaxiSound.stopRing();
 
         addToQueue({
             id: call.id,
@@ -130,9 +139,10 @@ window.TaxiCallCenter = (() => {
         if (window.TaxiSound) window.TaxiSound.beep(1200, 0.15, 0.1);
     }
 
-    // ═══ F2 — REFUZO (nga Dispatch) ═══
+    // ═══ F2 — REFUZO NGA DISPATCH ═══
     function rejectIncomingCallFromDispatch() {
-        const calls = window.AppState?.incomingCalls || [];
+        const s = getAppState();
+        const calls = s?.incomingCalls || [];
         if (!calls.length) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
             return;
@@ -143,20 +153,21 @@ window.TaxiCallCenter = (() => {
 
         missCall(call);
 
-        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
 
         if (typeof stopRing === 'function') stopRing();
-        else if (window.TaxiSound) window.TaxiSound.stopRing();
+        if (window.TaxiSound) window.TaxiSound.stopRing();
 
         if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
 
         showToast('info', '📵 U refuzua', call.phone);
     }
 
-    // ═══ F3 — NË PRITJE (nga Dispatch) ═══
+    // ═══ F3 — NË PRITJE NGA DISPATCH ═══
     function holdIncomingCallFromDispatch() {
-        const calls = window.AppState?.incomingCalls || [];
+        const s = getAppState();
+        const calls = s?.incomingCalls || [];
         if (!calls.length) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
             return;
@@ -173,11 +184,11 @@ window.TaxiCallCenter = (() => {
             holdStart: Date.now()
         });
 
-        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
 
         if (typeof stopRing === 'function') stopRing();
-        else if (window.TaxiSound) window.TaxiSound.stopRing();
+        if (window.TaxiSound) window.TaxiSound.stopRing();
 
         render();
 
@@ -185,9 +196,10 @@ window.TaxiCallCenter = (() => {
         showToast('warning', '⏸️ Në pritje', `${call.phone} u vu në pritje`);
     }
 
-    // ═══ F4 — TRANSFER (nga Dispatch) ═══
+    // ═══ F4 — TRANSFER NGA DISPATCH ═══
     function transferIncomingCallFromDispatch() {
-        const calls = window.AppState?.incomingCalls || [];
+        const s = getAppState();
+        const calls = s?.incomingCalls || [];
         if (!calls.length) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
             return;
@@ -204,11 +216,11 @@ window.TaxiCallCenter = (() => {
             startTime: Date.now()
         };
 
-        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
 
         if (typeof stopRing === 'function') stopRing();
-        else if (window.TaxiSound) window.TaxiSound.stopRing();
+        if (window.TaxiSound) window.TaxiSound.stopRing();
 
         openTransferModal();
 
@@ -231,7 +243,6 @@ window.TaxiCallCenter = (() => {
         return item;
     }
 
-    // ═══ PRANO THIRRJEN E PARË ═══
     function pickup() {
         if (state.activeCall) {
             showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
@@ -243,11 +254,7 @@ window.TaxiCallCenter = (() => {
             return;
         }
 
-        state.activeCall = {
-            ...call,
-            startTime: Date.now(),
-            answeredAt: Date.now()
-        };
+        state.activeCall = { ...call, startTime: Date.now(), answeredAt: Date.now() };
 
         logEvent('call_answered', { phone: call.phone });
         if (window.TaxiSound) window.TaxiSound.beep(1200, 0.15, 0.1);
@@ -268,7 +275,6 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ MBYLL THIRRJEN ═══
     function hangup() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -291,16 +297,12 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ VENDOS NË PRITJE ═══
     function hold() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
             return;
         }
-        const item = {
-            ...state.activeCall,
-            holdStart: Date.now()
-        };
+        const item = { ...state.activeCall, holdStart: Date.now() };
         state.onHold.push(item);
         state.activeCall = null;
         logEvent('call_hold', { phone: item.phone });
@@ -308,7 +310,6 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ KTHE NGA PRITJA ═══
     function unhold(id) {
         const idx = state.onHold.findIndex(h => h.id === id);
         if (idx < 0) return;
@@ -335,7 +336,6 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ TRANSFER ═══
     function openTransfer() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -363,19 +363,12 @@ window.TaxiCallCenter = (() => {
 
         const myUid = window.TaxiAuth?.currentUser()?.uid;
         operators = operators.filter(o => o.uid !== myUid);
-
-        operators = operators.map(op => {
-            const busy = isOperatorBusy(op.uid);
-            return { ...op, busy };
-        });
+        operators = operators.map(op => ({ ...op, busy: isOperatorBusy(op.uid) }));
 
         modal.innerHTML = `
             <div class="modal">
                 <div class="modal-header">
-                    <div class="modal-title">
-                        <i class="fa-solid fa-share"></i>
-                        <h3>Transfero thirrjen</h3>
-                    </div>
+                    <div class="modal-title"><i class="fa-solid fa-share"></i><h3>Transfero thirrjen</h3></div>
                     <button class="modal-close" onclick="document.getElementById('modal-transfer-call').remove()">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -386,31 +379,21 @@ window.TaxiCallCenter = (() => {
                             <div style="font-size:11px;color:var(--text-muted);">${state.activeCall.name || 'Klient'}</div>
                         </div>
                     </div>
-
-                    <div class="detail-section-title" style="margin-top:16px;">
-                        <i class="fa-solid fa-users"></i> Zgjedh operatorin
-                    </div>
-
+                    <div class="detail-section-title" style="margin-top:16px;"><i class="fa-solid fa-users"></i> Zgjedh operatorin</div>
                     <div class="operator-list">
-                        ${operators.length === 0 ? `
-                            <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">
-                                <i class="fa-solid fa-user-slash" style="font-size:32px;opacity:0.3;display:block;margin-bottom:12px;"></i>
-                                Nuk ka operatorë të tjerë
-                            </div>
-                        ` : operators.map(op => `
-                            <div class="operator-item ${op.busy ? 'busy' : 'free'}" onclick="TaxiCallCenter.transferToOperator('${op.uid}', '${(op.name || op.email || 'Operator').replace(/'/g, "\\'")}')">
-                                <div class="op-avatar">${(op.name || op.email || 'OP').slice(0, 2).toUpperCase()}</div>
-                                <div class="op-info">
-                                    <div class="op-name">${op.name || op.email}</div>
-                                    <div class="op-role">${op.role || 'Dispatcher'}</div>
+                        ${operators.length === 0 ? `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;"><i class="fa-solid fa-user-slash" style="font-size:32px;opacity:0.3;display:block;margin-bottom:12px;"></i>Nuk ka operatorë të tjerë</div>` :
+                            operators.map(op => `
+                                <div class="operator-item ${op.busy ? 'busy' : 'free'}" onclick="TaxiCallCenter.transferToOperator('${op.uid}', '${(op.name || op.email || 'Operator').replace(/'/g, "\\'")}')">
+                                    <div class="op-avatar">${(op.name || op.email || 'OP').slice(0, 2).toUpperCase()}</div>
+                                    <div class="op-info">
+                                        <div class="op-name">${op.name || op.email}</div>
+                                        <div class="op-role">${op.role || 'Dispatcher'}</div>
+                                    </div>
+                                    <div class="op-status ${op.busy ? 'busy' : 'free'}">
+                                        ${op.busy ? '<i class="fa-solid fa-circle"></i> I ZËNË' : '<i class="fa-solid fa-circle"></i> I LIRË'}
+                                    </div>
                                 </div>
-                                <div class="op-status ${op.busy ? 'busy' : 'free'}">
-                                    ${op.busy
-                                        ? '<i class="fa-solid fa-circle"></i> I ZËNË'
-                                        : '<i class="fa-solid fa-circle"></i> I LIRË'}
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -418,7 +401,6 @@ window.TaxiCallCenter = (() => {
                 </div>
             </div>
         `;
-
         document.body.appendChild(modal);
     }
 
@@ -433,24 +415,18 @@ window.TaxiCallCenter = (() => {
 
     function transferToOperator(targetUid, targetName) {
         if (!state.activeCall) return;
-
         const call = state.activeCall;
 
         state.history.unshift({
-            id: call.id,
-            phone: call.phone,
-            name: call.name,
-            status: 'T',
-            statusLabel: `Transferuar → ${targetName}`,
-            time: call.time,
-            duration: Math.floor((Date.now() - call.startTime) / 1000),
+            id: call.id, phone: call.phone, name: call.name,
+            status: 'T', statusLabel: `Transferuar → ${targetName}`,
+            time: call.time, duration: Math.floor((Date.now() - call.startTime) / 1000),
             timestamp: Date.now()
         });
 
         saveTransferToFirestore(call, targetUid, targetName);
 
         state.activeCall = null;
-
         document.getElementById('modal-transfer-call')?.remove();
 
         showToast('success', '🔄 U transferua', `Tek ${targetName}`);
@@ -463,15 +439,11 @@ window.TaxiCallCenter = (() => {
         if (!db) return;
         try {
             await db.collection('transfers').add({
-                callId: call.id,
-                phone: call.phone,
-                name: call.name,
-                targetUid,
-                targetName,
+                callId: call.id, phone: call.phone, name: call.name,
+                targetUid, targetName,
                 fromUid: window.TaxiAuth?.currentUser()?.uid || null,
                 fromName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
-                createdAt: Date.now(),
-                status: 'pending'
+                createdAt: Date.now(), status: 'pending'
             });
         } catch (e) { console.warn('Transfer save:', e); }
     }
@@ -526,31 +498,15 @@ window.TaxiCallCenter = (() => {
         const db = window.TaxiFirebase?.db;
         if (db) {
             try {
-                await db.collection('transfers').doc(transferId).update({
-                    status: 'accepted',
-                    acceptedAt: Date.now()
-                });
-            } catch (e) { console.warn(e); }
+                await db.collection('transfers').doc(transferId).update({ status: 'accepted', acceptedAt: Date.now() });
+            } catch (e) {}
         }
-
         if (!state.activeCall) {
-            state.activeCall = {
-                id: Date.now(),
-                phone: phone,
-                name: name || 'Transferuar',
-                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                startTime: Date.now()
-            };
+            state.activeCall = { id: Date.now(), phone, name: name || 'Transferuar', time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }), startTime: Date.now() };
             showToast('success', '📞 Thirrje e re', phone);
             render();
         } else {
-            state.queue.unshift({
-                id: Date.now(),
-                phone: phone,
-                name: name + ' (transferuar)',
-                time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                waitStart: Date.now()
-            });
+            state.queue.unshift({ id: Date.now(), phone, name: name + ' (transferuar)', time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }), waitStart: Date.now() });
             showToast('info', '⏸️ Në radhë', 'Thirrja u vu në radhë');
             render();
         }
@@ -559,12 +515,7 @@ window.TaxiCallCenter = (() => {
     async function rejectTransfer(transferId) {
         const db = window.TaxiFirebase?.db;
         if (db) {
-            try {
-                await db.collection('transfers').doc(transferId).update({
-                    status: 'rejected',
-                    rejectedAt: Date.now()
-                });
-            } catch (e) {}
+            try { await db.collection('transfers').doc(transferId).update({ status: 'rejected', rejectedAt: Date.now() }); } catch (e) {}
         }
         showToast('info', 'Refuzuar', 'Transferimi u refuzua');
     }
@@ -573,30 +524,17 @@ window.TaxiCallCenter = (() => {
         const idx = state.queue.findIndex(c => c.id === id);
         if (idx < 0) return;
         const call = state.queue.splice(idx, 1)[0];
-        state.history.unshift({
-            id: call.id,
-            phone: call.phone,
-            name: call.name,
-            status: 'R',
-            statusLabel: 'Refuzuar',
-            time: call.time,
-            duration: 0,
-            timestamp: Date.now()
-        });
+        state.history.unshift({ id: call.id, phone: call.phone, name: call.name, status: 'R', statusLabel: 'Refuzuar', time: call.time, duration: 0, timestamp: Date.now() });
         logEvent('call_rejected', { phone: call.phone });
         render();
     }
 
     function missCall(call) {
         state.history.unshift({
-            id: call.id || Date.now(),
-            phone: call.phone,
-            name: call.name || '',
-            status: 'M',
-            statusLabel: 'Humbur',
+            id: call.id || Date.now(), phone: call.phone, name: call.name || '',
+            status: 'M', statusLabel: 'Humbur',
             time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-            duration: 0,
-            timestamp: Date.now()
+            duration: 0, timestamp: Date.now()
         });
         logEvent('call_missed', { phone: call.phone });
         render();
@@ -605,21 +543,15 @@ window.TaxiCallCenter = (() => {
     async function loadHistoryFromFirestore() {
         if (!window.TaxiFirebase?.db) return;
         try {
-            const snap = await window.TaxiFirebase.db.collection('calls')
-                .orderBy('startedAt', 'desc')
-                .limit(50)
-                .get();
+            const snap = await window.TaxiFirebase.db.collection('calls').orderBy('startedAt', 'desc').limit(50).get();
             state.history = snap.docs.map(doc => {
                 const d = doc.data();
                 return {
-                    id: doc.id,
-                    phone: d.phone || '',
-                    name: d.clientName || '',
+                    id: doc.id, phone: d.phone || '', name: d.clientName || '',
                     status: d.status === 'answered' ? 'A' : d.status === 'missed' ? 'M' : d.status === 'rejected' ? 'R' : 'A',
                     statusLabel: d.status === 'answered' ? 'Pranuar' : d.status === 'missed' ? 'Humbur' : d.status === 'rejected' ? 'Refuzuar' : '—',
                     time: d.startedAt ? new Date(d.startedAt).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }) : '',
-                    duration: d.duration || 0,
-                    timestamp: d.startedAt || 0
+                    duration: d.duration || 0, timestamp: d.startedAt || 0
                 };
             });
             render();
@@ -630,8 +562,7 @@ window.TaxiCallCenter = (() => {
         if (!window.TaxiFirebase?.db) return;
         try {
             await window.TaxiFirebase.db.collection('calls').add({
-                type,
-                ...data,
+                type, ...data,
                 operatorId: window.TaxiAuth?.currentUser()?.uid || null,
                 operatorName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
                 startedAt: Date.now()
@@ -646,11 +577,9 @@ window.TaxiCallCenter = (() => {
     }
 
     function formatWait(ms) {
-        const sec = Math.floor((Date.now() - ms) / 1000);
-        return formatDuration(sec);
+        return formatDuration(Math.floor((Date.now() - ms) / 1000));
     }
 
-    // ═══ RENDER ═══
     function render() {
         const el = document.querySelector('.page[data-page="calls"]');
         if (!el) return;
@@ -666,10 +595,7 @@ window.TaxiCallCenter = (() => {
             <div class="page-header">
                 <div class="page-title">
                     <i class="fa-solid fa-phone-volume"></i>
-                    <div>
-                        <h2>Call Center</h2>
-                        <p>Menaxhimi i thirrjeve · ${queueCount} në radhë · ${holdCount} në pritje</p>
-                    </div>
+                    <div><h2>Call Center</h2><p>Menaxhimi i thirrjeve · ${queueCount} në radhë · ${holdCount} në pritje</p></div>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
                     <div class="shortcut-hint"><kbd>F1</kbd> Prano</div>
@@ -680,40 +606,16 @@ window.TaxiCallCenter = (() => {
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card pink">
-                    <div class="kpi-label"><i class="fa-solid fa-phone"></i> Në radhë</div>
-                    <div class="kpi-value pink">${queueCount}</div>
-                    <div class="kpi-sub">Thirrje duke pritur</div>
-                </div>
-                <div class="kpi-card yellow">
-                    <div class="kpi-label"><i class="fa-solid fa-pause"></i> Në pritje</div>
-                    <div class="kpi-value yellow">${holdCount}</div>
-                    <div class="kpi-sub">Mbahtur aktive</div>
-                </div>
-                <div class="kpi-card green">
-                    <div class="kpi-label"><i class="fa-solid fa-check"></i> Pranuar</div>
-                    <div class="kpi-value green">${answered}</div>
-                    <div class="kpi-sub">Sot</div>
-                </div>
-                <div class="kpi-card blue">
-                    <div class="kpi-label"><i class="fa-solid fa-phone-slash"></i> Humbur / Refuzuar</div>
-                    <div class="kpi-value blue">${missed + rejected}</div>
-                    <div class="kpi-sub">${missed} M · ${rejected} R</div>
-                </div>
+                <div class="kpi-card pink"><div class="kpi-label"><i class="fa-solid fa-phone"></i> Në radhë</div><div class="kpi-value pink">${queueCount}</div><div class="kpi-sub">Thirrje duke pritur</div></div>
+                <div class="kpi-card yellow"><div class="kpi-label"><i class="fa-solid fa-pause"></i> Në pritje</div><div class="kpi-value yellow">${holdCount}</div><div class="kpi-sub">Mbahtur aktive</div></div>
+                <div class="kpi-card green"><div class="kpi-label"><i class="fa-solid fa-check"></i> Pranuar</div><div class="kpi-value green">${answered}</div><div class="kpi-sub">Sot</div></div>
+                <div class="kpi-card blue"><div class="kpi-label"><i class="fa-solid fa-phone-slash"></i> Humbur / Refuzuar</div><div class="kpi-value blue">${missed + rejected}</div><div class="kpi-sub">${missed} M · ${rejected} R</div></div>
             </div>
 
             ${state.activeCall ? `
                 <div class="active-call-banner">
-                    <div class="acb-left">
-                        <div class="acb-pulse"></div>
-                        <div>
-                            <div class="acb-phone">${state.activeCall.phone}</div>
-                            <div class="acb-name">${state.activeCall.name || 'Klient'}</div>
-                        </div>
-                    </div>
-                    <div class="acb-center">
-                        <div class="acb-timer" id="acb-timer">${formatDuration(Math.floor((Date.now() - state.activeCall.startTime) / 1000))}</div>
-                    </div>
+                    <div class="acb-left"><div class="acb-pulse"></div><div><div class="acb-phone">${state.activeCall.phone}</div><div class="acb-name">${state.activeCall.name || 'Klient'}</div></div></div>
+                    <div class="acb-center"><div class="acb-timer" id="acb-timer">${formatDuration(Math.floor((Date.now() - state.activeCall.startTime) / 1000))}</div></div>
                     <div class="acb-right">
                         <button class="btn-warning" onclick="TaxiCallCenter.hold()"><i class="fa-solid fa-pause"></i> Pritje (F3)</button>
                         <button class="btn-primary" onclick="TaxiCallCenter.openTransfer()"><i class="fa-solid fa-share"></i> Transfer (F4)</button>
@@ -725,98 +627,56 @@ window.TaxiCallCenter = (() => {
             <div class="call-center-grid">
                 <div class="cc-panel">
                     <div class="cc-panel-header">
-                        <div class="cc-panel-title">
-                            <i class="fa-solid fa-list-ol"></i>
-                            <h3>Radha e Thirrjeve</h3>
-                            <span class="count-badge">${queueCount}</span>
-                        </div>
-                        <button class="btn-primary" onclick="TaxiCallCenter.pickup()" style="padding:6px 12px;font-size:11px;">
-                            <i class="fa-solid fa-phone"></i> Prano (F1)
-                        </button>
+                        <div class="cc-panel-title"><i class="fa-solid fa-list-ol"></i><h3>Radha e Thirrjeve</h3><span class="count-badge">${queueCount}</span></div>
+                        <button class="btn-primary" onclick="TaxiCallCenter.pickup()" style="padding:6px 12px;font-size:11px;"><i class="fa-solid fa-phone"></i> Prano (F1)</button>
                     </div>
                     <div class="cc-panel-body">
                         ${queueCount === 0 ? `<div class="empty-state"><i class="fa-solid fa-phone-slash"></i><p>Radha është bosh</p></div>` :
                             state.queue.map((c, idx) => `
                                 <div class="queue-item ${idx === 0 ? 'first' : ''}">
-                                    <div class="qi-left">
-                                        <div class="qi-number">${idx + 1}</div>
-                                        <div>
-                                            <div class="qi-phone">${c.phone}</div>
-                                            <div class="qi-name">${c.name || 'Klient i re'}</div>
-                                        </div>
-                                    </div>
-                                    <div class="qi-middle">
-                                        <div class="qi-wait" data-start="${c.waitStart}">${formatWait(c.waitStart)}</div>
-                                        ${c.lastAddress ? `<div class="qi-addr">📍 ${c.lastAddress}</div>` : ''}
-                                    </div>
+                                    <div class="qi-left"><div class="qi-number">${idx + 1}</div><div><div class="qi-phone">${c.phone}</div><div class="qi-name">${c.name || 'Klient i re'}</div></div></div>
+                                    <div class="qi-middle"><div class="qi-wait" data-start="${c.waitStart}">${formatWait(c.waitStart)}</div>${c.lastAddress ? `<div class="qi-addr">📍 ${c.lastAddress}</div>` : ''}</div>
                                     <div class="qi-actions">
-                                        <button class="action-btn auto" onclick="TaxiCallCenter.pickupSpecific(${c.id})" title="Prano"><i class="fa-solid fa-phone"></i></button>
-                                        <button class="action-btn cancel" onclick="TaxiCallCenter.reject(${c.id})" title="Refuzo"><i class="fa-solid fa-xmark"></i></button>
+                                        <button class="action-btn auto" onclick="TaxiCallCenter.pickupSpecific(${c.id})"><i class="fa-solid fa-phone"></i></button>
+                                        <button class="action-btn cancel" onclick="TaxiCallCenter.reject(${c.id})"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
-                            `).join('')
-                        }
+                            `).join('')}
                     </div>
                 </div>
 
                 <div class="cc-panel">
-                    <div class="cc-panel-header">
-                        <div class="cc-panel-title">
-                            <i class="fa-solid fa-pause"></i>
-                            <h3>Në Pritje</h3>
-                            <span class="count-badge warning">${holdCount}</span>
-                        </div>
-                    </div>
+                    <div class="cc-panel-header"><div class="cc-panel-title"><i class="fa-solid fa-pause"></i><h3>Në Pritje</h3><span class="count-badge warning">${holdCount}</span></div></div>
                     <div class="cc-panel-body">
                         ${holdCount === 0 ? `<div class="empty-state"><i class="fa-solid fa-circle-pause"></i><p>Nuk ka thirrje në pritje</p></div>` :
                             state.onHold.map(h => `
                                 <div class="hold-item">
-                                    <div class="hi-left">
-                                        <div class="hi-pulse"></div>
-                                        <div>
-                                            <div class="hi-phone">${h.phone}</div>
-                                            <div class="hi-name">${h.name || 'Klient'}</div>
-                                        </div>
-                                    </div>
-                                    <div class="hi-middle">
-                                        <div class="hi-time" data-start="${h.holdStart}">${formatWait(h.holdStart)}</div>
-                                    </div>
+                                    <div class="hi-left"><div class="hi-pulse"></div><div><div class="hi-phone">${h.phone}</div><div class="hi-name">${h.name || 'Klient'}</div></div></div>
+                                    <div class="hi-middle"><div class="hi-time" data-start="${h.holdStart}">${formatWait(h.holdStart)}</div></div>
                                     <div class="hi-actions">
                                         <button class="action-btn auto" onclick="TaxiCallCenter.unhold(${h.id})"><i class="fa-solid fa-play"></i> Kthe</button>
                                         <button class="action-btn cancel" onclick="TaxiCallCenter.dropHold(${h.id})"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
-                            `).join('')
-                        }
+                            `).join('')}
                     </div>
                 </div>
 
                 <div class="cc-panel">
-                    <div class="cc-panel-header">
-                        <div class="cc-panel-title">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                            <h3>Historiku</h3>
-                            <span class="count-badge">${todayTotal}</span>
-                        </div>
-                    </div>
+                    <div class="cc-panel-header"><div class="cc-panel-title"><i class="fa-solid fa-clock-rotate-left"></i><h3>Historiku</h3><span class="count-badge">${todayTotal}</span></div></div>
                     <div class="cc-panel-body">
                         ${todayTotal === 0 ? `<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>Nuk ka histori</p></div>` :
                             state.history.slice(0, 30).map(h => `
                                 <div class="history-item-call">
                                     <div class="hic-status ${h.status}">${h.status}</div>
-                                    <div class="hic-info">
-                                        <div class="hic-phone">${h.phone}</div>
-                                        <div class="hic-meta">${h.statusLabel} · ${h.time}</div>
-                                    </div>
+                                    <div class="hic-info"><div class="hic-phone">${h.phone}</div><div class="hic-meta">${h.statusLabel} · ${h.time}</div></div>
                                     ${h.duration > 0 ? `<div class="hic-duration">${formatDuration(h.duration)}</div>` : ''}
                                 </div>
-                            `).join('')
-                        }
+                            `).join('')}
                     </div>
                 </div>
             </div>
         `;
-
         startTimers();
     }
 
@@ -842,8 +702,7 @@ window.TaxiCallCenter = (() => {
         hangup, hold, unhold, dropHold,
         openTransfer, reject,
         transferToOperator, acceptTransfer, rejectTransfer,
-        state,
-        operatorsBusy
+        state, operatorsBusy
     };
 })();
 
