@@ -97,10 +97,17 @@ window.TaxiCallCenter = (() => {
         }
     }
 
-    // ═══ F1 — PRANO NGA DISPATCH ═══
+       // ═══ F1 — PRANO NGA DISPATCH ═══
     function acceptIncomingCallFromDispatch() {
         const s = getAppState();
         const calls = s?.incomingCalls || [];
+
+        // Nëse ka thirrje aktive → F1 nuk bën gjë
+        if (state.activeCall) {
+            showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale me F2 së pari');
+            return;
+        }
+
         if (!calls.length) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
             return;
@@ -108,6 +115,7 @@ window.TaxiCallCenter = (() => {
 
         const call = calls[0];
 
+        // Plotëso formën
         const phoneField = document.getElementById('client-phone');
         const nameField = document.getElementById('client-name');
         const pickupField = document.getElementById('pickup-address');
@@ -116,26 +124,33 @@ window.TaxiCallCenter = (() => {
         if (nameField && call.name) nameField.value = call.name;
         if (pickupField && call.lastAddress) pickupField.value = call.lastAddress;
 
-        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
+        // Bëje thirrjen aktive
+        state.activeCall = {
+            id: call.id,
+            phone: call.phone,
+            name: call.name || 'Klient',
+            lastAddress: call.lastAddress || '',
+            time: call.time,
+            startTime: Date.now(),
+            answeredAt: Date.now()
+        };
 
+        // Fshi nga lista hyrëse
+        if (s) s.incomingCalls = calls.filter(c => c.id !== call.id);
         if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
 
+        // Ndal zilen
         if (typeof stopRing === 'function') stopRing();
         if (window.TaxiSound) window.TaxiSound.stopRing();
 
-        addToQueue({
-            id: call.id,
-            phone: call.phone,
-            name: call.name,
-            lastAddress: call.lastAddress
-        });
+        logEvent('call_answered', { phone: call.phone });
 
         if (phoneField) {
             phoneField.focus();
             phoneField.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        showToast('success', '📞 Thirrja u pranua', `${call.phone} — plotëso porosinë`);
+        showToast('success', '📞 Thirrja u pranua', `${call.phone} — plotëso porosinë (F2=Mbyll, F3=Pritje, F4=Transfer)`);
         if (window.TaxiSound) window.TaxiSound.beep(1200, 0.15, 0.1);
     }
 
