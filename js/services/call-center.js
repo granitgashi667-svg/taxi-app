@@ -155,11 +155,20 @@ window.TaxiCallCenter = (() => {
     }
 
     // ═══ F2 — REFUZO NGA DISPATCH ═══
+      // ═══ F2 — MBYLL NGA DISPATCH ═══
     function rejectIncomingCallFromDispatch() {
         const s = getAppState();
+
+        // Nëse ka thirrje aktive → mbyll atë
+        if (state.activeCall) {
+            hangup();
+            return;
+        }
+
+        // Përndryshe refuzo thirrjen e re në radhë
         const calls = s?.incomingCalls || [];
         if (!calls.length) {
-            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje për të mbyllur');
             return;
         }
 
@@ -179,12 +188,20 @@ window.TaxiCallCenter = (() => {
         showToast('info', '📵 U refuzua', call.phone);
     }
 
-    // ═══ F3 — NË PRITJE NGA DISPATCH ═══
+        // ═══ F3 — HOLD NGA DISPATCH ═══
     function holdIncomingCallFromDispatch() {
         const s = getAppState();
+
+        // Nëse ka thirrje aktive → vë në pritje
+        if (state.activeCall) {
+            hold();
+            return;
+        }
+
+        // Përndryshe vë thirrjen e re në pritje
         const calls = s?.incomingCalls || [];
         if (!calls.length) {
-            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje për të vënë në pritje');
             return;
         }
 
@@ -211,12 +228,20 @@ window.TaxiCallCenter = (() => {
         showToast('warning', '⏸️ Në pritje', `${call.phone} u vu në pritje`);
     }
 
-    // ═══ F4 — TRANSFER NGA DISPATCH ═══
+        // ═══ F4 — TRANSFER NGA DISPATCH ═══
     function transferIncomingCallFromDispatch() {
         const s = getAppState();
+
+        // Nëse ka thirrje aktive → hap transferin
+        if (state.activeCall) {
+            openTransferModal();
+            return;
+        }
+
+        // Përndryshe bëj thirrjen e re aktive + hap transferin
         const calls = s?.incomingCalls || [];
         if (!calls.length) {
-            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje për të transferuar');
             return;
         }
 
