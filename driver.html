@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
     <meta name="theme-color" content="#0a0416">
     <title>Taxi Shofer | Driver App</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -57,7 +58,6 @@
     <!-- ═══ MAIN APP SCREEN ═══ -->
     <div class="screen main-screen" id="screen-main">
 
-        <!-- TOP BAR -->
         <header class="driver-topbar">
             <div class="driver-info">
                 <div class="driver-avatar" id="driver-avatar">?</div>
@@ -75,7 +75,6 @@
             </button>
         </header>
 
-        <!-- STATUS BANNER -->
         <div class="status-banner" id="status-banner">
             <div class="status-banner-content">
                 <div class="sb-icon" id="sb-icon"><i class="fa-solid fa-car"></i></div>
@@ -89,7 +88,6 @@
             </div>
         </div>
 
-        <!-- ACTIVE ORDER CARD -->
         <div class="active-order" id="active-order" style="display:none;">
             <div class="ao-header">
                 <div class="ao-badge" id="ao-badge">POROSIA JOTE</div>
@@ -104,6 +102,9 @@
                     </div>
                     <button class="ao-call" onclick="DriverApp.callClient()">
                         <i class="fa-solid fa-phone"></i>
+                    </button>
+                    <button class="ao-chat" onclick="DriverApp.openChat()" title="Chat">
+                        <i class="fa-solid fa-comments"></i>
                     </button>
                 </div>
                 <div class="ao-row">
@@ -145,7 +146,6 @@
             </div>
         </div>
 
-        <!-- QUEUE (NË PRITJE) -->
         <div class="queue-section" id="queue-section">
             <div class="queue-header">
                 <div class="queue-title">
@@ -162,12 +162,14 @@
             </div>
         </div>
 
-        <!-- MAP BUTTON -->
         <button class="map-fab" onclick="DriverApp.toggleMap()">
             <i class="fa-solid fa-map"></i>
         </button>
 
-        <!-- BOTTOM NAV -->
+        <button class="sos-fab" onclick="DriverApp.activateSOS()" title="SOS">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </button>
+
         <nav class="bottom-nav">
             <a href="#" class="nav-item active" data-tab="orders" onclick="DriverApp.switchTab('orders'); return false;">
                 <i class="fa-solid fa-clipboard-list"></i>
@@ -189,7 +191,7 @@
 
     </div>
 
-    <!-- ═══ MODAL: POROSI E RE ═══ -->
+    <!-- MODAL: POROSI E RE -->
     <div class="order-modal" id="modal-new-order">
         <div class="order-modal-content">
             <div class="order-modal-header">
@@ -241,7 +243,7 @@
         </div>
     </div>
 
-    <!-- ═══ MODAL: STATUS ═══ -->
+    <!-- MODAL: STATUS -->
     <div class="status-modal" id="modal-status">
         <div class="status-modal-content">
             <h3>Zgjidh statusin</h3>
@@ -272,48 +274,78 @@
         </div>
     </div>
 
-    <!-- ═══ TOAST ═══ -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ SCRIPTS ═══ -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- FIREBASE SDK                                            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="firebase-config.js"></script>
 
-    <!-- CORE -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE (7)                                                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
 
     <!-- DATA -->
     <script src="data.js"></script>
 
-    <!-- SERVICES (të përbashkëtat) -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES (të përbashkëtat)                              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/operators.js"></script>
+    <script src="js/services/messages.js"></script>
     <script src="js/services/sound.js"></script>
     <script src="js/services/sms.js"></script>
     <script src="js/services/navigation.js"></script>
     <script src="js/services/drivers.js"></script>
     <script src="js/services/logger.js"></script>
     <script src="js/services/audit-log.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/responsive.js"></script>
+    <script src="js/services/pwa.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/maps.js"></script>
 
-    <!-- DRIVER APP -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DRIVER APP                                              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="js/driver/login.js"></script>
     <script src="js/driver/app.js"></script>
     <script src="js/driver/queue.js"></script>
     <script src="js/driver/navigation.js"></script>
 
-    <!-- INIT -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- INIT                                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            DriverApp.init();
+            // Init app
+            if (window.DriverApp) DriverApp.init();
+
+            // PWA
+            if (window.TaxiPWA) TaxiPWA.init();
+
+            // Responsive
+            if (window.TaxiResponsive) TaxiResponsive.init();
+
+            // Dark mode
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
+
+            console.log('🚗 Driver App gati');
         });
     </script>
 </body>
