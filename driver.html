@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="css/driver.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
 </head>
 <body>
 
-    <!-- ═══ LOADING ═══ -->
     <div class="loading-overlay" id="loading-overlay">
         <div class="loading-spinner">
             <div class="spinner-ring"></div>
@@ -24,7 +24,6 @@
         </div>
     </div>
 
-    <!-- ═══ LOGIN SCREEN ═══ -->
     <div class="screen login-screen active" id="screen-login">
         <div class="login-box">
             <div class="login-logo">
@@ -55,7 +54,6 @@
         </div>
     </div>
 
-    <!-- ═══ MAIN APP SCREEN ═══ -->
     <div class="screen main-screen" id="screen-main">
 
         <header class="driver-topbar">
@@ -191,7 +189,6 @@
 
     </div>
 
-    <!-- MODAL: POROSI E RE -->
     <div class="order-modal" id="modal-new-order">
         <div class="order-modal-content">
             <div class="order-modal-header">
@@ -243,7 +240,6 @@
         </div>
     </div>
 
-    <!-- MODAL: STATUS -->
     <div class="status-modal" id="modal-status">
         <div class="status-modal-content">
             <h3>Zgjidh statusin</h3>
@@ -276,18 +272,13 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- FIREBASE SDK                                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="firebase-config.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- CORE (7)                                                -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- CORE -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -299,9 +290,7 @@
     <!-- DATA -->
     <script src="data.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SERVICES (të përbashkëtat)                              -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/operators.js"></script>
@@ -319,32 +308,33 @@
     <script src="js/services/pwa.js"></script>
     <script src="js/services/offline.js"></script>
     <script src="js/services/maps.js"></script>
+    <script src="js/services/validation.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/session.js"></script>
+    <script src="js/services/geofencing.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/system-health.js"></script>
+    <script src="js/services/onboarding.js"></script>
+    <script src="js/services/help-center.js"></script>
+    <script src="js/services/feedback.js"></script>
+    <script src="js/services/qr-generator.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- DRIVER APP                                              -->
-    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DRIVER APP -->
     <script src="js/driver/login.js"></script>
     <script src="js/driver/app.js"></script>
     <script src="js/driver/queue.js"></script>
     <script src="js/driver/navigation.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- INIT                                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Init app
             if (window.DriverApp) DriverApp.init();
-
-            // PWA
             if (window.TaxiPWA) TaxiPWA.init();
-
-            // Responsive
             if (window.TaxiResponsive) TaxiResponsive.init();
-
-            // Dark mode
             if (window.TaxiDarkMode) TaxiDarkMode.init();
-
+            if (window.TaxiHealth) TaxiHealth.start();
+            if (window.TaxiOnboarding) {
+                setTimeout(() => TaxiOnboarding.start('driver'), 4000);
+            }
             console.log('🚗 Driver App gati');
         });
     </script>
