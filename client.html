@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0416">
+    <title>Taxi Klient | Client App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/client.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+</head>
+<body>
+
+    <!-- ═══ LOADING ═══ -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar...</div>
+        </div>
+    </div>
+
+    <!-- ═══ WELCOME SCREEN ═══ -->
+    <div class="screen welcome-screen active" id="screen-welcome">
+        <div class="welcome-box">
+            <div class="welcome-logo">
+                <i class="fa-solid fa-taxi"></i>
+            </div>
+            <h1>TaxiApp</h1>
+            <p class="welcome-sub">Porosit taxi në sekonda</p>
+
+            <div class="welcome-features">
+                <div class="wf-item">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Porositje e shpejtë</span>
+                </div>
+                <div class="wf-item">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>Tracking live</span>
+                </div>
+                <div class="wf-item">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Shoferë të verifikuar</span>
+                </div>
+            </div>
+
+            <button class="btn-primary big" onclick="ClientApp.goToLogin()">
+                <i class="fa-solid fa-arrow-right"></i>
+                <span>VAZHDO</span>
+            </button>
+
+            <div class="welcome-footer">
+                <p>Version 2.0 · Powered by TaxiDispatch</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div class="screen login-screen" id="screen-login">
+        <div class="login-box">
+            <button class="back-btn" onclick="ClientApp.goToWelcome()">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+
+            <div class="login-logo">
+                <i class="fa-solid fa-phone"></i>
+            </div>
+            <h1>Regjistrohu</h1>
+            <p class="login-sub">Fut numrin tënd për të vazhduar</p>
+
+            <!-- STEP 1: PHONE -->
+            <div class="login-step active" id="step-phone">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-phone"></i> Numri i telefonit</label>
+                    <div class="phone-input">
+                        <span class="phone-prefix">+383</span>
+                        <input type="tel" id="input-phone" class="input-field" placeholder="44 123 456" autocomplete="off" maxlength="9">
+                    </div>
+                </div>
+
+                <div class="form-check">
+                    <input type="checkbox" id="check-terms">
+                    <label for="check-terms">Pranoj <strong>Kushtet e Shërbimit</strong> dhe <strong>Politikën e Privatësisë</strong></label>
+                </div>
+
+                <div id="login-error" class="login-error" style="display:none;"></div>
+
+                <button class="btn-primary big" id="btn-send-otp">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>DËRGO KODIN</span>
+                </button>
+            </div>
+
+            <!-- STEP 2: OTP -->
+            <div class="login-step" id="step-otp" style="display:none;">
+                <p class="otp-info">
+                    Kodi u dërgua te <strong id="otp-phone">+383 44 123 456</strong>
+                </p>
+
+                <div class="form-group">
+                    <label><i class="fa-solid fa-shield-halved"></i> Kodi 6-shifror</label>
+                    <div class="otp-inputs">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="0">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="1">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="2">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="3">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="4">
+                        <input type="text" class="otp-digit" maxlength="1" data-index="5">
+                    </div>
+                </div>
+
+                <div class="otp-timer">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="otp-timer-text">02:00</span>
+                </div>
+
+                <button class="btn-primary big" id="btn-verify-otp" disabled>
+                    <i class="fa-solid fa-check"></i>
+                    <span>VERIFIKO</span>
+                </button>
+
+                <button class="btn-ghost full" id="btn-resend-otp" style="margin-top:8px;">
+                    <i class="fa-solid fa-rotate-right"></i> Dërgo përsëri
+                </button>
+            </div>
+
+            <!-- STEP 3: NAME (i re) -->
+            <div class="login-step" id="step-name" style="display:none;">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-user"></i> Emri i plotë</label>
+                    <input type="text" id="input-name" class="input-field" placeholder="Ardit Krasniqi" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fa-solid fa-envelope"></i> Email (opsionale)</label>
+                    <input type="email" id="input-email" class="input-field" placeholder="ardit@email.com" autocomplete="off">
+                </div>
+
+                <button class="btn-primary big" id="btn-finish-register">
+                    <i class="fa-solid fa-check"></i>
+                    <span>KRIJO LLOGARINË</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN SCREEN ═══ -->
+    <div class="screen main-screen" id="screen-main">
+
+        <!-- TOP BAR -->
+        <header class="client-topbar">
+            <div class="client-info">
+                <div class="client-avatar" id="client-avatar">?</div>
+                <div>
+                    <div class="client-greeting">Mirë se vjen,</div>
+                    <div class="client-name" id="client-name">Klient</div>
+                </div>
+            </div>
+            <button class="btn-logout-small" onclick="ClientApp.logout()">
+                <i class="fa-solid fa-sign-out-alt"></i>
+            </button>
+        </header>
+
+        <!-- ORDER FORM -->
+        <div class="order-section" id="order-section">
+            <div class="order-card">
+                <div class="order-header">
+                    <i class="fa-solid fa-taxi"></i>
+                    <h2>Porosit Taxi</h2>
+                </div>
+
+                <div class="order-body">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-location-dot"></i> Nga</label>
+                        <input type="text" id="pickup-input" class="input-field" placeholder="Ku jeni tani?" autocomplete="off">
+                        <div class="autocomplete-suggestions" id="pickup-suggestions"></div>
+                        <button class="btn-location" onclick="ClientApp.useMyLocation()" title="Përdor lokacionin tim">
+                            <i class="fa-solid fa-location-crosshairs"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-flag-checkered"></i> Destinacioni</label>
+                        <input type="text" id="destination-input" class="input-field" placeholder="Ku po shkoni?" autocomplete="off">
+                        <div class="autocomplete-suggestions" id="destination-suggestions"></div>
+                    </div>
+
+                    <div class="order-options">
+                        <div class="option-row">
+                            <i class="fa-solid fa-clock"></i>
+                            <span id="eta-estimate">Duke llogaritur...</span>
+                        </div>
+                        <div class="option-row">
+                            <i class="fa-solid fa-money-bill"></i>
+                            <span id="price-estimate">€—</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary big" id="btn-order-taxi">
+                        <i class="fa-solid fa-taxi"></i>
+                        <span>POROSIT TAXI</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIVE ORDER TRACKING -->
+        <div class="tracking-section" id="tracking-section" style="display:none;">
+            <div class="tracking-header">
+                <div class="th-status" id="th-status">
+                    <div class="th-pulse"></div>
+                    <span id="th-status-text">Duke kërkuar shofer...</span>
+                </div>
+                <div class="th-time" id="th-time">00:00</div>
+            </div>
+
+            <div class="tracking-map" id="tracking-map"></div>
+
+            <div class="tracking-info">
+                <div class="ti-row">
+                    <i class="fa-solid fa-car"></i>
+                    <div>
+                        <div class="ti-label">Vetura</div>
+                        <div class="ti-value" id="ti-vehicle">Duke u caktuar...</div>
+                    </div>
+                </div>
+                <div class="ti-row">
+                    <i class="fa-solid fa-user"></i>
+                    <div>
+                        <div class="ti-label">Shoferi</div>
+                        <div class="ti-value" id="ti-driver">Duke u caktuar...</div>
+                    </div>
+                </div>
+                <div class="ti-row">
+                    <i class="fa-solid fa-clock"></i>
+                    <div>
+                        <div class="ti-label">Vjen për</div>
+                        <div class="ti-value" id="ti-eta">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-danger full" id="btn-cancel-ride">
+                <i class="fa-solid fa-xmark"></i>
+                <span>ANULO POROSINË</span>
+            </button>
+        </div>
+
+        <!-- RATE SCREEN -->
+        <div class="rate-section" id="rate-section" style="display:none;">
+            <div class="rate-card">
+                <div class="rate-header">
+                    <i class="fa-solid fa-flag-checkered"></i>
+                    <h2>Udhëtimi përfundoi!</h2>
+                </div>
+
+                <div class="rate-body">
+                    <div class="rate-info">
+                        <div class="ri-row">
+                            <span>Çmimi:</span>
+                            <strong id="rate-price">€—</strong>
+                        </div>
+                        <div class="ri-row">
+                            <span>Shoferi:</span>
+                            <strong id="rate-driver">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="rate-stars">
+                        <p>Vlerëso shoferin:</p>
+                        <div class="stars" id="stars-container">
+                            <i class="fa-solid fa-star" data-star="1"></i>
+                            <i class="fa-solid fa-star" data-star="2"></i>
+                            <i class="fa-solid fa-star" data-star="3"></i>
+                            <i class="fa-solid fa-star" data-star="4"></i>
+                            <i class="fa-solid fa-star" data-star="5"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-comment"></i> Koment (opsionale)</label>
+                        <textarea id="rate-comment" class="input-field" rows="2" placeholder="Shkruaj komentin..."></textarea>
+                    </div>
+
+                    <button class="btn-primary big" id="btn-submit-rating">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        <span>DËRGO VLERËSIMIN</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTTOM NAV -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active" data-tab="home" onclick="ClientApp.switchTab('home'); return false;">
+                <i class="fa-solid fa-home"></i>
+                <span>Kryefaqja</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="history" onclick="ClientApp.switchTab('history'); return false;">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Historiku</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="profile" onclick="ClientApp.switchTab('profile'); return false;">
+                <i class="fa-solid fa-user"></i>
+                <span>Profili</span>
+            </a>
+        </nav>
+
+    </div>
+
+    <!-- ═══ TOAST ═══ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══ SCRIPTS ═══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SHARED SERVICES -->
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/maps.js"></script>
+
+    <!-- CLIENT APP -->
+    <script src="js/client/register.js"></script>
+    <script src="js/client/app.js"></script>
+    <script src="js/client/order.js"></script>
+    <script src="js/client/tracking.js"></script>
+
+    <!-- INIT -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            ClientApp.init();
+        });
+    </script>
+</body>
+</html>
