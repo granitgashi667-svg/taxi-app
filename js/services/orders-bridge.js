@@ -1,11 +1,15 @@
 'use strict';
 
 /**
- * orders-bridge.js — Lidh sistemin e vjetër (script.js) me Firestore
+ * orders-bridge.js — Lidh sistemin me Firestore + rrugëtim sipas statusit
  */
 
 window.TaxiOrdersBridge = (() => {
     let isInitialized = false;
+
+    const WAITING_STATUSES = ['waiting', 'new', 'pending'];
+    const ACTIVE_STATUSES = ['assigned', 'onroute', 'arrived', 'taximeter', 'fixed', 'delay'];
+    const HIDDEN_STATUSES = ['completed', 'cancelled'];
 
     function init() {
         if (isInitialized) return;
@@ -13,44 +17,42 @@ window.TaxiOrdersBridge = (() => {
 
         console.log('🔗 Duke lidhur porositë me Firestore...');
 
-        // Dëgjo ndryshimet nga Firestore
         window.TaxiEvents.on('firestore:order_added', (orders) => {
-            console.log('🆕 Porosi të re nga cloud:', orders.length);
-            orders.forEach(order => {
-                const localOrder = mapToLocal(order);
-                const exists = window.TaxiState.get('orders').find(o => o.id === localOrder.id);
-                if (!exists) {
-                    window.TaxiState.get('orders').unshift(localOrder);
-                }
-            });
-            renderOrdersFromState();
+            orders.forEach(order => addToLocalState(order));
+            rerender();
         });
 
         window.TaxiEvents.on('firestore:order_updated', (orders) => {
-            console.log('✏️ Porosi u ndryshua:', orders.length);
-            orders.forEach(order => {
-                const localOrder = mapToLocal(order);
-                const idx = window.TaxiState.get('orders').findIndex(o => o.id === localOrder.id);
-                if (idx >= 0) {
-                    window.TaxiState.get('orders')[idx] = localOrder;
-                } else {
-                    window.TaxiState.get('orders').unshift(localOrder);
-                }
-            });
-            renderOrdersFromState();
+            orders.forEach(order => addToLocalState(order));
+            rerender();
         });
 
         window.TaxiEvents.on('firestore:order_removed', (orders) => {
-            console.log('🗑️ Porosi u fshi:', orders.length);
-            orders.forEach(order => {
-                window.TaxiState.set('orders',
-                    window.TaxiState.get('orders').filter(o => o.id !== order.id)
-                );
-            });
-            renderOrdersFromState();
+            orders.forEach(order => removeFromLocalState(order.id));
+            rerender();
         });
 
         console.log('✅ Bridge u aktivizua');
+    }
+
+    function addToLocalState(fsOrder) {
+        const order = mapToLocal(fsOrder);
+        removeFromLocalState(order.firestoreId);
+
+        if (WAITING_STATUSES.includes(order.status)) {
+            window.TaxiState.get('waitingOrders').unshift(order);
+        } else if (ACTIVE_STATUSES.includes(order.status)) {
+            window.TaxiState.get('orders').unshift(order);
+        }
+    }
+
+    function removeFromLocalState(id) {
+        window.TaxiState.set('waitingOrders',
+            window.TaxiState.get('waitingOrders').filter(o => o.firestoreId !== id && o.id !== id)
+        );
+        window.TaxiState.set('orders',
+            window.TaxiState.get('orders').filter(o => o.firestoreId !== id && o.id !== id)
+        );
     }
 
     function mapToLocal(fsOrder) {
@@ -61,7 +63,7 @@ window.TaxiOrdersBridge = (() => {
             name: fsOrder.name || 'Klient',
             pickup: fsOrder.pickup || '',
             destination: fsOrder.destination || '',
-            status: fsOrder.status || 'new',
+            status: fsOrder.status || 'waiting',
             vehicle: fsOrder.vehicleNum || '',
             driverName: fsOrder.driverName || '',
             time: fsOrder.createdTimeStr || '',
@@ -72,25 +74,21 @@ window.TaxiOrdersBridge = (() => {
             doneAt: '',
             nearbyCars: 0,
             price: fsOrder.price || 0,
-            remark: fsOrder.remark || ''
+            remark: fsOrder.remark || '',
+            createdAtLocal: fsOrder.createdAtLocal || Date.now(),
+            waitStart: fsOrder.createdAtLocal || Date.now()
         };
     }
 
-    function renderOrdersFromState() {
+    function rerender() {
         if (typeof renderOrders === 'function') renderOrders();
+        if (typeof renderWaitingOrders === 'function') renderWaitingOrders();
         if (typeof updateStats === 'function') updateStats();
     }
 
-    // ─── KRIJO POROSI (pranon objekt direkt) ───
     async function createFromData(orderData) {
-        if (!window.TaxiOrders) {
-            console.error('❌ TaxiOrders nuk është gati');
-            return null;
-        }
-
+        if (!window.TaxiOrders) return null;
         try {
-            console.log('💾 Duke ruajtur në Firestore:', orderData);
-
             const order = await window.TaxiOrders.create({
                 phone: orderData.phone,
                 name: orderData.name,
@@ -99,32 +97,50 @@ window.TaxiOrdersBridge = (() => {
                 zone: orderData.zone,
                 tariff: orderData.tariff,
                 remark: orderData.remark,
-                status: orderData.status
+                status: orderData.status || 'waiting'
             });
-
-            console.log('✅ Porosia u ruajt me ID:', order.id);
+            console.log('✅ Porosia u ruajt:', order.id);
             return order;
-
         } catch (e) {
-            console.error('❌ Gabim gjatë ruajtjes:', e);
-            console.error('   Kodi:', e.code);
-            console.error('   Mesazhi:', e.message);
-
-            // Provo të shohësh arsyen
-            if (e.code === 'permission-denied') {
-                console.error('⚠️ Firestore RULES po bllokojnë! Kontrollo Rules tab.');
-            }
-
+            console.error('❌ Gabim:', e);
             if (typeof showToast === 'function') {
-                showToast('error', 'Gabim', 'Porosia nuk u ruajt në cloud');
+                showToast('error', 'Gabim', 'Porosia nuk u ruajt');
             }
             return null;
         }
     }
 
+    async function assignOrder(firestoreId, changes) {
+        if (!window.TaxiOrders) return;
+        try {
+            await window.TaxiOrders.update(firestoreId, {
+                ...changes,
+                assignedAt: new Date().getTime()
+            });
+            console.log('✅ Porosia u caktua:', firestoreId);
+        } catch (e) {
+            console.error('❌ Gabim caktimi:', e);
+        }
+    }
+
+    async function cancelOrderFs(firestoreId) {
+        if (!window.TaxiOrders) return;
+        try {
+            await window.TaxiOrders.update(firestoreId, {
+                status: 'cancelled',
+                cancelledAt: new Date().getTime()
+            });
+            console.log('✅ Porosia u anulua:', firestoreId);
+        } catch (e) {
+            console.error('❌ Gabim anulimi:', e);
+        }
+    }
+
     return {
         init,
-        createFromData
+        createFromData,
+        assignOrder,
+        cancelOrderFs
     };
 })();
 
