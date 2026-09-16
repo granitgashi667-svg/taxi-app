@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMap();
     initEventListeners();
     renderAll();
+    setupTargetEditButtons();
     startCallSimulation();
     startOrderSimulation();
 });
@@ -31,7 +32,6 @@ function loadData() {
     AppState.vehicles = window.TaxiData.vehicles || [];
     AppState.config = window.TaxiData.config || {};
 
-    // Sync me TaxiState
     if (window.TaxiState) {
         window.TaxiState.set('drivers', AppState.drivers);
         window.TaxiState.set('vehicles', AppState.vehicles);
@@ -75,7 +75,6 @@ function initMap() {
     renderVehiclesOnMap();
     renderAddressMarkers();
 
-    // Ruaj në TaxiState
     if (window.TaxiState) window.TaxiState.set('map', AppState.map);
 }
 
@@ -224,6 +223,24 @@ function initEventListeners() {
     });
 }
 
+// ═══ TARGET EDIT BUTTONS ═══
+function setupTargetEditButtons() {
+    setTimeout(() => {
+        const btnSave = document.getElementById('btn-save-order');
+        const btnDelete = document.getElementById('btn-delete-order');
+        if (btnSave) {
+            btnSave.addEventListener('click', () => {
+                if (window.TaxiTargetEdit) window.TaxiTargetEdit.save();
+            });
+        }
+        if (btnDelete) {
+            btnDelete.addEventListener('click', () => {
+                if (window.TaxiTargetEdit) window.TaxiTargetEdit.remove();
+            });
+        }
+    }, 500);
+}
+
 // ═══ AUTOCOMPLETE ═══
 function setupAutocomplete(inputId, suggestId) {
     const input = document.getElementById(inputId);
@@ -299,7 +316,6 @@ function acceptCall(callId) {
     AppState.incomingCalls = AppState.incomingCalls.filter(c => c.id !== callId);
     renderIncomingCalls();
     stopRing();
-    // Emit event për operatorin
     if (window.TaxiEvents) window.TaxiEvents.emit('operator:call_taken');
 }
 
@@ -316,23 +332,6 @@ function playRing() {
         window.TaxiSound.playRing();
         return;
     }
-    if (!AppState.soundEnabled) return;
-    try {
-        if (!AppState.audioContext) AppState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const ctx = AppState.audioContext;
-        const playBeep = (time, freq) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = freq; osc.type = 'sine';
-            gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.15, time + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
-            osc.start(time); osc.stop(time + 0.4);
-        };
-        const now = ctx.currentTime;
-        playBeep(now, 880); playBeep(now + 0.5, 660); playBeep(now + 1.0, 880);
-    } catch (e) {}
 }
 function startRing() {
     if (ringInterval) return;
@@ -472,32 +471,10 @@ function openOrderDetail(firestoreId) {
            || AppState.waitingOrders.find(x => x.firestoreId === firestoreId)
            || AppState.preOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
-    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje', arrived: 'Në Vend', taximeter: 'Taksimetër', fixed: 'Çmim Fiks', preorder: 'Me Termin' };
-    document.getElementById('order-detail-body').innerHTML = `
-        <div class="detail-section">
-            <div class="detail-section-title"><i class="fa-solid fa-receipt"></i> INFORMACION BAZË</div>
-            <div class="detail-grid">
-                <div class="detail-item"><label>ID</label><span class="mono">#${String(o.firestoreId).slice(-6)}</span></div>
-                <div class="detail-item"><label>Statusi</label><span><span class="status-badge ${o.status}">${statusLbl[o.status] || o.status}</span></span></div>
-                <div class="detail-item"><label>Telefon</label><span class="mono">${o.phone}</span></div>
-                <div class="detail-item"><label>Emri</label><span>${o.name || 'N/A'}</span></div>
-                <div class="detail-item"><label>Operatori</label><span style="color:var(--accent-purple);font-weight:700;">${o.operator || AppState.currentOperator.name}</span></div>
-                <div class="detail-item"><label>Tarifa</label><span>${o.tariff || 'standard'}</span></div>
-            </div>
-        </div>
-        <div class="detail-section">
-            <div class="detail-section-title"><i class="fa-solid fa-route"></i> RRUGËTIMI</div>
-            <div class="detail-grid">
-                <div class="detail-item" style="grid-column:1/-1;"><label>Marrja</label><span>📍 ${o.pickup}</span></div>
-                <div class="detail-item" style="grid-column:1/-1;"><label>Destinacioni</label><span>🏁 ${o.destination}</span></div>
-                <div class="detail-item"><label>Zona</label><span>${o.zone || 'N/A'}</span></div>
-                <div class="detail-item"><label>Vetura</label><span class="mono">${o.vehicle ? '🚗 ' + o.vehicle : '—'}</span></div>
-                <div class="detail-item"><label>Shoferi</label><span>${o.driverName || '—'}</span></div>
-                <div class="detail-item"><label>Shënim</label><span>${o.remark || '—'}</span></div>
-            </div>
-        </div>
-    `;
-    document.getElementById('modal-order-detail')?.classList.add('active');
+
+    if (window.TaxiTargetEdit) {
+        window.TaxiTargetEdit.open(o);
+    }
 }
 
 async function cancelOrder(firestoreId) {
@@ -536,14 +513,14 @@ function renderPreOrders() {
     if (cnt) cnt.textContent = AppState.preOrders.length;
     if (!AppState.preOrders.length) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Asnjë pre-order</td></tr>`; return; }
     tb.innerHTML = AppState.preOrders.map(o => `
-        <tr>
+        <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
             <td><span class="preorder-date">${o.date || '—'}</span></td>
             <td class="time">${o.terminTime || o.time}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
-            <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
-            <td><div class="action-buttons">
+            <td onclick="event.stopPropagation()">${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
+            <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="activatePre('${o.firestoreId}')">AKTIVIZO</button>
                 <button class="action-btn cancel" onclick="cancelPre('${o.firestoreId}')">X</button>
             </div></td>
@@ -646,7 +623,6 @@ function showToast(type, title, msg) {
     c.appendChild(t);
     setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(400px)'; setTimeout(() => t.remove(), 300); }, 3500);
 
-    // Luaj zërin
     if (window.TaxiSound) {
         if (type === 'success') window.TaxiSound.playSuccess();
         else if (type === 'error') window.TaxiSound.playError();
