@@ -2900,3 +2900,161 @@ body.light-mode .leaflet-container { background: #f0f0f0; }
 .role-badge.manager { background: rgba(168,85,247,.15); color: #a855f7; }
 .role-badge.director { background: rgba(245,158,11,.15); color: #f59e0b; }
 .role-badge.admin { background: rgba(244,63,94,.15); color: #f43f5e; }
+/* ═══════════════════════════════════════════════════════
+   ONBOARDING, HELP, FEEDBACK
+   ═══════════════════════════════════════════════════════ */
+
+/* ═══ ONBOARDING OVERLAY ═══ */
+.onboarding-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9998;
+    pointer-events: none;
+    animation: fadeIn 0.3s ease;
+}
+.onboarding-spotlight {
+    position: absolute;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7), 0 0 30px rgba(168, 85, 247, 0.6);
+    background: transparent;
+    border: 2px solid var(--accent-purple);
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.onboarding-popover {
+    position: fixed;
+    width: 320px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--accent-purple);
+    border-radius: 14px;
+    padding: 16px;
+    z-index: 9999;
+    box-shadow: 0 20px 60px rgba(0,0,0,.7), 0 0 30px rgba(168, 85, 247, 0.3);
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: auto;
+}
+.onboarding-popover.active {
+    opacity: 1;
+    transform: scale(1);
+}
+.onboarding-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--accent-purple);
+    margin-bottom: 8px;
+}
+.onboarding-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+.onboarding-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+.onboarding-progress {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+.onboarding-buttons {
+    display: flex;
+    gap: 6px;
+}
+.onboarding-btn-skip {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.onboarding-btn-skip:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+.onboarding-btn-next {
+    padding: 6px 14px;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.onboarding-btn-next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);
+}
+
+/* ═══ HELP CENTER ═══ */
+.help-item {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.help-item:hover {
+    border-color: var(--accent-purple);
+}
+.help-item.active {
+    border-color: var(--accent-purple);
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.2);
+}
+.help-question {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.help-chevron {
+    color: var(--accent-purple);
+    font-size: 12px;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+}
+.help-answer {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 14px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    transition: max-height 0.3s, padding 0.3s;
+}
+.help-answer.open {
+    max-height: 500px;
+    padding: 0 14px 14px 14px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+}
+
+/* ═══ FEEDBACK ═══ */
+.modal-feedback .modal-body textarea {
+    font-family: inherit;
+}
+
+/* ═══ API KEYS ═══ */
+.modal-api-keys input[type="password"] {
+    font-family: var(--font-mono);
+}
