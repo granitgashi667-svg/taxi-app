@@ -24,17 +24,17 @@
     <aside class="nav-rail" id="nav-rail">
         <div class="rail-logo"><i class="fa-solid fa-taxi"></i></div>
         <nav class="rail-nav">
-            <a href="#" class="rail-item active" title="Dispatch"><i class="fa-solid fa-gauge-high"></i></a>
-            <a href="#" class="rail-item" title="Thirrjet"><i class="fa-solid fa-phone-volume"></i></a>
-            <a href="#" class="rail-item" title="Porositë"><i class="fa-solid fa-clipboard-list"></i></a>
-            <a href="#" class="rail-item" title="Shoferët"><i class="fa-solid fa-users"></i></a>
-            <a href="#" class="rail-item" title="Veturat"><i class="fa-solid fa-car-side"></i></a>
-            <a href="#" class="rail-item" title="Harta"><i class="fa-solid fa-map"></i></a>
-            <a href="#" class="rail-item" title="Zonat"><i class="fa-solid fa-map-location-dot"></i></a>
-            <a href="#" class="rail-item" title="Klientët"><i class="fa-solid fa-address-book"></i></a>
-            <a href="#" class="rail-item" title="Raporte"><i class="fa-solid fa-chart-line"></i></a>
-            <a href="#" class="rail-item" title="Financa"><i class="fa-solid fa-coins"></i></a>
-            <a href="#" class="rail-item" title="Cilësimet"><i class="fa-solid fa-sliders"></i></a>
+            <a href="#" class="rail-item active" data-nav="dispatch" title="Dispatch"><i class="fa-solid fa-gauge-high"></i></a>
+            <a href="#" class="rail-item" data-nav="calls" title="Thirrjet"><i class="fa-solid fa-phone-volume"></i></a>
+            <a href="#" class="rail-item" data-nav="orders" title="Porositë"><i class="fa-solid fa-clipboard-list"></i></a>
+            <a href="#" class="rail-item" data-nav="drivers" title="Shoferët"><i class="fa-solid fa-users"></i></a>
+            <a href="#" class="rail-item" data-nav="vehicles" title="Veturat"><i class="fa-solid fa-car-side"></i></a>
+            <a href="#" class="rail-item" data-nav="map" title="Harta"><i class="fa-solid fa-map"></i></a>
+            <a href="#" class="rail-item" data-nav="zones" title="Zonat"><i class="fa-solid fa-map-location-dot"></i></a>
+            <a href="#" class="rail-item" data-nav="clients" title="Klientët"><i class="fa-solid fa-address-book"></i></a>
+            <a href="#" class="rail-item" data-nav="reports" title="Raporte"><i class="fa-solid fa-chart-line"></i></a>
+            <a href="#" class="rail-item" data-nav="finance" title="Financa"><i class="fa-solid fa-coins"></i></a>
+            <a href="#" class="rail-item" data-nav="settings" title="Cilësimet"><i class="fa-solid fa-sliders"></i></a>
         </nav>
         <div class="rail-bottom">
             <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri"><i class="fa-solid fa-volume-high"></i></button>
@@ -248,7 +248,7 @@
                     </div>
                     <div class="panel-body waiting-body">
                         <table class="orders-table compact">
-                            <thead><tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Pritja</th><th>Veprimet</th></tr></thead>
+                            <thead><tr><th>ID</th><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shënim</th><th>Pritja</th><th>Veprime</th></tr></thead>
                             <tbody id="waiting-tbody"></tbody>
                         </table>
                     </div>
@@ -269,7 +269,7 @@
                     </div>
                     <div class="panel-body orders-table-body">
                         <table class="orders-table">
-                            <thead><tr><th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th></th></tr></thead>
+                            <thead><tr><th>Statusi</th><th>Ora</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>Shënim</th><th>Veprime</th></tr></thead>
                             <tbody id="orders-tbody"></tbody>
                         </table>
                     </div>
@@ -378,7 +378,7 @@
     <!-- FIREBASE CONFIG -->
     <script src="firebase-config.js"></script>
 
-    <!-- CORE (6) -->
+    <!-- CORE -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -389,7 +389,7 @@
     <!-- DATA -->
     <script src="data.js"></script>
 
-    <!-- SERVICES (38) -->
+    <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
