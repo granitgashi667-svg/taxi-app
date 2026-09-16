@@ -23,7 +23,6 @@
         </div>
     </div>
 
-    <!-- LOGIN SCREEN -->
     <div class="screen login-screen active" id="screen-login">
         <div class="login-box">
             <div class="login-logo" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
@@ -54,7 +53,6 @@
         </div>
     </div>
 
-    <!-- MAIN SCREEN -->
     <div class="screen main-screen" id="screen-main">
 
         <aside class="admin-sidebar" id="admin-sidebar">
@@ -129,6 +127,15 @@
                     </button>
                     <button class="topbar-toggle" id="btn-voice-toggle" title="Komanda me zë">
                         <i class="fa-solid fa-microphone-slash"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiApiKeys) TaxiApiKeys.open()" title="API Keys">
+                        <i class="fa-solid fa-key"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiFeedback) TaxiFeedback.open()" title="Feedback">
+                        <i class="fa-solid fa-comment-dots"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiHelp) TaxiHelp.open()" title="Ndihmë">
+                        <i class="fa-solid fa-circle-question"></i>
                     </button>
                     <div class="topbar-time">
                         <div class="time-clock" id="clock-time">--:--:--</div>
@@ -240,7 +247,6 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -286,6 +292,11 @@
     <script src="js/services/sync.js"></script>
     <script src="js/services/chat.js"></script>
     <script src="js/services/emergency.js"></script>
+    <script src="js/services/system-health.js"></script>
+    <script src="js/services/help-center.js"></script>
+    <script src="js/services/feedback.js"></script>
+    <script src="js/services/print.js"></script>
+    <script src="js/services/api-keys.js"></script>
 
     <!-- DIRECTOR APP -->
     <script src="js/director/login.js"></script>
@@ -314,6 +325,8 @@
             });
             if (window.TaxiEmergency) TaxiEmergency.init();
             if (window.TaxiTwoFactor) TaxiTwoFactor.init();
+            if (window.TaxiHealth) TaxiHealth.start();
+            if (window.TaxiApiKeys) TaxiApiKeys.init();
             console.log('👑 Director Panel gati');
         });
     </script>
