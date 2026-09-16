@@ -2,50 +2,52 @@
 
 /**
  * app.js — Bootstrap: Nisja e të gjitha moduleve
- * Kjo thirret NGA index.html pas ngarkimit të të gjithë file-ave.
  */
 
 window.TaxiApp = (() => {
     let initialized = false;
 
     async function init() {
-        if (initialized) {
-            console.warn('⚠️ App.js u thirr përsëri');
-            return;
-        }
+        if (initialized) return;
         initialized = true;
 
         console.log('🚀 TaxiApp: Fillimi i inicializimit...');
 
-        // ═══ 1. FIREBASE ═══
+        // ═══ 1. INIT MODULES ═══
+        if (window.TaxiLocale) window.TaxiLocale.init();
+        if (window.TaxiThemes) window.TaxiThemes.init();
+        if (window.TaxiOffline) window.TaxiOffline.init();
+        if (window.TaxiSound) window.TaxiSound.init();
+
+        // ═══ 2. FIREBASE ═══
         if (!window.TaxiFirebase) {
-            console.error('❌ TaxiFirebase nuk u ngarkua');
+            console.error('❌ TaxiFirebase mungon');
             return;
         }
         window.TaxiFirebase.init();
 
-        // ═══ 2. ORDER BRIDGE (para subscribe) ═══
-        if (window.TaxiOrdersBridge) {
-            window.TaxiOrdersBridge.init();
-        }
+        // ═══ 3. ORDER BRIDGE (para subscribe) ═══
+        if (window.TaxiOrdersBridge) window.TaxiOrdersBridge.init();
 
-        // ═══ 3. FIRESTORE SUBSCRIBE ═══
-        if (window.TaxiOrders) {
-            window.TaxiOrders.subscribe();
-        }
+        // ═══ 4. SUBSCRIBE FIRESTORE ═══
+        if (window.TaxiOrders) window.TaxiOrders.subscribe();
+        if (window.TaxiMessages) window.TaxiMessages.subscribe();
 
-        // ═══ 4. MESSAGES SUBSCRIBE ═══
-        if (window.TaxiMessages) {
-            window.TaxiMessages.subscribe();
-        }
+        // ═══ 5. BLACKLIST CACHE ═══
+        if (window.TaxiBlacklist) window.TaxiBlacklist.loadCache();
 
-        // ═══ 5. AUTH STATE ═══
+        // ═══ 6. GEOFENCING ═══
+        if (window.TaxiGeofencing) window.TaxiGeofencing.start();
+
+        // ═══ 7. AUTO-SYNC ═══
+        if (window.TaxiSync) window.TaxiSync.startAutoSync(5 * 60 * 1000);
+
+        // ═══ 8. AUTH STATE ═══
         if (window.TaxiAuth) {
             window.TaxiAuth.onAuthChange(async (user) => {
                 if (user) {
                     console.log('👤 User aktiv:', user.email);
 
-                    // Operator
                     if (window.TaxiOperators) {
                         const operator = await window.TaxiOperators.getOrCreate({
                             uid: user.uid,
@@ -67,6 +69,10 @@ window.TaxiApp = (() => {
                                     loginTime: Date.now()
                                 });
                             }
+
+                            if (window.TaxiLogger) {
+                                window.TaxiLogger.success('login', { email: user.email });
+                            }
                         }
                     }
                 } else {
@@ -77,35 +83,30 @@ window.TaxiApp = (() => {
             });
         }
 
-        // ═══ 6. RAIL USER KLIK ═══
-        const railUser = document.getElementById('rail-user');
-        if (railUser) {
-            railUser.addEventListener('click', () => {
-                if (window.TaxiAuth?.currentUser()) {
-                    showOperatorStats();
-                } else {
-                    document.getElementById('modal-login')?.classList.add('active');
-                    setTimeout(() => document.getElementById('login-email')?.focus(), 200);
-                }
-            });
-        }
+        // ═══ 9. RAIL USER KLIK ═══
+        setupRailUserClick();
 
-        // ═══ 7. LOGIN BUTTON ═══
+        // ═══ 10. LOGIN/LOGOUT ═══
         setupLoginButton();
-
-        // ═══ 8. LOGOUT BUTTON ═══
         setupLogoutButton();
 
-        // ═══ 9. MODAL CLOSE ═══
+        // ═══ 11. MODAL CLOSE ═══
         setupModalClose();
 
-        // ═══ 10. CLIENT AUTO-SEARCH ═══
+        // ═══ 12. CLIENT AUTO-SEARCH ═══
         setupClientSearch();
+
+        // ═══ 13. NOTIFICATIONS ═══
+        if (window.TaxiNotifications) {
+            window.TaxiNotifications.requestPermission();
+        }
+
+        // ═══ 14. EVENT LISTENERS ═══
+        setupEventListeners();
 
         console.log('✅ TaxiApp: Init komplet përfundoi');
     }
 
-    // ═══ HELPER: Rail User ═══
     function updateRailUser(name) {
         const el = document.getElementById('rail-user');
         if (el) {
@@ -122,12 +123,23 @@ window.TaxiApp = (() => {
         }
     }
 
-    // ═══ LOGIN ═══
+    function setupRailUserClick() {
+        const railUser = document.getElementById('rail-user');
+        if (!railUser) return;
+        railUser.addEventListener('click', () => {
+            if (window.TaxiAuth?.currentUser()) {
+                showOperatorStats();
+            } else {
+                document.getElementById('modal-login')?.classList.add('active');
+                setTimeout(() => document.getElementById('login-email')?.focus(), 200);
+            }
+        });
+    }
+
     function setupLoginButton() {
         const btn = document.getElementById('btn-do-login');
         if (!btn) return;
 
-        // Hiq listener-at e vjetër
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
 
@@ -147,31 +159,18 @@ window.TaxiApp = (() => {
             try {
                 newBtn.disabled = true;
                 newBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Duke hyrë...';
-
                 const user = await window.TaxiAuth.login(email, password);
                 console.log('✅ U loguat:', user);
-
                 document.getElementById('modal-login')?.classList.remove('active');
-
-                if (typeof showToast === 'function') {
-                    showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
-                }
-
-                // Pastro
+                if (typeof showToast === 'function') showToast('success', 'U loguat', `Mirë se vjen, ${user.name}!`);
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-password').value = '';
-
             } catch (e) {
                 let msg = 'Gabim gjatë login-it';
-                if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') {
-                    msg = 'Email ose fjalëkalim i gabuar';
-                } else if (e.code === 'auth/user-not-found') {
-                    msg = 'Ky user nuk ekziston';
-                } else if (e.code === 'auth/invalid-email') {
-                    msg = 'Email-i nuk është valid';
-                } else if (e.code === 'auth/network-request-failed') {
-                    msg = 'Problem me internetin';
-                }
+                if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-login-credentials') msg = 'Email ose fjalëkalim i gabuar';
+                else if (e.code === 'auth/user-not-found') msg = 'Ky user nuk ekziston';
+                else if (e.code === 'auth/invalid-email') msg = 'Email-i nuk është valid';
+                else if (e.code === 'auth/network-request-failed') msg = 'Problem me internetin';
                 errBox.textContent = '❌ ' + msg;
                 errBox.style.display = 'block';
             } finally {
@@ -180,36 +179,29 @@ window.TaxiApp = (() => {
             }
         });
 
-        // Enter në password
         document.getElementById('login-password')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') newBtn.click();
         });
     }
 
-    // ═══ LOGOUT ═══
     function setupLogoutButton() {
         const btn = document.getElementById('btn-logout');
         if (!btn) return;
-
         btn.addEventListener('click', async () => {
             if (confirm('A jeni i sigurt që dëshironi të dilni?')) {
                 await window.TaxiAuth.logout();
                 document.getElementById('modal-operator-stats')?.classList.remove('active');
-                if (typeof showToast === 'function') {
-                    showToast('info', 'U dilni', 'Deri herën tjetër!');
-                }
+                if (typeof showToast === 'function') showToast('info', 'U dilni', 'Deri herën tjetër!');
             }
         });
     }
 
-    // ═══ MODAL CLOSE ═══
     function setupModalClose() {
         document.querySelectorAll('[data-close]').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.getElementById(btn.dataset.close)?.classList.remove('active');
             });
         });
-
         document.querySelectorAll('.modal-overlay').forEach(ov => {
             ov.addEventListener('click', (e) => {
                 if (e.target === ov) ov.classList.remove('active');
@@ -217,38 +209,40 @@ window.TaxiApp = (() => {
         });
     }
 
-    // ═══ CLIENT AUTO-SEARCH ═══
     function setupClientSearch() {
         const phoneInput = document.getElementById('client-phone');
         if (!phoneInput || !window.TaxiClients) return;
 
         let searchTimer = null;
-
         phoneInput.addEventListener('input', (e) => {
             const phone = e.target.value.trim();
             clearTimeout(searchTimer);
-
             if (phone.length < 6) {
                 const p = document.getElementById('client-history-panel');
                 if (p) p.style.display = 'none';
                 return;
             }
-
             searchTimer = setTimeout(async () => {
-                console.log('🔍 Kërkim klienti:', phone);
                 const result = await window.TaxiClients.searchByPhone(phone);
                 window.TaxiClients.renderPanel(phone, result);
-
                 if (result && result.lastOrder && result.lastOrder.name && !document.getElementById('client-name').value) {
                     document.getElementById('client-name').value = result.lastOrder.name;
                 }
             }, 500);
         });
-
-        console.log('✅ Client auto-search aktivizuar');
     }
 
-    // ═══ OPERATOR STATS MODAL ═══
+    function setupEventListeners() {
+        // Njofto kur porosi e re vjen
+        if (window.TaxiEvents) {
+            window.TaxiEvents.on('firestore:order_added', (orders) => {
+                orders.forEach(o => {
+                    if (window.TaxiNotifications) window.TaxiNotifications.orderNew(o);
+                });
+            });
+        }
+    }
+
     async function showOperatorStats() {
         const user = window.TaxiAuth?.currentUser();
         if (!user) return;
@@ -256,7 +250,7 @@ window.TaxiApp = (() => {
         const body = document.getElementById('operator-stats-body');
         if (!body) return;
 
-        body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Duke ngarkuar statistikat...</div>';
+        body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">Duke ngarkuar...</div>';
         document.getElementById('modal-operator-stats')?.classList.add('active');
 
         const stats = await window.TaxiOperators.getStats(user.uid);
@@ -294,7 +288,7 @@ window.TaxiApp = (() => {
                 <i class="fa-solid fa-clock"></i> KOHËT
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
-                ${box('⏱️ Sesioni aktual', fmt(stats.sessionMinutes), 'var(--accent-purple)')}
+                ${box('⏱️ Sesioni', fmt(stats.sessionMinutes), 'var(--accent-purple)')}
                 ${box('📊 Total', fmt(stats.totalMinutes), 'var(--accent-purple)')}
             </div>
 
@@ -314,7 +308,7 @@ window.TaxiApp = (() => {
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
                 ${box('Total', stats.vacations.totalDays, 'var(--text-primary)')}
                 ${box('Shfrytëzuar', stats.vacations.usedDays, 'var(--accent-yellow)')}
-                ${box('Të mbetura', stats.vacations.remainingDays, 'var(--accent-green)')}
+                ${box('Mbetura', stats.vacations.remainingDays, 'var(--accent-green)')}
             </div>
 
             <div style="text-align:center;padding:12px;background:rgba(168,85,247,.08);border-radius:8px;font-size:11px;color:var(--text-muted);">
