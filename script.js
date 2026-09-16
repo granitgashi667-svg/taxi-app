@@ -354,14 +354,14 @@ function renderWaitingOrders() {
         const wsec = Math.floor((Date.now() - (o.waitStart || Date.now())) / 1000);
         const wmin = Math.floor(wsec / 60);
         const cls = wmin < 1 ? 'fresh' : wmin < 3 ? 'medium' : 'old';
-        return `<tr>
+        return `<tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
             <td><strong>#${String(o.firestoreId).slice(-6)}</strong></td>
             <td class="time">${o.time}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td><span class="wait-time ${cls}">${wmin}min</span></td>
-            <td><div class="action-buttons">
+            <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
                 <button class="action-btn manual" onclick="manualAssignWaiting('${o.firestoreId}')">MANUAL</button>
                 <button class="action-btn closest" onclick="closestAssignWaiting('${o.firestoreId}')">AFËRTI</button>
@@ -451,7 +451,7 @@ function renderOrders() {
     if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi aktive</td></tr>`; return; }
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje', arrived: 'Në vend', taximeter: 'Taksimetër', fixed: 'Fiks' };
     tb.innerHTML = AppState.orders.map(o => `
-        <tr onclick="openOrderDetail('${o.firestoreId}')">
+        <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : `<span class="vehicle-badge empty">—</span>`}</td>
@@ -492,7 +492,7 @@ function filterOrders(q) {
     if (!f.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk u gjet</td></tr>`; return; }
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
     tb.innerHTML = f.map(o => `
-        <tr onclick="openOrderDetail('${o.firestoreId}')">
+        <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
