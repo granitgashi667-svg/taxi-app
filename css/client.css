@@ -805,3 +805,38 @@ textarea.input-field { resize: vertical; font-family: inherit; }
 .toast-content { flex: 1; }
 .toast-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
 .toast-message { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+/* ═══ TRACKING ACTIONS ═══ */
+.tracking-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+/* ═══ SOS BUTTON ═══ */
+.btn-sos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #f43f5e, #be123c);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4);
+    animation: sosPulse 2s infinite;
+    transition: var(--transition-fast);
+}
+.btn-sos:active {
+    transform: scale(0.97);
+}
+@keyframes sosPulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4); }
+    50% { box-shadow: 0 4px 24px rgba(244, 63, 94, 0.8); }
+}
