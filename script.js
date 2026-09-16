@@ -182,59 +182,13 @@ function setupNavRail() {
 // ═══ PAGE RENDERERS ═══
 
 function renderCallsPage() {
-    const el = document.querySelector('.page[data-page="calls"]');
-    if (!el) return;
-    const calls = AppState.incomingCalls;
-
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">
-                <i class="fa-solid fa-phone-volume"></i>
-                <div>
-                    <h2>Thirrjet Hyrëse</h2>
-                    <p>Radha e thirrjeve në pritje · ${calls.length} aktive</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="kpi-grid">
-            <div class="kpi-card pink">
-                <div class="kpi-label"><i class="fa-solid fa-phone"></i> Në pritje</div>
-                <div class="kpi-value pink">${calls.length}</div>
-                <div class="kpi-sub">Thirrje pa trajtuar</div>
-            </div>
-            <div class="kpi-card green">
-                <div class="kpi-label"><i class="fa-solid fa-check"></i> Të pranuara sot</div>
-                <div class="kpi-value green">${AppState.currentOperator.stats.callsTaken || 0}</div>
-                <div class="kpi-sub">Totali i thirrjeve</div>
-            </div>
-        </div>
-
-        <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
-            <i class="fa-solid fa-list"></i> Lista e thirrjeve
-        </h3>
-        <div class="cards-grid">
-            ${calls.length === 0 ? `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-phone-slash"></i><h3>Nuk ka thirrje në pritje</h3><p>Thirrjet e reja do shfaqen këtu</p></div>` :
-                calls.map(c => `
-                    <div class="info-card">
-                        <div class="info-card-header">
-                            <div class="info-card-avatar">📞</div>
-                            <div style="flex:1;">
-                                <div class="info-card-name">${c.phone}</div>
-                                <div class="info-card-sub">${c.name || 'Klient i re'} · ${c.time}</div>
-                            </div>
-                        </div>
-                        <div class="info-card-body">
-                            ${c.lastAddress ? `<div class="info-card-row"><span><i class="fa-solid fa-clock-rotate-left"></i> Adresa e fundit</span><span>${c.lastAddress}</span></div>` : ''}
-                            <button class="btn-accept" onclick="acceptCall(${c.id}); switchPage('dispatch');" style="width:100%;margin-top:8px;padding:10px;">
-                                <i class="fa-solid fa-phone"></i> KRIJO POROSI
-                            </button>
-                        </div>
-                    </div>
-                `).join('')
-            }
-        </div>
-    `;
+    // Përdor Call Center modulin
+    if (window.TaxiCallCenter) {
+        window.TaxiCallCenter.render();
+    } else {
+        const el = document.querySelector('.page[data-page="calls"]');
+        if (el) el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted);">Call Center nuk është gati</div>';
+    }
 }
 
 function renderOrdersPage() {
@@ -288,30 +242,16 @@ function renderOrdersPage() {
         <div class="page-table-wrap">
             <table class="orders-table">
                 <thead>
-                    <tr>
-                        <th>Ora</th>
-                        <th>Statusi</th>
-                        <th>Vetura</th>
-                        <th>Telefon</th>
-                        <th>Marrja</th>
-                        <th>Destinacioni</th>
-                        <th>Shoferi</th>
-                        <th>Shënim</th>
-                        <th>Çmimi</th>
-                    </tr>
+                    <tr><th>Ora</th><th>Statusi</th><th>Vetura</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Shoferi</th><th>Shënim</th><th>Çmimi</th></tr>
                 </thead>
-                <tbody id="orders-page-tbody">
-                    ${renderOrdersPageRows(all)}
-                </tbody>
+                <tbody id="orders-page-tbody">${renderOrdersPageRows(all)}</tbody>
             </table>
         </div>
     `;
 }
 
 function renderOrdersPageRows(orders) {
-    if (!orders.length) {
-        return `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">Asnjë porosi</td></tr>`;
-    }
+    if (!orders.length) return `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">Asnjë porosi</td></tr>`;
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në pritje', arrived: 'Në vend', taximeter: 'Taksimetër', fixed: 'Fiks', preorder: 'Me termin', cancelled: 'Anuluar' };
     return orders.map(o => `
         <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
@@ -331,14 +271,12 @@ function renderOrdersPageRows(orders) {
 function filterOrdersPage(filter, btn) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-
     let list = [];
     if (filter === 'all') list = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders, ...AppState.completedOrders];
     else if (filter === 'active') list = AppState.orders;
     else if (filter === 'waiting') list = AppState.waitingOrders;
     else if (filter === 'preorder') list = AppState.preOrders;
     else if (filter === 'completed') list = AppState.completedOrders;
-
     const tbody = document.getElementById('orders-page-tbody');
     if (tbody) tbody.innerHTML = renderOrdersPageRows(list);
 }
@@ -355,20 +293,15 @@ function renderDriversPage() {
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-users"></i>
-                <div>
-                    <h2>Shoferët</h2>
-                    <p>Lista e plotë e shoferëve · ${drivers.length} total</p>
-                </div>
+                <div><h2>Shoferët</h2><p>Lista e plotë e shoferëve · ${drivers.length} total</p></div>
             </div>
         </div>
-
         <div class="kpi-grid">
             <div class="kpi-card green"><div class="kpi-label"><i class="fa-solid fa-circle-check"></i> Aktiv</div><div class="kpi-value green">${active}</div><div class="kpi-sub">Në punë tani</div></div>
             <div class="kpi-card blue"><div class="kpi-label"><i class="fa-solid fa-car"></i> Të lirë</div><div class="kpi-value blue">${free}</div><div class="kpi-sub">Presin porosi</div></div>
             <div class="kpi-card yellow"><div class="kpi-label"><i class="fa-solid fa-route"></i> Në udhëtim</div><div class="kpi-value yellow">${busy}</div><div class="kpi-sub">Me klient</div></div>
             <div class="kpi-card pink"><div class="kpi-label"><i class="fa-solid fa-user-slash"></i> Joaktiv</div><div class="kpi-value pink">${drivers.length - active}</div><div class="kpi-sub">Jashtë turnit</div></div>
         </div>
-
         <div class="cards-grid">
             ${drivers.map(d => {
                 const v = AppState.vehicles.find(x => x.id === d.vehicleId);
@@ -378,10 +311,7 @@ function renderDriversPage() {
                     <div class="info-card">
                         <div class="info-card-header">
                             <div class="info-card-avatar ${d.mode}">${d.avatar || d.name?.slice(0,2).toUpperCase() || '?'}</div>
-                            <div style="flex:1;">
-                                <div class="info-card-name">${d.name}</div>
-                                <div class="info-card-sub">🚗 ${num} · ${v ? v.plate : 'N/A'}</div>
-                            </div>
+                            <div style="flex:1;"><div class="info-card-name">${d.name}</div><div class="info-card-sub">🚗 ${num} · ${v ? v.plate : 'N/A'}</div></div>
                         </div>
                         <div class="info-card-body">
                             <div class="info-card-row"><span><i class="fa-solid fa-circle" style="color:${getModeColor(d.mode)};font-size:8px;"></i> Statusi</span><span>${modeLabel}</span></div>
@@ -409,38 +339,29 @@ function renderVehiclesPage() {
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-car-side"></i>
-                <div>
-                    <h2>Veturat</h2>
-                    <p>Flota e veturave · ${vehicles.length} total</p>
-                </div>
+                <div><h2>Veturat</h2><p>Flota e veturave · ${vehicles.length} total</p></div>
             </div>
         </div>
-
         <div class="kpi-grid">
             <div class="kpi-card green"><div class="kpi-label"><i class="fa-solid fa-car"></i> Aktive</div><div class="kpi-value green">${active}</div><div class="kpi-sub">Në punë</div></div>
             <div class="kpi-card pink"><div class="kpi-label"><i class="fa-solid fa-parking"></i> Pushim</div><div class="kpi-value pink">${vehicles.length - active}</div><div class="kpi-sub">Jashtë turnit</div></div>
         </div>
-
         <div class="page-table-wrap">
             <table class="orders-table">
-                <thead>
-                    <tr><th>Nr.</th><th>Targa</th><th>Modeli</th><th>Shoferi</th><th>Statusi</th><th>Telefoni</th></tr>
-                </thead>
+                <thead><tr><th>Nr.</th><th>Targa</th><th>Modeli</th><th>Shoferi</th><th>Statusi</th><th>Telefoni</th></tr></thead>
                 <tbody>
                     ${vehicles.map(v => {
                         const d = AppState.drivers.find(x => x.vehicleId === v.id);
                         const num = String(v.id).padStart(2, '0');
                         const modeLabel = d ? ({ free: '🟢 Lirë', taximeter: '🔵 Në udhëtim', fixed: '🔴 Çmim fiks', pause: '🟡 Pushim', inactive: '⚪ Joaktiv' }[d.mode] || d.mode) : '—';
-                        return `
-                            <tr>
-                                <td><span class="vehicle-badge">${num}</span></td>
-                                <td><strong style="font-family:var(--font-mono);color:var(--accent-purple);">${v.plate}</strong></td>
-                                <td>${v.model}</td>
-                                <td>${d ? d.name : '—'}</td>
-                                <td>${modeLabel}</td>
-                                <td class="phone">${d ? d.phone : '—'}</td>
-                            </tr>
-                        `;
+                        return `<tr>
+                            <td><span class="vehicle-badge">${num}</span></td>
+                            <td><strong style="font-family:var(--font-mono);color:var(--accent-purple);">${v.plate}</strong></td>
+                            <td>${v.model}</td>
+                            <td>${d ? d.name : '—'}</td>
+                            <td>${modeLabel}</td>
+                            <td class="phone">${d ? d.phone : '—'}</td>
+                        </tr>`;
                     }).join('')}
                 </tbody>
             </table>
@@ -451,22 +372,17 @@ function renderVehiclesPage() {
 function renderMapPage() {
     const el = document.querySelector('.page[data-page="map"]');
     if (!el) return;
-
     el.innerHTML = `
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-map"></i>
-                <div>
-                    <h2>Harta Live</h2>
-                    <p>Pozicionet live të flotës · ${AppState.drivers.length} vetura</p>
-                </div>
+                <div><h2>Harta Live</h2><p>Pozicionet live të flotës · ${AppState.drivers.length} vetura</p></div>
             </div>
         </div>
         <div class="page-table-wrap" style="padding:0;height:calc(100% - 100px);">
             <div id="map-page-container" style="width:100%;height:100%;border-radius:var(--radius-lg);"></div>
         </div>
     `;
-
     setTimeout(() => {
         const el2 = document.getElementById('map-page-container');
         if (!el2) return;
@@ -489,18 +405,13 @@ function renderMapPage() {
 function renderZonesPage() {
     const el = document.querySelector('.page[data-page="zones"]');
     if (!el) return;
-
     el.innerHTML = `
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-map-location-dot"></i>
-                <div>
-                    <h2>Zonat</h2>
-                    <p>Zonat e shërbimit · ${AppState.zones.length} total</p>
-                </div>
+                <div><h2>Zonat</h2><p>Zonat e shërbimit · ${AppState.zones.length} total</p></div>
             </div>
         </div>
-
         <div class="cards-grid">
             ${AppState.zones.map(z => {
                 const driversInZone = AppState.drivers.filter(d => {
@@ -511,10 +422,7 @@ function renderZonesPage() {
                     <div class="info-card" style="border-left:3px solid ${z.color};">
                         <div class="info-card-header">
                             <div class="info-card-avatar" style="background:${z.color};">📍</div>
-                            <div>
-                                <div class="info-card-name">${z.name}</div>
-                                <div class="info-card-sub">Tarifa: €${z.tariff.toFixed(2)}</div>
-                            </div>
+                            <div><div class="info-card-name">${z.name}</div><div class="info-card-sub">Tarifa: €${z.tariff.toFixed(2)}</div></div>
                         </div>
                         <div class="info-card-body">
                             <div class="info-card-row"><span><i class="fa-solid fa-car"></i> Veturat këtu</span><span>${driversInZone}</span></div>
@@ -531,18 +439,13 @@ function renderZonesPage() {
 function renderClientsPage() {
     const el = document.querySelector('.page[data-page="clients"]');
     if (!el) return;
-
     el.innerHTML = `
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-address-book"></i>
-                <div>
-                    <h2>Klientët</h2>
-                    <p>Historiku i klientëve dhe porosive</p>
-                </div>
+                <div><h2>Klientët</h2><p>Historiku i klientëve dhe porosive</p></div>
             </div>
         </div>
-
         <div class="page-table-wrap" style="padding:20px;">
             <div style="text-align:center;padding:40px;">
                 <i class="fa-solid fa-search" style="font-size:48px;opacity:0.3;color:var(--accent-purple);"></i>
@@ -555,7 +458,6 @@ function renderClientsPage() {
             </div>
         </div>
     `;
-
     const search = document.getElementById('clients-search');
     let timer;
     search.addEventListener('input', (e) => {
@@ -586,7 +488,6 @@ function renderClientsPage() {
 function renderReportsPage() {
     const el = document.querySelector('.page[data-page="reports"]');
     if (!el) return;
-
     const all = [...AppState.orders, ...AppState.completedOrders, ...AppState.waitingOrders];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -597,24 +498,17 @@ function renderReportsPage() {
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-chart-line"></i>
-                <div>
-                    <h2>Raporte</h2>
-                    <p>Statistikat dhe raportet ditore/javore/mujore</p>
-                </div>
+                <div><h2>Raporte</h2><p>Statistikat dhe raportet ditore/javore/mujore</p></div>
             </div>
         </div>
-
         <div class="kpi-grid">
             <div class="kpi-card green"><div class="kpi-label"><i class="fa-solid fa-calendar-day"></i> Sot</div><div class="kpi-value green">€${todayRevenue.toFixed(2)}</div><div class="kpi-sub">${todayOrders.length} porosi</div></div>
             <div class="kpi-card blue"><div class="kpi-label"><i class="fa-solid fa-calendar-week"></i> Kjo javë</div><div class="kpi-value blue">€0.00</div><div class="kpi-sub">Duke u ngarkuar...</div></div>
             <div class="kpi-card pink"><div class="kpi-label"><i class="fa-solid fa-calendar-alt"></i> Ky muaj</div><div class="kpi-value pink">€0.00</div><div class="kpi-sub">Duke u ngarkuar...</div></div>
             <div class="kpi-card yellow"><div class="kpi-label"><i class="fa-solid fa-calendar"></i> Ky vit</div><div class="kpi-value yellow">€0.00</div><div class="kpi-sub">Duke u ngarkuar...</div></div>
         </div>
-
         <div class="page-table-wrap" style="padding:20px;">
-            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
-                <i class="fa-solid fa-clock"></i> Porositë sot
-            </h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;"><i class="fa-solid fa-clock"></i> Porositë sot</h3>
             <table class="orders-table">
                 <thead><tr><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Çmimi</th><th>Statusi</th></tr></thead>
                 <tbody>
@@ -647,24 +541,17 @@ function renderFinancePage() {
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-coins"></i>
-                <div>
-                    <h2>Financa</h2>
-                    <p>Përmbledhje financiare e kompanisë</p>
-                </div>
+                <div><h2>Financa</h2><p>Përmbledhje financiare e kompanisë</p></div>
             </div>
         </div>
-
         <div class="kpi-grid">
             <div class="kpi-card green"><div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura totale</div><div class="kpi-value green">€${totalRevenue.toFixed(2)}</div><div class="kpi-sub">Nga ${completed.length} porosi</div></div>
             <div class="kpi-card blue"><div class="kpi-label"><i class="fa-solid fa-chart-line"></i> Mesatarja / porosi</div><div class="kpi-value blue">€${avgPrice.toFixed(2)}</div><div class="kpi-sub">Çmimi mesatar</div></div>
             <div class="kpi-card pink"><div class="kpi-label"><i class="fa-solid fa-percent"></i> Komisioni (10%)</div><div class="kpi-value pink">€${(totalRevenue * 0.10).toFixed(2)}</div><div class="kpi-sub">Fitimi i kompanisë</div></div>
             <div class="kpi-card yellow"><div class="kpi-label"><i class="fa-solid fa-hand-holding-dollar"></i> Pagat shoferëve</div><div class="kpi-value yellow">€${(totalRevenue * 0.90).toFixed(2)}</div><div class="kpi-sub">90% për shoferët</div></div>
         </div>
-
         <div class="page-table-wrap" style="padding:20px;">
-            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
-                <i class="fa-solid fa-list"></i> Porositë e përfunduara
-            </h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;"><i class="fa-solid fa-list"></i> Porositë e përfunduara</h3>
             <table class="orders-table">
                 <thead><tr><th>Ora</th><th>Telefon</th><th>Vetura</th><th>Shoferi</th><th>Çmimi</th><th>Data</th></tr></thead>
                 <tbody>
@@ -689,18 +576,13 @@ function renderFinancePage() {
 function renderSettingsPage() {
     const el = document.querySelector('.page[data-page="settings"]');
     if (!el) return;
-
     el.innerHTML = `
         <div class="page-header">
             <div class="page-title">
                 <i class="fa-solid fa-sliders"></i>
-                <div>
-                    <h2>Cilësimet</h2>
-                    <p>Konfigurimi i sistemit</p>
-                </div>
+                <div><h2>Cilësimet</h2><p>Konfigurimi i sistemit</p></div>
             </div>
         </div>
-
         <div class="cards-grid">
             <div class="info-card">
                 <div class="info-card-header">
@@ -712,7 +594,6 @@ function renderSettingsPage() {
                     <div class="info-card-row"><span>Gjuha</span><span>Shqip</span></div>
                 </div>
             </div>
-
             <div class="info-card">
                 <div class="info-card-header">
                     <div class="info-card-avatar"><i class="fa-solid fa-bell"></i></div>
@@ -723,7 +604,6 @@ function renderSettingsPage() {
                     <div class="info-card-row"><span>Auto-ring</span><span>Aktiv</span></div>
                 </div>
             </div>
-
             <div class="info-card">
                 <div class="info-card-header">
                     <div class="info-card-avatar"><i class="fa-solid fa-database"></i></div>
@@ -732,9 +612,7 @@ function renderSettingsPage() {
                 <div class="info-card-body">
                     <div class="info-card-row"><span>Firebase</span><span style="color:var(--accent-green);">✅ Lidhur</span></div>
                     <div class="info-card-row"><span>Version</span><span>v2.0.0</span></div>
-                    <button class="btn-primary" onclick="backupData()" style="margin-top:8px;width:100%;">
-                        <i class="fa-solid fa-download"></i> Shkarko backup
-                    </button>
+                    <button class="btn-primary" onclick="backupData()" style="margin-top:8px;width:100%;"><i class="fa-solid fa-download"></i> Shkarko backup</button>
                 </div>
             </div>
         </div>
@@ -930,6 +808,17 @@ function renderIncomingCalls() {
 function acceptCall(callId) {
     const call = AppState.incomingCalls.find(c => c.id === callId);
     if (!call) return;
+
+    // Shto në Call Center
+    if (window.TaxiCallCenter) {
+        window.TaxiCallCenter.addToQueue({
+            id: call.id,
+            phone: call.phone,
+            name: call.name,
+            lastAddress: call.lastAddress
+        });
+    }
+
     document.getElementById('client-phone').value = call.phone;
     if (call.name) document.getElementById('client-name').value = call.name;
     if (call.lastAddress) document.getElementById('pickup-address').value = call.lastAddress;
@@ -940,9 +829,15 @@ function acceptCall(callId) {
 }
 
 function rejectCall(callId) {
+    const call = AppState.incomingCalls.find(c => c.id === callId);
     AppState.incomingCalls = AppState.incomingCalls.filter(c => c.id !== callId);
     renderIncomingCalls();
     stopRing();
+
+    // Regjistro në Call Center si "refuzuar"
+    if (window.TaxiCallCenter && call) {
+        window.TaxiCallCenter.missCall(call);
+    }
 }
 
 // ═══ SOUND ═══
