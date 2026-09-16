@@ -17,7 +17,6 @@ window.TaxiOrders = (() => {
         return window.TaxiFirebase?.serverTime?.() || new Date();
     }
 
-    // ─── KRIJO POROSI TË RE ───
     async function create(orderData) {
         const database = db();
         if (!database) throw new Error('Firebase nuk është gati');
@@ -27,7 +26,6 @@ window.TaxiOrders = (() => {
         const dateStr = window.TaxiUtils.date(now);
 
         const order = {
-            // Të dhënat bazë
             phone: orderData.phone || '',
             name: orderData.name || 'Klient',
             pickup: orderData.pickup || '',
@@ -36,17 +34,22 @@ window.TaxiOrders = (() => {
             tariff: orderData.tariff || 'standard',
             remark: orderData.remark || '',
 
-            // Statusi
-            status: orderData.status || 'new', // new, waiting, assigned, onroute, arrived, taximeter, fixed, completed, cancelled
+            status: orderData.status || 'waiting',
 
-            // Caktimi
             vehicleId: orderData.vehicleId || null,
             vehicleNum: orderData.vehicleNum || null,
             driverId: orderData.driverId || null,
             driverName: orderData.driverName || null,
-            dispatchMode: orderData.dispatchMode || 'auto', // auto, closest, manual
+            dispatchMode: orderData.dispatchMode || 'auto',
 
-            // Kohët
+            // Të dhënat e termin-it (nëse ka)
+            isPreorder: orderData.isPreorder || false,
+            terminDate: orderData.terminDate || null,
+            terminTime: orderData.terminTime || null,
+            terminLead: orderData.terminLead || 15,
+            terminRepeat: orderData.terminRepeat || 'none',
+            terminDateTime: orderData.terminDateTime || null,
+
             createdAt: serverTime(),
             createdAtLocal: now.getTime(),
             createdTimeStr: timeStr,
@@ -54,16 +57,12 @@ window.TaxiOrders = (() => {
             assignedAt: null,
             completedAt: null,
 
-            // Operatori
             operatorId: window.TaxiAuth?.currentUser()?.uid || null,
             operatorName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
 
-            // Financat
             price: 0,
             distance: 0,
             duration: 0,
-
-            // Meta
             version: 1
         };
 
@@ -77,7 +76,6 @@ window.TaxiOrders = (() => {
         }
     }
 
-    // ─── UPDATE POROSI ───
     async function update(orderId, changes) {
         const database = db();
         if (!database) throw new Error('Firebase nuk është gati');
@@ -95,7 +93,6 @@ window.TaxiOrders = (() => {
         }
     }
 
-    // ─── FSHIJ POROSI ───
     async function remove(orderId) {
         const database = db();
         if (!database) throw new Error('Firebase nuk është gati');
@@ -109,11 +106,10 @@ window.TaxiOrders = (() => {
         }
     }
 
-    // ─── DËGJO NDRYSHIMET LIVE ───
     function subscribe() {
         const database = db();
         if (!database) {
-            console.warn('⚠️ Firestore nuk është gati — nuk mund të abonohem');
+            console.warn('⚠️ Firestore nuk është gati');
             return null;
         }
 
@@ -135,7 +131,6 @@ window.TaxiOrders = (() => {
                         if (change.type === 'removed') removed.push(data);
                     });
 
-                    // Emit events
                     if (added.length) {
                         listeners.added.forEach(fn => fn(added));
                         window.TaxiEvents?.emit('firestore:order_added', added);
@@ -160,7 +155,6 @@ window.TaxiOrders = (() => {
         return unsubscribe;
     }
 
-    // ─── NDALO DËGJIMIN ───
     function unsubscribeAll() {
         if (unsubscribe) {
             unsubscribe();
@@ -169,7 +163,6 @@ window.TaxiOrders = (() => {
         }
     }
 
-    // ─── MERR TË GJITHA POROSITË ───
     async function getAll() {
         const database = db();
         if (!database) return [];
