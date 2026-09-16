@@ -17,7 +17,7 @@ window.TaxiApp = (() => {
         if (window.TaxiLocale) window.TaxiLocale.init();
         if (window.TaxiThemes) window.TaxiThemes.init();
         if (window.TaxiOffline) window.TaxiOffline.init();
-        if (window.TaxiSound) window.TaxiSound.init();
+        if (window.TaxiCallCenter) window.TaxiCallCenter.init();
 
         // ═══ 2. FIREBASE ═══
         if (!window.TaxiFirebase) {
