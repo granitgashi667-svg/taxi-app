@@ -122,7 +122,8 @@
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label><i class="fa-solid fa-phone"></i> Numri <span class="required">*</span></label>
-                                    <input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field">
+                                    <input type="tel" id="client-phone" placeholder="+383 44 123 456" class="input-field" autocomplete="off">
+                                    <div id="client-history-panel"></div>
                                 </div>
                                 <div class="form-group">
                                     <label><i class="fa-solid fa-user"></i> Emri</label>
@@ -409,7 +410,7 @@
     <script src="data.js"></script>
     <script src="script.js"></script>
 
-    <!-- INIT: FIREBASE + LOGIN + ORDERS -->
+    <!-- INIT: FIREBASE + LOGIN + ORDERS + CLIENT HISTORY -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Inicializo Firebase
@@ -534,6 +535,35 @@
                     if (e.target === ov) ov.classList.remove('active');
                 });
             });
+
+            // 8. AUTO-KËRKIM KLIENTI KUR SHKRUAN NUMRIN
+            const phoneInput = document.getElementById('client-phone');
+            if (phoneInput && window.TaxiClients) {
+                let searchTimer = null;
+
+                phoneInput.addEventListener('input', (e) => {
+                    const phone = e.target.value.trim();
+
+                    clearTimeout(searchTimer);
+
+                    if (phone.length < 6) {
+                        document.getElementById('client-history-panel').style.display = 'none';
+                        return;
+                    }
+
+                    searchTimer = setTimeout(async () => {
+                        console.log('🔍 Duke kërkuar klientin:', phone);
+                        const result = await window.TaxiClients.searchByPhone(phone);
+                        window.TaxiClients.renderPanel(phone, result);
+
+                        if (result && result.lastOrder && result.lastOrder.name && !document.getElementById('client-name').value) {
+                            document.getElementById('client-name').value = result.lastOrder.name;
+                        }
+                    }, 500);
+                });
+
+                console.log('✅ Auto-search i klientit u aktivizua');
+            }
 
             console.log('🚀 Init komplet përfundoi');
         });
