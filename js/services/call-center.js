@@ -2,6 +2,7 @@
 
 /**
  * call-center.js — Call Center i plotë
+ * F1-F4 funksionojnë në DISPATCH dhe CALL CENTER
  */
 
 window.TaxiCallCenter = (() => {
@@ -29,26 +30,37 @@ window.TaxiCallCenter = (() => {
         console.log('✅ Call Center aktivizuar');
     }
 
-    // ═══ KEYBOARD F1-F4 GLOBAL (BLLOKON CHROME HELP) ═══
+    // ═══ KEYBOARD F1-F4 GLOBAL ═══
     function setupKeyboard() {
-        // KAP TË GJITHA F1-F4 GLOBALISHT (para Chrome)
         document.addEventListener('keydown', (e) => {
             const action = KEYS[e.key];
-            if (action) {
-                // BLLOKO CHROME NGA HAPJA E HELP
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
+            if (!action) return;
 
-                // Nëse jemi në faqen e thirrjeve → ekzekuto
-                if (window.AppState?.currentPage === 'calls') {
-                    runAction(action);
-                }
+            // BLLOKO CHROME HELP
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const page = window.AppState?.currentPage;
+
+            // FAQJA CALL CENTER
+            if (page === 'calls') {
+                runAction(action);
                 return false;
             }
-        }, true); // ← capture phase (para çdo listeneri tjetër)
 
-        // Gjithashtu blloko keyup
+            // FAQJA DISPATCH
+            if (page === 'dispatch') {
+                if (action === 'pickup')   acceptIncomingCallFromDispatch();
+                if (action === 'hangup')   rejectIncomingCallFromDispatch();
+                if (action === 'hold')     holdIncomingCallFromDispatch();
+                if (action === 'transfer') transferIncomingCallFromDispatch();
+                return false;
+            }
+
+            return false;
+        }, true);
+
         document.addEventListener('keyup', (e) => {
             if (KEYS[e.key]) {
                 e.preventDefault();
@@ -57,7 +69,6 @@ window.TaxiCallCenter = (() => {
             }
         }, true);
 
-        // Dhe keypress
         document.addEventListener('keypress', (e) => {
             if (KEYS[e.key]) {
                 e.preventDefault();
@@ -78,6 +89,131 @@ window.TaxiCallCenter = (() => {
         }
     }
 
+    // ═══ F1 — PRANO THIRRJEN (nga Dispatch) ═══
+    function acceptIncomingCallFromDispatch() {
+        const calls = window.AppState?.incomingCalls || [];
+        if (!calls.length) {
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            return;
+        }
+
+        const call = calls[0];
+
+        const phoneField = document.getElementById('client-phone');
+        const nameField = document.getElementById('client-name');
+        const pickupField = document.getElementById('pickup-address');
+
+        if (phoneField) phoneField.value = call.phone || '';
+        if (nameField && call.name) nameField.value = call.name;
+        if (pickupField && call.lastAddress) pickupField.value = call.lastAddress;
+
+        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+
+        if (typeof stopRing === 'function') stopRing();
+        else if (window.TaxiSound) window.TaxiSound.stopRing();
+
+        addToQueue({
+            id: call.id,
+            phone: call.phone,
+            name: call.name,
+            lastAddress: call.lastAddress
+        });
+
+        if (phoneField) {
+            phoneField.focus();
+            phoneField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        showToast('success', '📞 Thirrja u pranua', `${call.phone} — plotëso porosinë`);
+        if (window.TaxiSound) window.TaxiSound.beep(1200, 0.15, 0.1);
+    }
+
+    // ═══ F2 — REFUZO (nga Dispatch) ═══
+    function rejectIncomingCallFromDispatch() {
+        const calls = window.AppState?.incomingCalls || [];
+        if (!calls.length) {
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            return;
+        }
+
+        const call = calls[0];
+        if (!confirm(`A jeni i sigurt që dëshironi të REFUZONI thirrjen nga ${call.phone}?`)) return;
+
+        missCall(call);
+
+        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+
+        if (typeof stopRing === 'function') stopRing();
+        else if (window.TaxiSound) window.TaxiSound.stopRing();
+
+        if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
+
+        showToast('info', '📵 U refuzua', call.phone);
+    }
+
+    // ═══ F3 — NË PRITJE (nga Dispatch) ═══
+    function holdIncomingCallFromDispatch() {
+        const calls = window.AppState?.incomingCalls || [];
+        if (!calls.length) {
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            return;
+        }
+
+        const call = calls[0];
+
+        state.onHold.push({
+            id: call.id,
+            phone: call.phone,
+            name: call.name || 'Klient',
+            lastAddress: call.lastAddress || '',
+            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+            holdStart: Date.now()
+        });
+
+        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+
+        if (typeof stopRing === 'function') stopRing();
+        else if (window.TaxiSound) window.TaxiSound.stopRing();
+
+        render();
+
+        logEvent('call_hold_from_dispatch', { phone: call.phone });
+        showToast('warning', '⏸️ Në pritje', `${call.phone} u vu në pritje`);
+    }
+
+    // ═══ F4 — TRANSFER (nga Dispatch) ═══
+    function transferIncomingCallFromDispatch() {
+        const calls = window.AppState?.incomingCalls || [];
+        if (!calls.length) {
+            showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje hyrëse');
+            return;
+        }
+
+        const call = calls[0];
+
+        state.activeCall = {
+            id: call.id,
+            phone: call.phone,
+            name: call.name || 'Klient',
+            lastAddress: call.lastAddress || '',
+            time: call.time,
+            startTime: Date.now()
+        };
+
+        window.AppState.incomingCalls = calls.filter(c => c.id !== call.id);
+        if (typeof renderIncomingCalls === 'function') renderIncomingCalls();
+
+        if (typeof stopRing === 'function') stopRing();
+        else if (window.TaxiSound) window.TaxiSound.stopRing();
+
+        openTransferModal();
+
+        showToast('info', '🔄 Transfer', `Duke transferuar ${call.phone}`);
+    }
+
     // ═══ KRIJO THIRRJE TË RE ═══
     function addToQueue(call) {
         const item = {
@@ -94,7 +230,7 @@ window.TaxiCallCenter = (() => {
         return item;
     }
 
-    // ═══ PRANO THIRRJEN E PARË (F1) ═══
+    // ═══ PRANO THIRRJEN E PARË ═══
     function pickup() {
         if (state.activeCall) {
             showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
@@ -118,7 +254,20 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ MBYLL THIRRJEN (F2) ═══
+    function pickupSpecific(id) {
+        const idx = state.queue.findIndex(c => c.id === id);
+        if (idx < 0) return;
+        if (state.activeCall) {
+            showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
+            return;
+        }
+        const call = state.queue.splice(idx, 1)[0];
+        state.activeCall = { ...call, startTime: Date.now() };
+        showToast('success', '📞 U pranua', call.phone);
+        render();
+    }
+
+    // ═══ MBYLL THIRRJEN ═══
     function hangup() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -141,7 +290,7 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ VENDOS NË PRITJE (F3) ═══
+    // ═══ VENDOS NË PRITJE ═══
     function hold() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -173,7 +322,19 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ TRANSFER (F4) ═══
+    function dropHold(id) {
+        const idx = state.onHold.findIndex(h => h.id === id);
+        if (idx < 0) return;
+        const item = state.onHold.splice(idx, 1)[0];
+        state.history.unshift({
+            id: item.id, phone: item.phone, name: item.name,
+            status: 'M', statusLabel: 'Humbur', time: item.time,
+            duration: 0, timestamp: Date.now()
+        });
+        render();
+    }
+
+    // ═══ TRANSFER ═══
     function openTransfer() {
         if (!state.activeCall) {
             showToast('info', 'Nuk ka thirrje', 'Nuk ka thirrje aktive');
@@ -407,7 +568,6 @@ window.TaxiCallCenter = (() => {
         showToast('info', 'Refuzuar', 'Transferimi u refuzua');
     }
 
-    // ═══ REFUZO THIRRJEN ═══
     function reject(id) {
         const idx = state.queue.findIndex(c => c.id === id);
         if (idx < 0) return;
@@ -441,7 +601,6 @@ window.TaxiCallCenter = (() => {
         render();
     }
 
-    // ═══ NGARKO HISTORIKUN ═══
     async function loadHistoryFromFirestore() {
         if (!window.TaxiFirebase?.db) return;
         try {
@@ -476,7 +635,7 @@ window.TaxiCallCenter = (() => {
                 operatorName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
                 startedAt: Date.now()
             });
-        } catch (e) { /* silent */ }
+        } catch (e) {}
     }
 
     function formatDuration(sec) {
@@ -673,31 +832,6 @@ window.TaxiCallCenter = (() => {
                 acbTimer.textContent = formatDuration(Math.floor((Date.now() - state.activeCall.startTime) / 1000));
             }
         }, 1000);
-    }
-
-    function pickupSpecific(id) {
-        const idx = state.queue.findIndex(c => c.id === id);
-        if (idx < 0) return;
-        if (state.activeCall) {
-            showToast('warning', 'Thirrje aktive', 'Mbyll thirrjen aktuale së pari');
-            return;
-        }
-        const call = state.queue.splice(idx, 1)[0];
-        state.activeCall = { ...call, startTime: Date.now() };
-        showToast('success', '📞 U pranua', call.phone);
-        render();
-    }
-
-    function dropHold(id) {
-        const idx = state.onHold.findIndex(h => h.id === id);
-        if (idx < 0) return;
-        const item = state.onHold.splice(idx, 1)[0];
-        state.history.unshift({
-            id: item.id, phone: item.phone, name: item.name,
-            status: 'M', statusLabel: 'Humbur', time: item.time,
-            duration: 0, timestamp: Date.now()
-        });
-        render();
     }
 
     return {
