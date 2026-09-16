@@ -1,9 +1,10 @@
 'use strict';
 
 const AppState = {
-    orders: [], waitingOrders: [], preOrders: [], incomingCalls: [], messages: [],
+    orders: [], waitingOrders: [], preOrders: [], completedOrders: [], incomingCalls: [], messages: [],
     drivers: [], vehicles: [], zones: [], addresses: [], config: {},
     map: null, vehicleMarkers: new Map(), currentDispatchMode: 'auto', soundEnabled: true,
+    currentPage: 'dispatch',
     currentOperator: {
         name: 'Granit Gashi', initials: 'GD', loggedIn: false, loginTime: null,
         stats: { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 }
@@ -141,6 +142,707 @@ function updateVehicleMarker(driverId) {
     marker.setIcon(icon);
 }
 
+// ═══ ROUTER — NDRYSHO FAQET ═══
+function switchPage(pageName) {
+    console.log('📄 Duke kaluar në:', pageName);
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const page = document.querySelector(`.page[data-page="${pageName}"]`);
+    if (!page) return;
+    page.classList.add('active');
+    AppState.currentPage = pageName;
+
+    document.querySelectorAll('.rail-nav .rail-item').forEach(i => {
+        i.classList.toggle('active', i.dataset.nav === pageName);
+    });
+
+    // Render përmbajtjen sipas faqes
+    if (pageName === 'calls') renderCallsPage();
+    else if (pageName === 'orders') renderOrdersPage();
+    else if (pageName === 'drivers') renderDriversPage();
+    else if (pageName === 'vehicles') renderVehiclesPage();
+    else if (pageName === 'map') renderMapPage();
+    else if (pageName === 'zones') renderZonesPage();
+    else if (pageName === 'clients') renderClientsPage();
+    else if (pageName === 'reports') renderReportsPage();
+    else if (pageName === 'finance') renderFinancePage();
+    else if (pageName === 'settings') renderSettingsPage();
+
+    // Nëse kthehemi në dispatch, rindërto hartën
+    if (pageName === 'dispatch') {
+        setTimeout(() => AppState.map?.invalidateSize(), 300);
+    }
+}
+
+function setupNavRail() {
+    document.querySelectorAll('.rail-nav .rail-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchPage(item.dataset.nav);
+        });
+    });
+}
+
+// ═══ PAGE RENDERERS ═══
+
+function renderCallsPage() {
+    const el = document.querySelector('.page[data-page="calls"]');
+    if (!el) return;
+
+    const calls = AppState.incomingCalls;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-phone-volume"></i>
+                <div>
+                    <h2>Thirrjet Hyrëse</h2>
+                    <p>Radha e thirrjeve në pritje · ${calls.length} aktive</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-phone"></i> Në pritje</div>
+                <div class="kpi-value pink">${calls.length}</div>
+                <div class="kpi-sub">Thirrje pa trajtuar</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-check"></i> Të pranuara sot</div>
+                <div class="kpi-value green">${AppState.currentOperator.stats.callsTaken || 0}</div>
+                <div class="kpi-sub">Totali i thirrjeve</div>
+            </div>
+        </div>
+
+        <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
+            <i class="fa-solid fa-list"></i> Lista e thirrjeve
+        </h3>
+        <div class="cards-grid">
+            ${calls.length === 0 ? `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-phone-slash"></i><h3>Nuk ka thirrje në pritje</h3><p>Thirrjet e reja do shfaqen këtu</p></div>` :
+                calls.map(c => `
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-avatar">📞</div>
+                            <div style="flex:1;">
+                                <div class="info-card-name">${c.phone}</div>
+                                <div class="info-card-sub">${c.name || 'Klient i re'} · ${c.time}</div>
+                            </div>
+                        </div>
+                        <div class="info-card-body">
+                            ${c.lastAddress ? `<div class="info-card-row"><span><i class="fa-solid fa-clock-rotate-left"></i> Adresa e fundit</span><span>${c.lastAddress}</span></div>` : ''}
+                            <button class="btn-accept" onclick="acceptCall(${c.id}); switchPage('dispatch');" style="width:100%;margin-top:8px;padding:10px;">
+                                <i class="fa-solid fa-phone"></i> KRIJO POROSI
+                            </button>
+                        </div>
+                    </div>
+                `).join('')
+            }
+        </div>
+    `;
+}
+
+function renderOrdersPage() {
+    const el = document.querySelector('.page[data-page="orders"]');
+    if (!el) return;
+
+    const all = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders, ...AppState.completedOrders];
+    const completed = AppState.completedOrders || [];
+    const revenue = completed.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+    const active = AppState.orders.length;
+    const waiting = AppState.waitingOrders.length;
+    const preorders = AppState.preOrders.length;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <div>
+                    <h2>Porositë</h2>
+                    <p>Historiku i plotë i porosive · ${all.length} total</p>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterOrdersPage('all', this)">Të gjitha</button>
+                <button class="filter-btn" onclick="filterOrdersPage('active', this)">Aktive</button>
+                <button class="filter-btn" onclick="filterOrdersPage('waiting', this)">Në pritje</button>
+                <button class="filter-btn" onclick="filterOrdersPage('preorder', this)">Me termin</button>
+                <button class="filter-btn" onclick="filterOrdersPage('completed', this)">Të përfunduara</button>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura totale</div>
+                <div class="kpi-value green">€${revenue.toFixed(2)}</div>
+                <div class="kpi-sub">Nga porositë e përfunduara</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label"><i class="fa-solid fa-car"></i> Porosi aktive</div>
+                <div class="kpi-value blue">${active}</div>
+                <div class="kpi-sub">Në rrugë ose caktuar</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label"><i class="fa-solid fa-hourglass-half"></i> Në pritje</div>
+                <div class="kpi-value yellow">${waiting}</div>
+                <div class="kpi-sub">Presin caktim</div>
+            </div>
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-check"></i> Të përfunduara</div>
+                <div class="kpi-value pink">${completed.length}</div>
+                <div class="kpi-sub">Me çmim të caktuar</div>
+            </div>
+        </div>
+
+        <div class="page-table-wrap" id="orders-page-table">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Ora</th>
+                        <th>Statusi</th>
+                        <th>Vetura</th>
+                        <th>Telefon</th>
+                        <th>Marrja</th>
+                        <th>Destinacioni</th>
+                        <th>Shoferi</th>
+                        <th>Shënim</th>
+                        <th>Çmimi</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-page-tbody">
+                    ${renderOrdersPageRows(all)}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderOrdersPageRows(orders) {
+    if (!orders.length) {
+        return `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">Asnjë porosi</td></tr>`;
+    }
+    const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në pritje', arrived: 'Në vend', taximeter: 'Taksimetër', fixed: 'Fiks', preorder: 'Me termin', cancelled: 'Anuluar' };
+    return orders.map(o => `
+        <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
+            <td class="time">${o.time || o.terminTime || '—'}</td>
+            <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
+            <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
+            <td class="phone">${o.phone}</td>
+            <td class="location">${o.pickup}</td>
+            <td class="location">${o.destination || '—'}</td>
+            <td>${o.driverName || '—'}</td>
+            <td class="remark-cell">${o.remark || '—'}</td>
+            <td style="color:var(--accent-green);font-weight:800;font-family:var(--font-mono);">${o.price ? '€' + parseFloat(o.price).toFixed(2) : '—'}</td>
+        </tr>
+    `).join('');
+}
+
+function filterOrdersPage(filter, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    let list = [];
+    if (filter === 'all') list = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders, ...AppState.completedOrders];
+    else if (filter === 'active') list = AppState.orders;
+    else if (filter === 'waiting') list = AppState.waitingOrders;
+    else if (filter === 'preorder') list = AppState.preOrders;
+    else if (filter === 'completed') list = AppState.completedOrders;
+
+    const tbody = document.getElementById('orders-page-tbody');
+    if (tbody) tbody.innerHTML = renderOrdersPageRows(list);
+}
+
+function renderDriversPage() {
+    const el = document.querySelector('.page[data-page="drivers"]');
+    if (!el) return;
+
+    const drivers = AppState.drivers;
+    const active = drivers.filter(d => d.mode !== 'inactive').length;
+    const free = drivers.filter(d => d.mode === 'free').length;
+    const busy = drivers.filter(d => d.mode === 'taximeter' || d.mode === 'fixed').length;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-users"></i>
+                <div>
+                    <h2>Shoferët</h2>
+                    <p>Lista e plotë e shoferëve · ${drivers.length} total</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-circle-check"></i> Aktiv</div>
+                <div class="kpi-value green">${active}</div>
+                <div class="kpi-sub">Në punë tani</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label"><i class="fa-solid fa-car"></i> Të lirë</div>
+                <div class="kpi-value blue">${free}</div>
+                <div class="kpi-sub">Presin porosi</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label"><i class="fa-solid fa-route"></i> Në udhëtim</div>
+                <div class="kpi-value yellow">${busy}</div>
+                <div class="kpi-sub">Me klient</div>
+            </div>
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-user-slash"></i> Joaktiv</div>
+                <div class="kpi-value pink">${drivers.length - active}</div>
+                <div class="kpi-sub">Jashtë turnit</div>
+            </div>
+        </div>
+
+        <div class="cards-grid">
+            ${drivers.map(d => {
+                const v = AppState.vehicles.find(x => x.id === d.vehicleId);
+                const num = String(d.vehicleId || 0).padStart(2, '0');
+                const modeLabel = { free: 'Lirë', taximeter: 'Në udhëtim', fixed: 'Çmim fiks', pause: 'Pushim', inactive: 'Joaktiv' }[d.mode] || d.mode;
+                return `
+                    <div class="info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-avatar ${d.mode}">${d.avatar || d.name?.slice(0,2).toUpperCase() || '?'}</div>
+                            <div style="flex:1;">
+                                <div class="info-card-name">${d.name}</div>
+                                <div class="info-card-sub">🚗 ${num} · ${v ? v.plate : 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="info-card-row"><span><i class="fa-solid fa-circle" style="color:${getModeColor(d.mode)};font-size:8px;"></i> Statusi</span><span>${modeLabel}</span></div>
+                            <div class="info-card-row"><span><i class="fa-solid fa-star"></i> Vlerësimi</span><span>⭐ ${d.rating || '5.0'}</span></div>
+                            <div class="info-card-row"><span><i class="fa-solid fa-route"></i> Udhëtime</span><span>${d.trips || 0}</span></div>
+                            <div class="info-card-row"><span><i class="fa-solid fa-phone"></i> Telefon</span><span>${d.phone || '—'}</span></div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function renderVehiclesPage() {
+    const el = document.querySelector('.page[data-page="vehicles"]');
+    if (!el) return;
+
+    const vehicles = AppState.vehicles;
+    const active = vehicles.filter(v => {
+        const d = AppState.drivers.find(x => x.vehicleId === v.id);
+        return d && d.mode !== 'inactive';
+    }).length;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-car-side"></i>
+                <div>
+                    <h2>Veturat</h2>
+                    <p>Flota e veturave · ${vehicles.length} total</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-car"></i> Aktive</div>
+                <div class="kpi-value green">${active}</div>
+                <div class="kpi-sub">Në punë</div>
+            </div>
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-parking"></i> Pushim</div>
+                <div class="kpi-value pink">${vehicles.length - active}</div>
+                <div class="kpi-sub">Jashtë turnit</div>
+            </div>
+        </div>
+
+        <div class="page-table-wrap">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Nr.</th>
+                        <th>Targa</th>
+                        <th>Modeli</th>
+                        <th>Shoferi</th>
+                        <th>Statusi</th>
+                        <th>Telefoni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${vehicles.map(v => {
+                        const d = AppState.drivers.find(x => x.vehicleId === v.id);
+                        const num = String(v.id).padStart(2, '0');
+                        const modeLabel = d ? ({ free: '🟢 Lirë', taximeter: '🔵 Në udhëtim', fixed: '🔴 Çmim fiks', pause: '🟡 Pushim', inactive: '⚪ Joaktiv' }[d.mode] || d.mode) : '—';
+                        return `
+                            <tr>
+                                <td><span class="vehicle-badge">${num}</span></td>
+                                <td><strong style="font-family:var(--font-mono);color:var(--accent-purple);">${v.plate}</strong></td>
+                                <td>${v.model}</td>
+                                <td>${d ? d.name : '—'}</td>
+                                <td>${modeLabel}</td>
+                                <td class="phone">${d ? d.phone : '—'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderMapPage() {
+    const el = document.querySelector('.page[data-page="map"]');
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-map"></i>
+                <div>
+                    <h2>Harta Live</h2>
+                    <p>Pozicionet live të flotës · ${AppState.drivers.length} vetura</p>
+                </div>
+            </div>
+            <div class="filter-bar">
+                <button class="filter-btn active">Të gjitha</button>
+                <button class="filter-btn">Të lira</button>
+                <button class="filter-btn">Në udhëtim</button>
+            </div>
+        </div>
+        <div class="page-table-wrap" style="padding:0;height:calc(100% - 100px);">
+            <div id="map-page-container" style="width:100%;height:100%;border-radius:var(--radius-lg);"></div>
+        </div>
+    `;
+
+    setTimeout(() => {
+        const el2 = document.getElementById('map-page-container');
+        if (!el2) return;
+        const map2 = L.map('map-page-container', { center: [42.6629, 21.1655], zoom: 13 }).setView([42.6629, 21.1655], 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map2);
+        AppState.drivers.forEach(driver => {
+            const vehicle = AppState.vehicles.find(v => v.id === driver.vehicleId);
+            if (!vehicle) return;
+            const num = String(driver.vehicleId).padStart(2, '0');
+            const icon = L.divIcon({
+                className: 'vehicle-marker',
+                html: `<div class="vehicle-marker-inner ${driver.mode}" data-number="${num}"></div>`,
+                iconSize: [28, 28], iconAnchor: [14, 14]
+            });
+            L.marker([driver.lat, driver.lng], { icon }).addTo(map2);
+        });
+    }, 300);
+}
+
+function renderZonesPage() {
+    const el = document.querySelector('.page[data-page="zones"]');
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <div>
+                    <h2>Zonat</h2>
+                    <p>Zonat e shërbimit · ${AppState.zones.length} total</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-grid">
+            ${AppState.zones.map(z => {
+                const driversInZone = AppState.drivers.filter(d => {
+                    if (!z.polygon || !window.TaxiGeocoding) return false;
+                    return window.TaxiGeocoding.isPointInPolygon([d.lat, d.lng], z.polygon);
+                }).length;
+                return `
+                    <div class="info-card" style="border-left:3px solid ${z.color};">
+                        <div class="info-card-header">
+                            <div class="info-card-avatar" style="background:${z.color};">📍</div>
+                            <div>
+                                <div class="info-card-name">${z.name}</div>
+                                <div class="info-card-sub">Tarifa: €${z.tariff.toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="info-card-row"><span><i class="fa-solid fa-car"></i> Veturat këtu</span><span>${driversInZone}</span></div>
+                            <div class="info-card-row"><span><i class="fa-solid fa-money-bill"></i> Tarifa</span><span>€${z.tariff.toFixed(2)}</span></div>
+                            <div class="info-card-row"><span><i class="fa-solid fa-hashtag"></i> ID</span><span>${z.id}</span></div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+function renderClientsPage() {
+    const el = document.querySelector('.page[data-page="clients"]');
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-address-book"></i>
+                <div>
+                    <h2>Klientët</h2>
+                    <p>Historiku i klientëve dhe porosive</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-table-wrap" style="padding:20px;">
+            <div style="text-align:center;padding:40px;">
+                <i class="fa-solid fa-search" style="font-size:48px;opacity:0.3;color:var(--accent-purple);"></i>
+                <h3 style="margin-top:16px;color:var(--text-secondary);">Kërko klientin</h3>
+                <p style="color:var(--text-muted);font-size:12px;margin-top:6px;">Shkruaj numrin e telefonit për të shfaqur historikun e plotë</p>
+                <div style="max-width:400px;margin:20px auto 0;">
+                    <input type="tel" id="clients-search" placeholder="+383 44 123 456" class="input-field" style="text-align:center;font-size:16px;padding:14px;">
+                </div>
+                <div id="clients-result" style="margin-top:20px;"></div>
+            </div>
+        </div>
+    `;
+
+    const search = document.getElementById('clients-search');
+    let timer;
+    search.addEventListener('input', (e) => {
+        clearTimeout(timer);
+        const val = e.target.value.trim();
+        if (val.length < 6) {
+            document.getElementById('clients-result').innerHTML = '';
+            return;
+        }
+        timer = setTimeout(async () => {
+            if (window.TaxiClients) {
+                const r = await window.TaxiClients.searchByPhone(val);
+                const result = document.getElementById('clients-result');
+                if (!r || !r.orders.length) {
+                    result.innerHTML = '<p style="color:var(--text-muted);">Klient i re — nuk ka porosi</p>';
+                    return;
+                }
+                const s = r.stats;
+                result.innerHTML = `
+                    <div class="kpi-grid" style="max-width:600px;margin:0 auto;">
+                        <div class="kpi-card"><div class="kpi-label">Totali</div><div class="kpi-value">${s.total}</div></div>
+                        <div class="kpi-card green"><div class="kpi-label">Realizuar</div><div class="kpi-value green">${s.completed}</div></div>
+                        <div class="kpi-card pink"><div class="kpi-label">Të ardhura</div><div class="kpi-value pink">€${s.revenue.toFixed(2)}</div></div>
+                    </div>
+                `;
+            }
+        }, 500);
+    });
+}
+
+function renderReportsPage() {
+    const el = document.querySelector('.page[data-page="reports"]');
+    if (!el) return;
+
+    const all = [...AppState.orders, ...AppState.completedOrders, ...AppState.waitingOrders];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayOrders = all.filter(o => (o.createdAtLocal || 0) >= today.getTime());
+    const todayRevenue = todayOrders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-chart-line"></i>
+                <div>
+                    <h2>Raporte</h2>
+                    <p>Statistikat dhe raportet ditore/javore/mujore</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-calendar-day"></i> Sot</div>
+                <div class="kpi-value green">€${todayRevenue.toFixed(2)}</div>
+                <div class="kpi-sub">${todayOrders.length} porosi</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label"><i class="fa-solid fa-calendar-week"></i> Kjo javë</div>
+                <div class="kpi-value blue">€0.00</div>
+                <div class="kpi-sub">Duke u ngarkuar...</div>
+            </div>
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-calendar-alt"></i> Ky muaj</div>
+                <div class="kpi-value pink">€0.00</div>
+                <div class="kpi-sub">Duke u ngarkuar...</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label"><i class="fa-solid fa-calendar"></i> Ky vit</div>
+                <div class="kpi-value yellow">€0.00</div>
+                <div class="kpi-sub">Duke u ngarkuar...</div>
+            </div>
+        </div>
+
+        <div class="page-table-wrap" style="padding:20px;">
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
+                <i class="fa-solid fa-clock"></i> Porositë sot
+            </h3>
+            <table class="orders-table">
+                <thead><tr><th>Ora</th><th>Telefon</th><th>Marrja</th><th>Destinacioni</th><th>Çmimi</th><th>Statusi</th></tr></thead>
+                <tbody>
+                    ${todayOrders.length === 0
+                        ? `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk ka porosi sot</td></tr>`
+                        : todayOrders.map(o => `
+                            <tr>
+                                <td class="time">${o.time}</td>
+                                <td class="phone">${o.phone}</td>
+                                <td>${o.pickup}</td>
+                                <td>${o.destination || '—'}</td>
+                                <td style="color:var(--accent-green);font-weight:800;">${o.price ? '€' + parseFloat(o.price).toFixed(2) : '—'}</td>
+                                <td><span class="status-badge ${o.status}">${o.status}</span></td>
+                            </tr>
+                        `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderFinancePage() {
+    const el = document.querySelector('.page[data-page="finance"]');
+    if (!el) return;
+
+    const completed = AppState.completedOrders || [];
+    const all = [...completed, ...AppState.orders];
+    const totalRevenue = completed.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+    const avgPrice = completed.length ? totalRevenue / completed.length : 0;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-coins"></i>
+                <div>
+                    <h2>Financa</h2>
+                    <p>Përmbledhje financiare e kompanisë</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura totale</div>
+                <div class="kpi-value green">€${totalRevenue.toFixed(2)}</div>
+                <div class="kpi-sub">Nga ${completed.length} porosi</div>
+            </div>
+            <div class="kpi-card blue">
+                <div class="kpi-label"><i class="fa-solid fa-chart-line"></i> Mesatarja / porosi</div>
+                <div class="kpi-value blue">€${avgPrice.toFixed(2)}</div>
+                <div class="kpi-sub">Çmimi mesatar</div>
+            </div>
+            <div class="kpi-card pink">
+                <div class="kpi-label"><i class="fa-solid fa-percent"></i> Komisioni (10%)</div>
+                <div class="kpi-value pink">€${(totalRevenue * 0.10).toFixed(2)}</div>
+                <div class="kpi-sub">Fitimi i kompanisë</div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-label"><i class="fa-solid fa-hand-holding-dollar"></i> Pagat shoferëve</div>
+                <div class="kpi-value yellow">€${(totalRevenue * 0.90).toFixed(2)}</div>
+                <div class="kpi-sub">90% për shoferët</div>
+            </div>
+        </div>
+
+        <div class="page-table-wrap" style="padding:20px;">
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--accent-purple);text-transform:uppercase;letter-spacing:1px;font-weight:800;">
+                <i class="fa-solid fa-list"></i> Porositë e përfunduara
+            </h3>
+            <table class="orders-table">
+                <thead><tr><th>Ora</th><th>Telefon</th><th>Vetura</th><th>Shoferi</th><th>Çmimi</th><th>Data</th></tr></thead>
+                <tbody>
+                    ${completed.length === 0
+                        ? `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk ka porosi të përfunduara</td></tr>`
+                        : completed.map(o => `
+                            <tr>
+                                <td class="time">${o.time}</td>
+                                <td class="phone">${o.phone}</td>
+                                <td>${o.vehicle || '—'}</td>
+                                <td>${o.driverName || '—'}</td>
+                                <td style="color:var(--accent-green);font-weight:800;font-family:var(--font-mono);">€${parseFloat(o.price || 0).toFixed(2)}</td>
+                                <td class="time">${o.completedAtStr || '—'}</td>
+                            </tr>
+                        `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderSettingsPage() {
+    const el = document.querySelector('.page[data-page="settings"]');
+    if (!el) return;
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fa-solid fa-sliders"></i>
+                <div>
+                    <h2>Cilësimet</h2>
+                    <p>Konfigurimi i sistemit</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-grid">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-avatar"><i class="fa-solid fa-palette"></i></div>
+                    <div>
+                        <div class="info-card-name">Tema</div>
+                        <div class="info-card-sub">Ngjyra e aplikacionit</div>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-card-row"><span>Tema aktuale</span><span>Purple Neon</span></div>
+                    <div class="info-card-row"><span>Gjuha</span><span>Shqip</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-avatar"><i class="fa-solid fa-bell"></i></div>
+                    <div>
+                        <div class="info-card-name">Njoftimet</div>
+                        <div class="info-card-sub">Zë dhe alarme</div>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-card-row"><span>Zëri</span><span>${AppState.soundEnabled ? '✅ Aktiv' : '❌ Joaktiv'}</span></div>
+                    <div class="info-card-row"><span>Auto-ring</span><span>Aktiv</span></div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-avatar"><i class="fa-solid fa-database"></i></div>
+                    <div>
+                        <div class="info-card-name">Backup</div>
+                        <div class="info-card-sub">Ruajtje e të dhënave</div>
+                    </div>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-card-row"><span>Firebase</span><span style="color:var(--accent-green);">✅ Lidhur</span></div>
+                    <div class="info-card-row"><span>Version</span><span>v2.0.0</span></div>
+                    <button class="btn-primary" onclick="backupData()" style="margin-top:8px;width:100%;">
+                        <i class="fa-solid fa-download"></i> Shkarko backup
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function backupData() {
+    if (window.TaxiBackup) {
+        window.TaxiBackup.download();
+        showToast('success', 'Backup', 'Të dhënat u shkarkuan');
+    } else {
+        showToast('warning', 'Backup', 'Moduli nuk është gati');
+    }
+}
+
 // ═══ EVENT LISTENERS ═══
 function initEventListeners() {
     document.getElementById('order-form')?.addEventListener('submit', (e) => { e.preventDefault(); submitOrder(); });
@@ -222,7 +924,6 @@ function initEventListeners() {
         document.getElementById('termin-options')?.classList.remove('active');
     });
 
-    // Butoni ANULO POROSINË (në modal)
     setTimeout(() => {
         const btnCancelOrder = document.getElementById('btn-cancel-order');
         if (btnCancelOrder) {
@@ -230,7 +931,6 @@ function initEventListeners() {
                 const firestoreId = window.TaxiTargetEdit?.getCurrentOrderId?.();
                 if (!firestoreId) { showToast('error', 'Gabim', 'Nuk ka porosi aktive'); return; }
                 if (!confirm('A jeni i sigurt që dëshironi të ANULONI porosinë?')) return;
-
                 if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
                 if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
                 document.getElementById('modal-order-detail')?.classList.remove('active');
@@ -238,32 +938,6 @@ function initEventListeners() {
             });
         }
     }, 500);
-}
-
-// ═══ NAV RAIL ═══
-function setupNavRail() {
-    const railItems = document.querySelectorAll('.rail-nav .rail-item');
-    railItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            railItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-            const nav = item.dataset.nav;
-            switch (nav) {
-                case 'dispatch': showToast('info', 'Dispatch', 'Pamja kryesore'); break;
-                case 'calls': document.getElementById('panel-calls')?.scrollIntoView({ behavior: 'smooth' }); showToast('info', 'Thirrjet', `${AppState.incomingCalls.length} thirrje`); break;
-                case 'orders': document.getElementById('panel-orders')?.scrollIntoView({ behavior: 'smooth' }); showToast('info', 'Porositë', `${AppState.orders.length} aktive`); break;
-                case 'drivers': showToast('info', 'Shoferët', `${AppState.drivers.length} shoferë`); break;
-                case 'vehicles': showToast('info', 'Veturat', `${AppState.vehicles.length} vetura`); break;
-                case 'map': document.getElementById('panel-map')?.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => AppState.map?.invalidateSize(), 300); break;
-                case 'zones': showToast('info', 'Zonat', `${AppState.zones.length} zona`); break;
-                case 'clients': showToast('info', 'Klientët', 'Lista e klientëve'); break;
-                case 'reports': showToast('info', 'Raporte', 'Raportet e plota'); break;
-                case 'finance': showToast('info', 'Financa', 'Të ardhurat'); break;
-                case 'settings': showToast('info', 'Cilësimet', 'Konfigurimi'); break;
-            }
-        });
-    });
 }
 
 // ═══ TARGET EDIT BUTTONS ═══
@@ -310,7 +984,7 @@ function getLocationIcon(address) {
     return 'other';
 }
 
-// ═══ RENDER ═══
+// ═══ RENDER ALL ═══
 function renderAll() {
     renderIncomingCalls();
     renderWaitingOrders();
@@ -477,10 +1151,15 @@ function renderOrders() {
         else if (o.status === 'taximeter') rowClass = 'row-taximeter';
         else if (o.status === 'fixed') rowClass = 'row-fixed';
 
-        const showFinish = o.status === 'taximeter' || o.status === 'fixed' || o.status === 'onroute' || o.status === 'arrived';
-        const finishBtn = showFinish
-            ? `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')"><i class="fa-solid fa-check"></i> PËRFUNDO</button>`
-            : '';
+        // ═══ BUTONI PËRFUNDO SIPAS STATUSIT ═══
+        let finishBtn = '';
+        if (o.status === 'fixed') {
+            finishBtn = `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')" title="Përfundo me çmim fiks"><i class="fa-solid fa-lock"></i> PËRFUNDO FIKS</button>`;
+        } else if (o.status === 'taximeter') {
+            finishBtn = `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')" title="Përfundo me taksimetër"><i class="fa-solid fa-gauge"></i> PËRFUNDO TAKS.</button>`;
+        } else if (o.status === 'onroute' || o.status === 'arrived') {
+            finishBtn = `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')" title="Përfundo"><i class="fa-solid fa-check"></i> PËRFUNDO</button>`;
+        }
 
         return `<tr onclick="openOrderDetail('${o.firestoreId}')" class="${rowClass}" style="cursor:pointer;">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
@@ -498,24 +1177,40 @@ function renderOrders() {
     }).join('');
 }
 
-// ═══ FINISH ORDER ═══
+// ═══ FINISH ORDER — PËRFUNDO & KALON NË HISTORIK ═══
 async function finishOrder(firestoreId) {
     const o = AppState.orders.find(x => x.firestoreId === firestoreId);
-    const defaultPrice = o?.price || (o?.tariff === 'airport' ? 15 : 4.5);
-    const priceStr = prompt('Çmimi final (€):', defaultPrice.toString());
+    if (!o) return;
+
+    let suggestedPrice = o.price || 0;
+    if (!suggestedPrice) {
+        if (o.tariff === 'airport') suggestedPrice = 15;
+        else if (o.tariff === 'vip') suggestedPrice = 8;
+        else if (o.tariff === 'night') suggestedPrice = 6;
+        else if (o.tariff === 'van') suggestedPrice = 7;
+        else suggestedPrice = 4.5;
+    }
+
+    const priceStr = prompt('Çmimi final (€):', suggestedPrice.toString());
     if (priceStr === null) return;
     const price = parseFloat(priceStr);
-    if (isNaN(price)) { showToast('error', 'Gabim', 'Çmimi nuk është valid'); return; }
+    if (isNaN(price) || price < 0) { showToast('error', 'Gabim', 'Çmimi nuk është valid'); return; }
 
     if (window.TaxiOrdersBridge) {
         await window.TaxiOrdersBridge.assignOrder(firestoreId, {
             status: 'completed',
             price: price,
-            completedAt: new Date().getTime()
+            completedAt: new Date().getTime(),
+            completedAtStr: new Date().toLocaleString('sq-AL')
         });
     }
-    if (window.TaxiEvents) window.TaxiEvents.emit('operator:revenue', price);
 
+    if (window.TaxiEvents) {
+        window.TaxiEvents.emit('operator:revenue', price);
+        window.TaxiEvents.emit('operator:trip_done');
+    }
+
+    // Liruar shoferin
     if (o && o.driverId) {
         const driver = AppState.drivers.find(d => d.id === o.driverId);
         if (driver) {
@@ -524,13 +1219,15 @@ async function finishOrder(firestoreId) {
             updateVehicleMarker(driver.id);
         }
     }
-    showToast('success', 'U përfundua', `€${price.toFixed(2)}`);
+
+    showToast('success', 'Porosia u përfundua', `€${price.toFixed(2)} u regjistrua`);
 }
 
 function openOrderDetail(firestoreId) {
     const o = AppState.orders.find(x => x.firestoreId === firestoreId)
            || AppState.waitingOrders.find(x => x.firestoreId === firestoreId)
-           || AppState.preOrders.find(x => x.firestoreId === firestoreId);
+           || AppState.preOrders.find(x => x.firestoreId === firestoreId)
+           || AppState.completedOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
     if (window.TaxiTargetEdit) window.TaxiTargetEdit.open(o);
 }
@@ -549,8 +1246,8 @@ function filterOrders(q) {
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
             <td class="phone">${o.phone}</td>
-            <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
-            <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
+            <td class="location">${o.pickup}</td>
+            <td class="location">${o.destination}</td>
             <td>${o.driverName || '—'}</td>
             <td class="remark-cell">${o.remark || '—'}</td>
             <td></td>
@@ -570,8 +1267,8 @@ function renderPreOrders() {
             <td><span class="preorder-date">${o.date || '—'}</span></td>
             <td class="time">${o.terminTime || o.time}</td>
             <td class="phone">${o.phone}</td>
-            <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
-            <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
+            <td class="location">${o.pickup}</td>
+            <td class="location">${o.destination}</td>
             <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="activatePre('${o.firestoreId}')">AKTIVIZO</button>
             </div></td>
@@ -647,9 +1344,9 @@ function submitOrder() {
 function updateStats() {
     const online = AppState.drivers.filter(d => d.mode !== 'inactive').length;
     const pending = AppState.waitingOrders.length;
-    const allOrders = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders];
+    const allOrders = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders, ...AppState.completedOrders];
     const trips = allOrders.length;
-    const revenue = allOrders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+    const revenue = AppState.completedOrders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
     setText('stat-online', online);
     setText('stat-pending', pending);
     setText('stat-trips', trips);
@@ -720,9 +1417,11 @@ window.rejectCall = rejectCall;
 window.autoAssignWaiting = autoAssignWaiting;
 window.manualAssignWaiting = manualAssignWaiting;
 window.closestAssignWaiting = closestAssignWaiting;
-window.cancelOrder = cancelOrder;
 window.openOrderDetail = openOrderDetail;
 window.activatePre = activatePre;
 window.finishOrder = finishOrder;
+window.switchPage = switchPage;
+window.filterOrdersPage = filterOrdersPage;
+window.backupData = backupData;
 
 console.log('✅ TaxiDispatch Pro Ready');
