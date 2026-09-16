@@ -792,22 +792,48 @@ function renderIncomingCalls() {
         c.innerHTML = `<div style="text-align:center;padding:30px 16px;color:var(--text-muted);font-size:12px;"><i class="fa-solid fa-phone-slash" style="font-size:24px;opacity:0.3;display:block;margin-bottom:8px;"></i>Nuk ka thirrje</div>`;
         return;
     }
-    c.innerHTML = AppState.incomingCalls.map(call => `
-        <div class="call-card ${call.ringing ? 'ringing' : ''}">
+    c.innerHTML = AppState.incomingCalls.map((call, index) => `
+        <div class="call-card ${call.ringing ? 'ringing' : ''}" onclick="acceptCall(${call.id})" style="cursor:pointer;position:relative;">
+            ${index === 0 ? `<div style="position:absolute;top:6px;right:8px;background:var(--accent-green);color:white;font-size:8px;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:0.5px;">F1</div>` : ''}
             <div class="call-header"><span class="call-phone">${call.phone}</span><span class="call-time">${call.time}</span></div>
             ${call.name ? `<div class="call-name">${call.name}</div>` : ''}
             ${call.lastAddress ? `<div class="call-location"><i class="fa-solid fa-clock-rotate-left"></i> ${call.lastAddress}</div>` : ''}
             <div class="call-actions">
-                <button class="btn-accept" onclick="acceptCall(${call.id})"><i class="fa-solid fa-phone"></i> KRIJO</button>
-                <button class="btn-reject" onclick="rejectCall(${call.id})"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-accept" onclick="event.stopPropagation(); acceptCall(${call.id})"><i class="fa-solid fa-phone"></i> KRIJO</button>
+                <button class="btn-reject" onclick="event.stopPropagation(); rejectCall(${call.id})"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
     `).join('');
 }
 
 function acceptCall(callId) {
+    console.log('📞 acceptCall u thirr me ID:', callId);
+
     const call = AppState.incomingCalls.find(c => c.id === callId);
-    if (!call) return;
+    if (!call) {
+        console.warn('❌ Thirrja nuk u gjet:', callId);
+        showToast('error', 'Gabim', 'Thirrja nuk u gjet');
+        return;
+    }
+
+    console.log('✅ Thirrja u gjet:', call);
+
+    // Plotëso formën "Porosi e Re"
+    const phoneField = document.getElementById('client-phone');
+    const nameField = document.getElementById('client-name');
+    const pickupField = document.getElementById('pickup-address');
+
+    if (phoneField) phoneField.value = call.phone || '';
+    if (nameField && call.name) nameField.value = call.name;
+    if (pickupField && call.lastAddress) pickupField.value = call.lastAddress;
+
+    // Fshi thirrjen nga lista
+    AppState.incomingCalls = AppState.incomingCalls.filter(c => c.id !== callId);
+    renderIncomingCalls();
+
+    // Ndal zilen
+    stopRing();
+    if (window.TaxiSound) window.TaxiSound.stopRing();
 
     // Shto në Call Center
     if (window.TaxiCallCenter) {
@@ -819,13 +845,18 @@ function acceptCall(callId) {
         });
     }
 
-    document.getElementById('client-phone').value = call.phone;
-    if (call.name) document.getElementById('client-name').value = call.name;
-    if (call.lastAddress) document.getElementById('pickup-address').value = call.lastAddress;
-    AppState.incomingCalls = AppState.incomingCalls.filter(c => c.id !== callId);
-    renderIncomingCalls();
-    stopRing();
+    // Focus në fushën e numrit
+    if (phoneField) {
+        phoneField.focus();
+        phoneField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Njoftim
+    showToast('success', '📞 Thirrja u pranua', `${call.phone} — plotëso porosinë`);
+    if (window.TaxiSound) window.TaxiSound.beep(1200, 0.15, 0.1);
     if (window.TaxiEvents) window.TaxiEvents.emit('operator:call_taken');
+
+    console.log('✅ Thirrja u pranua plotësisht');
 }
 
 function rejectCall(callId) {
