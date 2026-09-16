@@ -13,23 +13,23 @@ window.ClientApp = (() => {
     async function init() {
         console.log('📱 Client App: Init...');
 
-        // Init modulet
         if (window.TaxiLocale) window.TaxiLocale.init();
         if (window.TaxiOffline) window.TaxiOffline.init();
         if (window.TaxiSound) window.TaxiSound.init();
-
-        // Firebase
         if (window.TaxiFirebase) window.TaxiFirebase.init();
 
-        // ClientRegister init
+        // Init modules e reja
+        if (window.ClientLoyalty) ClientLoyalty.init();
+        if (window.ClientWallet) ClientWallet.init();
+        if (window.ClientHistory) ClientHistory.init();
+        if (window.ClientProfile) ClientProfile.init();
+
         if (window.ClientRegister) window.ClientRegister.init();
 
-        // Kontrollo sesion ekzistues
         const existing = window.TaxiStorage?.get('taxi.client');
         const authUser = firebase.auth?.().currentUser;
 
         if (existing && authUser) {
-            // Verifiko nëse klienti ekziston në Firestore
             const client = await window.ClientRegister?.checkExistingClient(authUser.uid);
             if (client && !client.blocked) {
                 onLoginSuccess(client);
@@ -40,26 +40,21 @@ window.ClientApp = (() => {
             showWelcome();
         }
 
-        // Fshij loading
         setTimeout(() => {
             document.getElementById('loading-overlay')?.classList.add('hidden');
         }, 600);
 
-        // Event listeners
         setupEventListeners();
 
         console.log('✅ Client App gati');
     }
 
-    // ═══ SETUP EVENT LISTENERS ═══
     function setupEventListeners() {
-        // Enter në phone
         document.getElementById('input-phone')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') document.getElementById('btn-send-otp')?.click();
         });
     }
 
-    // ═══ SHFAQ WELCOME ═══
     function showWelcome() {
         showScreen('welcome');
         currentStep = 'welcome';
@@ -69,29 +64,22 @@ window.ClientApp = (() => {
         showWelcome();
     }
 
-    // ═══ SHFAQ LOGIN ═══
     function goToLogin() {
         showScreen('login');
         currentStep = 'login';
 
-        // Reset step
         document.querySelectorAll('.login-step').forEach(s => s.classList.remove('active'));
         document.getElementById('step-phone')?.classList.add('active');
 
         setTimeout(() => document.getElementById('input-phone')?.focus(), 300);
     }
 
-    // ═══ KUR LOGIN ME SUKSES ═══
     function onLoginSuccess(client) {
         currentClient = client;
 
-        // Update UI
         updateClientUI(client);
-
-        // Switch screen
         showScreen('main');
 
-        // Setup maps
         if (window.ClientOrder) window.ClientOrder.init();
         if (window.ClientTracking) window.ClientTracking.init();
 
@@ -100,13 +88,11 @@ window.ClientApp = (() => {
         showToast('success', '👋 Mirë se vjen', client.name);
     }
 
-    // ═══ UPDATE UI ═══
     function updateClientUI(client) {
         document.getElementById('client-avatar').textContent = client.avatar || (client.name || 'K').slice(0, 2).toUpperCase();
         document.getElementById('client-name').textContent = client.name || 'Klient';
     }
 
-    // ═══ SHFAQ SCREEN ═══
     function showScreen(name) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(`screen-${name}`)?.classList.add('active');
@@ -116,42 +102,57 @@ window.ClientApp = (() => {
     function switchTab(tab) {
         currentTab = tab;
 
+        // Update nav active
         document.querySelectorAll('.nav-item').forEach(i => {
             i.classList.toggle('active', i.dataset.tab === tab);
         });
 
-        // Shfaq/fsheh seksionet
+        // Fshih TË GJITHA client-page
+        document.querySelectorAll('.client-page').forEach(p => {
+            p.classList.remove('active');
+            p.style.display = '';
+        });
+
+        // Fshih seksionet e home
         const orderSection = document.getElementById('order-section');
         const trackingSection = document.getElementById('tracking-section');
         const rateSection = document.getElementById('rate-section');
+        if (orderSection) orderSection.style.display = 'none';
+        if (trackingSection) trackingSection.style.display = 'none';
+        if (rateSection) rateSection.style.display = 'none';
+
+        // Home page
+        const homePage = document.getElementById('client-home-page');
 
         if (tab === 'home') {
-            // Nëse ka porosi aktive → shfaq tracking
+            if (homePage) homePage.classList.add('active');
+
             if (window.ClientTracking?.hasActiveOrder()) {
-                if (orderSection) orderSection.style.display = 'none';
                 if (trackingSection) trackingSection.style.display = 'block';
-                if (rateSection) rateSection.style.display = 'none';
             } else if (window.ClientTracking?.hasCompletedOrder()) {
-                if (orderSection) orderSection.style.display = 'none';
-                if (trackingSection) trackingSection.style.display = 'none';
                 if (rateSection) rateSection.style.display = 'block';
             } else {
                 if (orderSection) orderSection.style.display = 'block';
-                if (trackingSection) trackingSection.style.display = 'none';
-                if (rateSection) rateSection.style.display = 'none';
             }
-        } else {
-            // Tab tjera → fshih të gjitha
-            if (orderSection) orderSection.style.display = 'none';
-            if (trackingSection) trackingSection.style.display = 'none';
-            if (rateSection) rateSection.style.display = 'none';
+            return;
+        }
 
-            // Shfaq toast për tab
-            if (tab === 'history') {
-                showToast('info', '📋 Historiku', 'Porositë e mëparshme');
-            } else if (tab === 'profile') {
-                showToast('info', '👤 Profili', currentClient?.name || 'Klient');
-            }
+        // Fshih home
+        if (homePage) homePage.classList.remove('active');
+
+        // Shfaq faqen përkatëse
+        if (tab === 'loyalty') {
+            const el = document.getElementById('client-loyalty-page');
+            if (el) { el.classList.add('active'); if (window.ClientLoyalty) ClientLoyalty.load(); }
+        } else if (tab === 'wallet') {
+            const el = document.getElementById('client-wallet-page');
+            if (el) { el.classList.add('active'); if (window.ClientWallet) ClientWallet.load(); }
+        } else if (tab === 'history') {
+            const el = document.getElementById('client-history-page');
+            if (el) { el.classList.add('active'); if (window.ClientHistory) ClientHistory.load(); }
+        } else if (tab === 'profile') {
+            const el = document.getElementById('client-profile-page');
+            if (el) { el.classList.add('active'); if (window.ClientProfile) ClientProfile.load(); }
         }
     }
 
@@ -169,14 +170,13 @@ window.ClientApp = (() => {
             async (pos) => {
                 const { latitude, longitude } = pos.coords;
 
-                // Kërko adresën më të afërt nga DB
                 let bestName = `Lokacioni im (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
                 let bestDist = Infinity;
 
                 if (window.TaxiData?.addresses) {
                     window.TaxiData.addresses.forEach(a => {
                         const d = window.TaxiUtils?.distanceKm(latitude, longitude, a.lat, a.lng) || 999;
-                        if (d < bestDist && d < 0.1) { // 100m
+                        if (d < bestDist && d < 0.1) {
                             bestDist = d;
                             bestName = a.name;
                         }
@@ -185,7 +185,6 @@ window.ClientApp = (() => {
 
                 if (input) input.value = bestName;
 
-                // Ruaj koordinatat
                 if (window.ClientOrder) {
                     window.ClientOrder.setPickupCoords(latitude, longitude);
                 }
@@ -201,7 +200,16 @@ window.ClientApp = (() => {
         );
     }
 
-    // ═══ LOGOUT ═══
+    function activateSOS() {
+        if (window.TaxiEmergency?.activate) {
+            window.TaxiEmergency.activate();
+        } else {
+            if (confirm('Aktivizo SOS? Do kontaktohet menjëherë zyra.')) {
+                showToast('warning', '🚨 SOS', 'U dërgua kërkesa për ndihmë');
+            }
+        }
+    }
+
     async function logout() {
         if (!confirm('A jeni i sigurt që dëshironi të dilni?')) return;
 
@@ -209,17 +217,14 @@ window.ClientApp = (() => {
             await firebase.auth().signOut();
             window.TaxiStorage?.remove('taxi.client');
 
-            // Pastro state
             if (window.ClientTracking) window.ClientTracking.stop();
 
-            // Reload
             setTimeout(() => location.reload(), 300);
         } catch (e) {
             console.error('Logout error:', e);
         }
     }
 
-    // ═══ TOAST ═══
     function showToast(type, title, msg) {
         const c = document.getElementById('toast-container');
         if (!c) return;
@@ -242,7 +247,7 @@ window.ClientApp = (() => {
     return {
         init, onLoginSuccess, logout,
         showWelcome, goToWelcome, goToLogin,
-        switchTab, useMyLocation, showToast,
+        switchTab, useMyLocation, activateSOS, showToast,
         get currentClient() { return currentClient; }
     };
 })();
