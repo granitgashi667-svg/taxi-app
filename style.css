@@ -1931,3 +1931,76 @@ textarea.input-field { resize: vertical; min-height: 50px; font-family: inherit;
     .cards-grid { grid-template-columns: 1fr; }
     .stat-row { flex-direction: column; }
 }
+/* ═══ BUTONI PËRFUNDO (JESHIL) ═══ */
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.btn-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(34, 197, 94, 0.5);
+}
+
+/* ═══ RRESHTI I ANULUAR (I VERDHË) ═══ */
+.orders-table tbody tr.row-cancelled {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-left: 3px solid #f59e0b !important;
+    opacity: 0.75;
+}
+.orders-table tbody tr.row-cancelled:hover {
+    background: rgba(245, 158, 11, 0.25) !important;
+    opacity: 1;
+}
+.orders-table tbody tr.row-cancelled td {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: rgba(245, 158, 11, 0.4);
+}
+.orders-table tbody tr.row-cancelled .status-badge {
+    text-decoration: none;
+    background: rgba(245, 158, 11, 0.25) !important;
+    color: #f59e0b !important;
+}
+
+/* ═══ RRESHTI I PËRFUNDUAR (JESHIL) ═══ */
+.orders-table tbody tr.row-completed {
+    background: rgba(34, 197, 94, 0.12) !important;
+    border-left: 3px solid #22c55e !important;
+    opacity: 0.85;
+}
+.orders-table tbody tr.row-completed:hover {
+    background: rgba(34, 197, 94, 0.22) !important;
+    opacity: 1;
+}
+.orders-table tbody tr.row-completed .status-badge {
+    background: rgba(34, 197, 94, 0.25) !important;
+    color: #22c55e !important;
+}
+.orders-table tbody tr.row-completed td {
+    color: var(--text-secondary);
+}
+
+/* ═══ BADGE: CANCELLED ═══ */
+.status-badge.cancelled {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #f59e0b !important;
+}
+
+/* ═══ BADGE: COMPLETED ═══ */
+.status-badge.completed {
+    background: rgba(34, 197, 94, 0.2) !important;
+    color: #22c55e !important;
+}
