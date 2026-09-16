@@ -1,0 +1,68 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════
+// TaxiApp 2.0 — Firebase Storage Rules
+// ═══════════════════════════════════════════════════════
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ═══ FUNKSIONET NDIHMËSE ═══
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ═══ PROFILE PHOTOS (shoferët, klientët) ═══
+    match /profile-photos/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId)
+                   && request.resource.size < 5 * 1024 * 1024 // 5MB max
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ═══ ID PHOTOS (verifikim) ═══
+    match /id-photos/{userId}/{fileName} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && request.resource.size < 10 * 1024 * 1024 // 10MB max
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ═══ VEHICLE PHOTOS ═══
+    match /vehicle-photos/{vehicleId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // ═══ SOS RECORDINGS (audio/video) ═══
+    match /sos-recordings/{emergencyId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.size < 50 * 1024 * 1024;
+    }
+
+    // ═══ CHAT MEDIA ═══
+    match /chat-media/{chatId}/{fileName} {
+      allow read, write: if isAuthenticated()
+                         && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ═══ INVOICES / DOCUMENTS ═══
+    match /documents/{docId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ═══ TË TJERA — DENY ═══
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
