@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     renderAll();
     setupTargetEditButtons();
+    setupNavRail();
     startCallSimulation();
     startOrderSimulation();
 });
@@ -74,7 +75,6 @@ function initMap() {
     renderZonesOnMap();
     renderVehiclesOnMap();
     renderAddressMarkers();
-
     if (window.TaxiState) window.TaxiState.set('map', AppState.map);
 }
 
@@ -223,6 +223,60 @@ function initEventListeners() {
     });
 }
 
+// ═══ NAV RAIL ═══
+function setupNavRail() {
+    const railItems = document.querySelectorAll('.rail-nav .rail-item');
+    railItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            railItems.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            const nav = item.dataset.nav;
+            switch (nav) {
+                case 'dispatch':
+                    showToast('info', 'Dispatch', 'Pamja kryesore');
+                    break;
+                case 'calls':
+                    document.getElementById('panel-calls')?.scrollIntoView({ behavior: 'smooth' });
+                    showToast('info', 'Thirrjet', `${AppState.incomingCalls.length} thirrje`);
+                    break;
+                case 'orders':
+                    document.getElementById('panel-orders')?.scrollIntoView({ behavior: 'smooth' });
+                    showToast('info', 'Porositë', `${AppState.orders.length} aktive · ${AppState.waitingOrders.length} në pritje`);
+                    break;
+                case 'drivers':
+                    showToast('info', 'Shoferët', `${AppState.drivers.length} shoferë`);
+                    break;
+                case 'vehicles':
+                    showToast('info', 'Veturat', `${AppState.vehicles.length} vetura`);
+                    break;
+                case 'map':
+                    document.getElementById('panel-map')?.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => AppState.map?.invalidateSize(), 300);
+                    showToast('info', 'Harta', 'Pamja e hartës');
+                    break;
+                case 'zones':
+                    showToast('info', 'Zonat', `${AppState.zones.length} zona`);
+                    break;
+                case 'clients':
+                    showToast('info', 'Klientët', 'Lista e klientëve');
+                    break;
+                case 'reports':
+                    showToast('info', 'Raporte', 'Raportet e plota');
+                    break;
+                case 'finance':
+                    showToast('info', 'Financa', 'Të ardhurat dhe shpenzimet');
+                    break;
+                case 'settings':
+                    showToast('info', 'Cilësimet', 'Konfigurimi');
+                    break;
+            }
+        });
+    });
+    console.log('✅ Nav-rail aktivizuar:', railItems.length, 'butona');
+}
+
 // ═══ TARGET EDIT BUTTONS ═══
 function setupTargetEditButtons() {
     setTimeout(() => {
@@ -347,19 +401,20 @@ function renderWaitingOrders() {
     if (!tb) return;
     if (cnt) cnt.textContent = AppState.waitingOrders.length;
     if (!AppState.waitingOrders.length) {
-        tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Asnjë porosi në pritje</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Asnjë porosi në pritje</td></tr>`;
         return;
     }
     tb.innerHTML = AppState.waitingOrders.map(o => {
         const wsec = Math.floor((Date.now() - (o.waitStart || Date.now())) / 1000);
         const wmin = Math.floor(wsec / 60);
         const cls = wmin < 1 ? 'fresh' : wmin < 3 ? 'medium' : 'old';
-        return `<tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
+        return `<tr onclick="openOrderDetail('${o.firestoreId}')" class="row-waiting" style="cursor:pointer;">
             <td><strong>#${String(o.firestoreId).slice(-6)}</strong></td>
             <td class="time">${o.time}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
+            <td class="remark-cell ${o.remark ? '' : 'empty'}">${o.remark || '—'}</td>
             <td><span class="wait-time ${cls}">${wmin}min</span></td>
             <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
@@ -448,10 +503,25 @@ function renderOrders() {
     const cnt = document.getElementById('orders-count');
     if (cnt) cnt.textContent = AppState.orders.length;
     if (!tb) return;
-    if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi aktive</td></tr>`; return; }
+    if (!AppState.orders.length) { tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted);">Asnjë porosi aktive</td></tr>`; return; }
+
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje', arrived: 'Në vend', taximeter: 'Taksimetër', fixed: 'Fiks' };
-    tb.innerHTML = AppState.orders.map(o => `
-        <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
+
+    tb.innerHTML = AppState.orders.map(o => {
+        let rowClass = '';
+        if (o.status === 'waiting' || o.status === 'pending' || o.status === 'new') rowClass = 'row-waiting';
+        else if (o.status === 'assigned') rowClass = 'row-assigned';
+        else if (o.status === 'onroute' || o.status === 'delay') rowClass = 'row-onroute';
+        else if (o.status === 'arrived') rowClass = 'row-arrived';
+        else if (o.status === 'taximeter') rowClass = 'row-taximeter';
+        else if (o.status === 'fixed') rowClass = 'row-fixed';
+
+        const showFinish = o.status === 'taximeter' || o.status === 'fixed' || o.status === 'onroute' || o.status === 'arrived';
+        const finishBtn = showFinish
+            ? `<button class="btn-finish" onclick="event.stopPropagation(); finishOrder('${o.firestoreId}')" title="Përfundo"><i class="fa-solid fa-check"></i> PËRFUNDO</button>`
+            : '';
+
+        return `<tr onclick="openOrderDetail('${o.firestoreId}')" class="${rowClass}" style="cursor:pointer;">
             <td><span class="status-badge ${o.status}">${lbl[o.status] || o.status}</span></td>
             <td class="time">${o.time}</td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : `<span class="vehicle-badge empty">—</span>`}</td>
@@ -459,11 +529,49 @@ function renderOrders() {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '<span style="color:var(--text-muted)">—</span>'}</td>
-            <td onclick="event.stopPropagation()"><div class="row-actions">
-                <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button>
-            </div></td>
-        </tr>
-    `).join('');
+            <td class="remark-cell ${o.remark ? '' : 'empty'}">${o.remark || '—'}</td>
+            <td class="actions-cell" onclick="event.stopPropagation()">
+                <div class="row-actions">
+                    ${finishBtn}
+                    <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')" title="Anulo"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ═══ FINISH ORDER ═══
+async function finishOrder(firestoreId) {
+    const o = AppState.orders.find(x => x.firestoreId === firestoreId);
+    const defaultPrice = o?.price || (o?.tariff === 'airport' ? 15 : 4.5);
+    const priceStr = prompt('Çmimi final (€):', defaultPrice.toString());
+    if (priceStr === null) return;
+    const price = parseFloat(priceStr);
+    if (isNaN(price)) { showToast('error', 'Gabim', 'Çmimi nuk është valid'); return; }
+
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.assignOrder(firestoreId, {
+            status: 'completed',
+            price: price,
+            completedAt: new Date().getTime()
+        });
+    }
+
+    if (window.TaxiEvents) {
+        window.TaxiEvents.emit('operator:revenue', price);
+    }
+
+    // Liruar shoferin
+    if (o && o.driverId) {
+        const driver = AppState.drivers.find(d => d.id === o.driverId);
+        if (driver) {
+            driver.mode = 'free';
+            driver.status = 'available';
+            updateVehicleMarker(driver.id);
+        }
+    }
+
+    showToast('success', 'U përfundua', `€${price.toFixed(2)}`);
 }
 
 function openOrderDetail(firestoreId) {
@@ -489,7 +597,7 @@ function filterOrders(q) {
     const tb = document.getElementById('orders-tbody');
     if (!tb) return;
     const f = AppState.orders.filter(o => o.phone.includes(lower) || o.pickup.toLowerCase().includes(lower) || (o.destination || '').toLowerCase().includes(lower));
-    if (!f.length) { tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk u gjet</td></tr>`; return; }
+    if (!f.length) { tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted);">Nuk u gjet</td></tr>`; return; }
     const lbl = { new: 'E Re', pending: 'Pritje', assigned: 'Caktuar', onroute: 'Në rrugë', delay: 'Vonesë', completed: 'Kryer', waiting: 'Pritje' };
     tb.innerHTML = f.map(o => `
         <tr onclick="openOrderDetail('${o.firestoreId}')" style="cursor:pointer;">
@@ -500,6 +608,7 @@ function filterOrders(q) {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '—'}</td>
+            <td class="remark-cell">${o.remark || '—'}</td>
             <td onclick="event.stopPropagation()"><div class="row-actions"><button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button></div></td>
         </tr>
     `).join('');
@@ -519,7 +628,6 @@ function renderPreOrders() {
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
-            <td onclick="event.stopPropagation()">${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
             <td onclick="event.stopPropagation()"><div class="action-buttons">
                 <button class="action-btn auto" onclick="activatePre('${o.firestoreId}')">AKTIVIZO</button>
                 <button class="action-btn cancel" onclick="cancelPre('${o.firestoreId}')">X</button>
@@ -600,10 +708,17 @@ function submitOrder() {
 
 // ═══ STATS ═══
 function updateStats() {
-    const online = AppState.drivers.filter(d => d.mode === 'free').length;
+    // Online = të gjithë që nuk janë inactive
+    const online = AppState.drivers.filter(d => d.mode !== 'inactive').length;
     const pending = AppState.waitingOrders.length;
-    const trips = AppState.orders.length;
-    const revenue = AppState.orders.reduce((s, o) => s + (o.price || (o.tariff === 'airport' ? 15 : 4.5)), 0);
+
+    // Udhëtime = totali i porosive
+    const allOrders = [...AppState.orders, ...AppState.waitingOrders, ...AppState.preOrders];
+    const trips = allOrders.length;
+
+    // Të ardhura
+    const revenue = allOrders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+
     setText('stat-online', online);
     setText('stat-pending', pending);
     setText('stat-trips', trips);
@@ -680,5 +795,6 @@ window.cancelOrder = cancelOrder;
 window.openOrderDetail = openOrderDetail;
 window.activatePre = activatePre;
 window.cancelPre = cancelPre;
+window.finishOrder = finishOrder;
 
 console.log('✅ TaxiDispatch Pro Ready');
