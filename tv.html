@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Display | TaxiDispatch Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0416">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/tv.css">
+</head>
+<body class="theme-2 tv-mode">
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar TV...</div>
+        </div>
+    </div>
+
+    <div class="tv-layout" id="tv-container">
+        <!-- HEADER -->
+        <header class="tv-header">
+            <div class="tv-brand">
+                <i class="fa-solid fa-bolt"></i>
+                <span>TaxiDispatch <strong style="color:var(--accent-purple);">PRO</strong></span>
+                <span class="tv-live-badge">● LIVE</span>
+            </div>
+
+            <div class="tv-stats">
+                <div class="tv-stat">
+                    <i class="fa-solid fa-car" style="color:var(--accent-green);"></i>
+                    <span id="tv-count">0</span>
+                    <small>Vetura</small>
+                </div>
+                <div class="tv-stat">
+                    <i class="fa-solid fa-clipboard-list" style="color:var(--accent-blue);"></i>
+                    <span id="tv-stat-orders">0</span>
+                    <small>Porosi sot</small>
+                </div>
+                <div class="tv-stat">
+                    <i class="fa-solid fa-check" style="color:var(--accent-green);"></i>
+                    <span id="tv-stat-completed">0</span>
+                    <small>Të kryera</small>
+                </div>
+                <div class="tv-stat">
+                    <i class="fa-solid fa-xmark" style="color:var(--accent-red);"></i>
+                    <span id="tv-stat-cancelled">0</span>
+                    <small>Anuluar</small>
+                </div>
+                <div class="tv-stat">
+                    <i class="fa-solid fa-euro-sign" style="color:var(--accent-green);"></i>
+                    <span id="tv-stat-revenue">€0</span>
+                    <small>Të ardhura</small>
+                </div>
+            </div>
+
+            <div class="tv-clock">
+                <div class="tv-clock-time" id="tv-clock-time">--:--:--</div>
+                <div class="tv-clock-date" id="tv-clock-date">--</div>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="tv-main">
+            <!-- MAP -->
+            <div class="tv-map-wrap">
+                <div id="tv-map"></div>
+            </div>
+
+            <!-- CONTROL PANEL -->
+            <aside class="tv-control" id="tv-control-panel">
+                <!-- Mbushur nga TaxiTvDisplay.renderPanel() -->
+            </aside>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SERVICES -->
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/tv-display.js"></script>
+    <script src="js/services/responsive.js"></script>
+
+    <!-- TV APP -->
+    <script src="js/tv/app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hiq loading
+            setTimeout(() => {
+                document.getElementById('loading-overlay')?.classList.add('hidden');
+            }, 500);
+
+            if (window.TvApp) TvApp.init();
+
+            // Render kontroll panel
+            setTimeout(() => {
+                if (window.TaxiTvDisplay) {
+                    window.TaxiTvDisplay.renderPanel();
+                    window.TaxiTvDisplay.applyTheme();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
