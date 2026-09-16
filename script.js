@@ -1,26 +1,14 @@
 'use strict';
 
 const AppState = {
-    orders: [],
-    waitingOrders: [],
-    preOrders: [],
-    incomingCalls: [],
-    messages: [],
-    drivers: [],
-    vehicles: [],
-    zones: [],
-    addresses: [],
-    config: {},
-    map: null,
-    vehicleMarkers: new Map(),
-    currentDispatchMode: 'auto',
-    soundEnabled: true,
+    orders: [], waitingOrders: [], preOrders: [], incomingCalls: [], messages: [],
+    drivers: [], vehicles: [], zones: [], addresses: [], config: {},
+    map: null, vehicleMarkers: new Map(), currentDispatchMode: 'auto', soundEnabled: true,
     currentOperator: {
         name: 'Granit Gashi', initials: 'GD', loggedIn: false, loginTime: null,
         stats: { callsTaken: 0, callsWaiting: 0, callsOpened: 0, revenue: 0, trips: 0, cancelled: 0 }
     },
-    manualAssignOrderId: null,
-    audioContext: null
+    manualAssignOrderId: null, audioContext: null
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,9 +31,6 @@ function loadData() {
     AppState.vehicles = window.TaxiData.vehicles || [];
     AppState.config = window.TaxiData.config || {};
 
-    // NUK ka demo data më — gjithçka vjen nga Firestore
-
-    // Popullo manual vehicle select
     const manualSelect = document.getElementById('manual-vehicle-select');
     if (manualSelect) {
         AppState.vehicles.forEach(v => {
@@ -97,8 +82,7 @@ function renderAddressMarkers() {
             html: `<div style="background:${cat.color};width:8px;height:8px;border-radius:50%;border:1px solid white;box-shadow:0 0 4px ${cat.color};"></div>`,
             iconSize: [8, 8], iconAnchor: [4, 4]
         });
-        L.marker([addr.lat, addr.lng], { icon }).addTo(AppState.map)
-            .bindPopup(`<b>${addr.name}</b><br><small>${cat.label || ''}</small>`);
+        L.marker([addr.lat, addr.lng], { icon }).addTo(AppState.map).bindPopup(`<b>${addr.name}</b><br><small>${cat.label || ''}</small>`);
     });
 }
 
@@ -228,7 +212,7 @@ function initEventListeners() {
     });
 }
 
-// ═══ AUTCOMPLETE ═══
+// ═══ AUTOCOMPLETE ═══
 function setupAutocomplete(inputId, suggestId) {
     const input = document.getElementById(inputId);
     const sug = document.getElementById(suggestId);
@@ -262,7 +246,7 @@ function getLocationIcon(address) {
     return 'other';
 }
 
-// ═══ RENDER ALL ═══
+// ═══ RENDER ═══
 function renderAll() {
     renderIncomingCalls();
     renderWaitingOrders();
@@ -297,8 +281,6 @@ function renderIncomingCalls() {
 function acceptCall(callId) {
     const call = AppState.incomingCalls.find(c => c.id === callId);
     if (!call) return;
-    AppState.currentOperator.stats.callsTaken++;
-    AppState.currentOperator.stats.callsOpened++;
     document.getElementById('client-phone').value = call.phone;
     if (call.name) document.getElementById('client-name').value = call.name;
     if (call.lastAddress) document.getElementById('pickup-address').value = call.lastAddress;
@@ -324,27 +306,20 @@ function playRing() {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = freq;
-            osc.type = 'sine';
+            osc.frequency.value = freq; osc.type = 'sine';
             gain.gain.setValueAtTime(0, time);
             gain.gain.linearRampToValueAtTime(0.15, time + 0.05);
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
             osc.start(time); osc.stop(time + 0.4);
         };
         const now = ctx.currentTime;
-        playBeep(now, 880);
-        playBeep(now + 0.5, 660);
-        playBeep(now + 1.0, 880);
+        playBeep(now, 880); playBeep(now + 0.5, 660); playBeep(now + 1.0, 880);
     } catch (e) {}
 }
-function startRing() {
-    if (ringInterval) return;
-    playRing();
-    ringInterval = setInterval(playRing, 2000);
-}
+function startRing() { if (ringInterval) return; playRing(); ringInterval = setInterval(playRing, 2000); }
 function stopRing() { if (ringInterval) { clearInterval(ringInterval); ringInterval = null; } }
 
-// ═══ WAITING ORDERS ═══
+// ═══ WAITING ═══
 function renderWaitingOrders() {
     const tb = document.getElementById('waiting-tbody');
     const cnt = document.getElementById('waiting-count');
@@ -355,8 +330,7 @@ function renderWaitingOrders() {
         return;
     }
     tb.innerHTML = AppState.waitingOrders.map(o => {
-        const waitStart = o.waitStart || Date.now();
-        const wsec = Math.floor((Date.now() - waitStart) / 1000);
+        const wsec = Math.floor((Date.now() - (o.waitStart || Date.now())) / 1000);
         const wmin = Math.floor(wsec / 60);
         const cls = wmin < 1 ? 'fresh' : wmin < 3 ? 'medium' : 'old';
         return `<tr>
@@ -366,14 +340,12 @@ function renderWaitingOrders() {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td><span class="wait-time ${cls}">${wmin}min</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
-                    <button class="action-btn manual" onclick="manualAssignWaiting('${o.firestoreId}')">MANUAL</button>
-                    <button class="action-btn closest" onclick="closestAssignWaiting('${o.firestoreId}')">AFËRTI</button>
-                    <button class="action-btn cancel" onclick="cancelWaiting('${o.firestoreId}')">X</button>
-                </div>
-            </td>
+            <td><div class="action-buttons">
+                <button class="action-btn auto" onclick="autoAssignWaiting('${o.firestoreId}')">AUTO</button>
+                <button class="action-btn manual" onclick="manualAssignWaiting('${o.firestoreId}')">MANUAL</button>
+                <button class="action-btn closest" onclick="closestAssignWaiting('${o.firestoreId}')">AFËRTI</button>
+                <button class="action-btn cancel" onclick="cancelWaiting('${o.firestoreId}')">X</button>
+            </div></td>
         </tr>`;
     }).join('');
 }
@@ -388,18 +360,16 @@ async function autoAssignWaiting(firestoreId) {
 
     if (window.TaxiOrdersBridge) {
         await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned',
-            vehicleNum: num,
-            vehicleId: v ? v.id : null,
-            driverId: d.id,
-            driverName: d.name
+            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
+            driverId: d.id, driverName: d.name
         });
     }
-
     d.mode = 'taximeter'; d.status = 'busy';
     updateVehicleMarker(d.id);
-    AppState.currentOperator.stats.trips++;
-    AppState.currentOperator.stats.revenue += 4.5;
+    if (window.TaxiEvents) {
+        window.TaxiEvents.emit('operator:trip_done');
+        window.TaxiEvents.emit('operator:revenue', 4.5);
+    }
     showToast('success', 'Auto-caktuar', `🚗 ${num} — ${d.name}`);
 }
 
@@ -428,23 +398,20 @@ async function confirmManualAssign() {
     if (!num) { showToast('error', 'Gabim', 'Zgjedh një veturë'); return; }
     const firestoreId = AppState.manualAssignOrderId;
     if (!firestoreId) return;
-
     const v = AppState.vehicles.find(x => String(x.id).padStart(2, '0') === num);
     const d = v ? AppState.drivers.find(x => x.vehicleId === v.id) : null;
 
     if (window.TaxiOrdersBridge) {
         await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned',
-            vehicleNum: num,
-            vehicleId: v ? v.id : null,
-            driverId: d ? d.id : null,
-            driverName: d ? d.name : 'N/A'
+            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
+            driverId: d ? d.id : null, driverName: d ? d.name : 'N/A'
         });
     }
-
     if (d) { d.mode = 'taximeter'; d.status = 'busy'; updateVehicleMarker(d.id); }
-    AppState.currentOperator.stats.trips++;
-    AppState.currentOperator.stats.revenue += 4.5;
+    if (window.TaxiEvents) {
+        window.TaxiEvents.emit('operator:trip_done');
+        window.TaxiEvents.emit('operator:revenue', 4.5);
+    }
     document.getElementById('modal-manual-assign')?.classList.remove('active');
     showToast('success', 'Manual', `🚗 ${num} caktuar`);
 }
@@ -465,18 +432,16 @@ async function closestAssignWaiting(firestoreId) {
 
     if (window.TaxiOrdersBridge) {
         await window.TaxiOrdersBridge.assignOrder(firestoreId, {
-            status: 'assigned',
-            vehicleNum: num,
-            vehicleId: v ? v.id : null,
-            driverId: best.id,
-            driverName: best.name
+            status: 'assigned', vehicleNum: num, vehicleId: v ? v.id : null,
+            driverId: best.id, driverName: best.name
         });
     }
-
     best.mode = 'taximeter'; best.status = 'busy';
     updateVehicleMarker(best.id);
-    AppState.currentOperator.stats.trips++;
-    AppState.currentOperator.stats.revenue += 4.5;
+    if (window.TaxiEvents) {
+        window.TaxiEvents.emit('operator:trip_done');
+        window.TaxiEvents.emit('operator:revenue', 4.5);
+    }
     showToast('success', 'Më i afërti', `🚗 ${num} — ${best.name}`);
 }
 
@@ -484,11 +449,11 @@ async function cancelWaiting(firestoreId) {
     if (window.TaxiOrdersBridge) {
         await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
     }
-    AppState.currentOperator.stats.cancelled++;
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
     showToast('info', 'Anuluar', `Porosia u anulua`);
 }
 
-// ═══ ACTIVE ORDERS ═══
+// ═══ ORDERS ═══
 function renderOrders() {
     const tb = document.getElementById('orders-tbody');
     const cnt = document.getElementById('orders-count');
@@ -505,19 +470,17 @@ function renderOrders() {
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.driverName || '<span style="color:var(--text-muted)">—</span>'}</td>
-            <td onclick="event.stopPropagation()">
-                <div class="row-actions">
-                    <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-            </td>
+            <td onclick="event.stopPropagation()"><div class="row-actions">
+                <button class="row-btn danger" onclick="cancelOrder('${o.firestoreId}')"><i class="fa-solid fa-xmark"></i></button>
+            </div></td>
         </tr>
     `).join('');
 }
 
 function openOrderDetail(firestoreId) {
-    const o = AppState.orders.find(x => x.firestoreId === firestoreId) || AppState.waitingOrders.find(x => x.firestoreId === firestoreId);
+    const o = AppState.orders.find(x => x.firestoreId === firestoreId) || AppState.waitingOrders.find(x => x.firestoreId === firestoreId) || AppState.preOrders.find(x => x.firestoreId === firestoreId);
     if (!o) return;
-    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje', arrived: 'Në Vend', taximeter: 'Taksimetër', fixed: 'Çmim Fiks' };
+    const statusLbl = { new: 'E Re', pending: 'Në Pritje', assigned: 'E Caktuar', onroute: 'Në Rrugë', delay: 'Vonesë', completed: 'Përfunduar', waiting: 'Në Pritje', arrived: 'Në Vend', taximeter: 'Taksimetër', fixed: 'Çmim Fiks', preorder: 'Me Termin' };
     document.getElementById('order-detail-body').innerHTML = `
         <div class="detail-section">
             <div class="detail-section-title"><i class="fa-solid fa-receipt"></i> INFORMACION BAZË</div>
@@ -546,10 +509,8 @@ function openOrderDetail(firestoreId) {
 }
 
 async function cancelOrder(firestoreId) {
-    if (window.TaxiOrdersBridge) {
-        await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
-    }
-    AppState.currentOperator.stats.cancelled++;
+    if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
     showToast('info', 'Anuluar', `Porosia u anulua`);
 }
 
@@ -584,35 +545,31 @@ function renderPreOrders() {
     if (!AppState.preOrders.length) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">Asnjë pre-order</td></tr>`; return; }
     tb.innerHTML = AppState.preOrders.map(o => `
         <tr>
-            <td><span class="preorder-date">${o.date}</span></td>
-            <td class="time">${o.time}</td>
+            <td><span class="preorder-date">${o.date || '—'}</span></td>
+            <td class="time">${o.terminTime || o.time}</td>
             <td class="phone">${o.phone}</td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-location-dot ${getLocationIcon(o.pickup)}"></i><span>${o.pickup}</span></div></td>
             <td class="location"><div class="location-cell"><i class="fa-solid fa-flag-checkered ${getLocationIcon(o.destination)}"></i><span>${o.destination}</span></div></td>
             <td>${o.vehicle ? `<span class="vehicle-badge">${o.vehicle}</span>` : '—'}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn auto" onclick="activatePre(${o.id})">AKTIVIZO</button>
-                    <button class="action-btn cancel" onclick="cancelPre(${o.id})">X</button>
-                </div>
-            </td>
+            <td><div class="action-buttons">
+                <button class="action-btn auto" onclick="activatePre('${o.firestoreId}')">AKTIVIZO</button>
+                <button class="action-btn cancel" onclick="cancelPre('${o.firestoreId}')">X</button>
+            </div></td>
         </tr>
     `).join('');
 }
 
-function activatePre(id) {
-    const o = AppState.preOrders.find(x => x.id === id);
-    if (!o) return;
-    AppState.preOrders = AppState.preOrders.filter(x => x.id !== id);
-    AppState.currentOperator.stats.callsWaiting++;
-    renderPreOrders(); renderWaitingOrders(); updateStats();
-    showToast('info', 'Aktivizuar', `Pre-order #${id}`);
+async function activatePre(firestoreId) {
+    if (window.TaxiOrdersBridge) {
+        await window.TaxiOrdersBridge.assignOrder(firestoreId, { status: 'waiting' });
+    }
+    showToast('info', 'Aktivizuar', `Pre-order u aktivizua`);
 }
 
-function cancelPre(id) {
-    AppState.preOrders = AppState.preOrders.filter(x => x.id !== id);
-    AppState.currentOperator.stats.cancelled++;
-    renderPreOrders(); updateStats();
+async function cancelPre(firestoreId) {
+    if (window.TaxiOrdersBridge) await window.TaxiOrdersBridge.cancelOrderFs(firestoreId);
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:cancelled');
+    showToast('info', 'Anuluar', `Pre-order u anulua`);
 }
 
 // ═══ NEW ORDER ═══
@@ -627,75 +584,126 @@ function submitOrder() {
 
     if (!phone || !pickup) { showToast('error', 'Gabim', 'Plotëso numrin dhe adresën'); return; }
 
-    // 🔍 KONTROLLO A ËSHTË TERMIN
     const terminActive = document.getElementById('termin-options')?.classList.contains('active');
     const terminDate = document.getElementById('termin-date')?.value;
     const terminTime = document.getElementById('termin-time')?.value;
     const terminLead = parseInt(document.getElementById('termin-lead')?.value) || 15;
     const terminRepeat = document.getElementById('termin-repeat')?.value || 'none';
-
     const isPreorder = terminActive && terminDate && terminTime;
 
-    // Validim për termin
     if (isPreorder) {
         const terminDT = new Date(`${terminDate}T${terminTime}`);
-        if (terminDT < new Date()) {
-            showToast('error', 'Gabim', 'Data e terminit është në të kaluarën!');
-            return;
-        }
+        if (terminDT < new Date()) { showToast('error', 'Gabim', 'Data është në të kaluarën'); return; }
     }
 
-    AppState.currentOperator.stats.callsTaken++;
-    AppState.currentOperator.stats.callsOpened++;
+    if (window.TaxiEvents) window.TaxiEvents.emit('operator:call_taken');
 
     if (isPreorder) {
-        // ⏰ KRIJO PREORDER
         const dateStr = terminDate.split('-').reverse().slice(0, 2).join('/');
-
         if (window.TaxiOrdersBridge) {
             window.TaxiOrdersBridge.createFromData({
-                phone: phone,
-                name: name || 'Klient',
-                pickup: pickup,
-                destination: dest || 'N/A',
-                zone: zone === 'auto' ? 'zona1' : zone,
-                tariff: tariff || 'standard',
-                remark: remark || '',
-                status: 'preorder',
-                isPreorder: true,
-                terminDate: dateStr,
-                terminTime: terminTime,
-                terminLead: terminLead,
-                terminRepeat: terminRepeat,
+                phone, name: name || 'Klient', pickup, destination: dest || 'N/A',
+                zone: zone === 'auto' ? 'zona1' : zone, tariff: tariff || 'standard',
+                remark: remark || '', status: 'preorder',
+                isPreorder: true, terminDate: dateStr, terminTime: terminTime,
+                terminLead, terminRepeat,
                 terminDateTime: new Date(`${terminDate}T${terminTime}`).getTime()
             });
         }
-
         showToast('success', 'Termini u ruajt', `${phone} — ${dateStr} në ${terminTime}`);
     } else {
-        // 📞 KRIJO POROSI NORMALE
-        AppState.currentOperator.stats.callsWaiting++;
-
         if (window.TaxiOrdersBridge) {
             window.TaxiOrdersBridge.createFromData({
-                phone: phone,
-                name: name || 'Klient',
-                pickup: pickup,
-                destination: dest || 'N/A',
-                zone: zone === 'auto' ? 'zona1' : zone,
-                tariff: tariff || 'standard',
-                remark: remark || '',
-                status: 'waiting'
+                phone, name: name || 'Klient', pickup, destination: dest || 'N/A',
+                zone: zone === 'auto' ? 'zona1' : zone, tariff: tariff || 'standard',
+                remark: remark || '', status: 'waiting'
             });
         }
-
         showToast('success', 'Porosia u shtua', `${phone} — ${pickup}`);
     }
 
-    // Reset formës
     document.getElementById('order-form')?.reset();
     document.getElementById('manual-vehicle-picker').style.display = 'none';
     document.getElementById('termin-options')?.classList.remove('active');
     const chp = document.getElementById('client-history-panel');
     if (chp) chp.style.display = 'none';
 }
+
+// ═══ STATS ═══
+function updateStats() {
+    const online = AppState.drivers.filter(d => d.mode === 'free').length;
+    const pending = AppState.waitingOrders.length;
+    const trips = AppState.orders.length;
+    const revenue = AppState.orders.reduce((s, o) => s + (o.tariff === 'airport' ? 15 : 4.5), 0);
+    setText('stat-online', online);
+    setText('stat-pending', pending);
+    setText('stat-trips', trips);
+    setText('stat-revenue', `€${revenue.toFixed(0)}`);
+}
+
+function setText(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; }
+
+// ═══ TOAST ═══
+function showToast(type, title, msg) {
+    const c = document.getElementById('toast-container');
+    if (!c) return;
+    const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${msg}</div></div>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(400px)'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ═══ SIMULATION ═══
+function startCallSimulation() {
+    setTimeout(() => generateCall(), 5000);
+    setInterval(() => { if (AppState.incomingCalls.length < 3) generateCall(); }, 30000);
+}
+
+function generateCall() {
+    const phones = ['+383 44 111 001', '+383 44 222 002', '+383 49 333 003', '+383 45 444 004'];
+    const names = ['Klient i Ri', 'Ardit Krasniqi', 'Blerim Hoxha', 'Driton Berisha'];
+    const addrs = ['Grand Hotel Prishtina', 'Newborn Monument', 'Rr. UÇK Dardani', 'Albi Mall'];
+    const i = Math.floor(Math.random() * phones.length);
+    const call = {
+        id: Date.now(), phone: phones[i],
+        name: Math.random() > 0.4 ? names[i] : '',
+        lastAddress: Math.random() > 0.5 ? addrs[Math.floor(Math.random() * addrs.length)] : '',
+        time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+        ringing: true
+    };
+    AppState.incomingCalls.push(call);
+    renderIncomingCalls();
+    startRing();
+    setTimeout(() => { call.ringing = false; renderIncomingCalls(); }, 5000);
+}
+
+function startOrderSimulation() {
+    setInterval(() => {
+        AppState.vehicleMarkers.forEach((m, id) => {
+            const d = AppState.drivers.find(x => x.id === id);
+            if (!d || d.mode === 'inactive') return;
+            const p = m.getLatLng();
+            const nl = p.lat + (Math.random() - 0.5) * 0.0015;
+            const ng = p.lng + (Math.random() - 0.5) * 0.0015;
+            m.setLatLng([nl, ng]);
+            d.lat = nl; d.lng = ng;
+        });
+    }, 4000);
+    setInterval(() => { if (AppState.waitingOrders.length > 0) renderWaitingOrders(); }, 10000);
+}
+
+// ═══ GLOBAL ═══
+window.acceptCall = acceptCall;
+window.rejectCall = rejectCall;
+window.autoAssignWaiting = autoAssignWaiting;
+window.manualAssignWaiting = manualAssignWaiting;
+window.closestAssignWaiting = closestAssignWaiting;
+window.cancelWaiting = cancelWaiting;
+window.cancelOrder = cancelOrder;
+window.openOrderDetail = openOrderDetail;
+window.activatePre = activatePre;
+window.cancelPre = cancelPre;
+
+console.log('✅ TaxiDispatch Pro Ready');
