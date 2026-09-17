@@ -1,420 +1,346 @@
 'use strict';
 
-/**
- * Firebase Cloud Functions për TaxiApp 2.0
- */
-
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
-
 admin.initializeApp();
 
 const db = admin.firestore();
 const auth = admin.auth();
 
-// ═══════════════════════════════════════════════════════════
-// 1. KRIJO ACCOUNT PËR PËRDORUES (nga aplikacioni)
-// ═══════════════════════════════════════════════════════════
-exports.createUser = functions.https.onCall(async (data, context) => {
-    // Kontrollo auth
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i loguar');
+// ═══════════════════════════════════════════════════════
+// 1. KUR KRIJOHET LLOGARI E RE → jep rolin 'client'
+// ═══════════════════════════════════════════════════════
+exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
+  try {
+    // Kontrollo nëse ka operators/{uid} me role të caktuar nga Cloud Function tjetër
+    const opDoc = await db.collection('operators').doc(user.uid).get();
+    let role = 'client';
+
+    if (opDoc.exists && opDoc.data().role) {
+      role = opDoc.data().role;
     }
 
-    // Kontrollo rolin
-    const callerDoc = await db.collection('operators').doc(context.auth.uid).get();
-    if (!callerDoc.exists) {
-        throw new functions.https.HttpsError('permission-denied', 'Nuk ka qasje');
-    }
+    // Vendos custom claim
+    await auth.setCustomUserClaims(user.uid, { role });
 
-    const callerRole = callerDoc.data().role;
-    if (!['director', 'admin'].includes(callerRole)) {
-        throw new functions.https.HttpsError('permission-denied', 'Vetëm drejtori mund të krijojë përdorues');
-    }
+    // Audit log
+    await db.collection('audit_log').add({
+      action: 'user_created',
+      userId: user.uid,
+      email: user.email || '',
+      phone: user.phoneNumber || '',
+      role,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
-    const { email, password, name, role, phone, vehicleId, baseSalary } = data;
-
-    // Validim
-    if (!email || !password || !name || !role) {
-        throw new functions.https.HttpsError('invalid-argument', 'Të dhënat mungojnë');
-    }
-
-    // Validim i rolit
-    const validRoles = ['dispatcher', 'supervisor', 'manager', 'director', 'admin'];
-    if (!validRoles.includes(role)) {
-        throw new functions.https.HttpsError('invalid-argument', 'Rol i pavlefshëm');
-    }
-
-    try {
-        // 1. Krijo user në Firebase Auth
-        const userRecord = await auth.createUser({
-            email: email,
-            password: password,
-            displayName: name,
-            emailVerified: false
-        });
-
-        // 2. Krijo dokument në Firestore
-        const userData = {
-            uid: userRecord.uid,
-            email: email,
-            name: name,
-            phone: phone || '',
-            role: role,
-            active: true,
-            avatar: name.slice(0, 2).toUpperCase(),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdAtLocal: Date.now(),
-            createdBy: context.auth.uid,
-            createdByName: callerDoc.data().name || 'Drejtori',
-            stats: {
-                totalMinutes: 0,
-                callsTaken: 0,
-                callsCancelled: 0,
-                trips: 0,
-                revenue: 0
-            },
-            vacations: {
-                totalDays: 22,
-                usedDays: 0,
-                remainingDays: 22
-            }
-        };
-
-        if (baseSalary) userData.baseSalary = baseSalary;
-        if (vehicleId) userData.vehicleId = vehicleId;
-
-        await db.collection('operators').doc(userRecord.uid).set(userData);
-
-        // 3. Audit log
-        await db.collection('audit_log').add({
-            action: 'user_created',
-            details: { email, role },
-            userId: context.auth.uid,
-            userEmail: context.auth.token.email,
-            userName: callerDoc.data().name || 'Drejtori',
-            userRole: callerRole,
-            level: 'success',
-            timestamp: Date.now(),
-            timestampStr: new Date().toLocaleString('sq-AL')
-        });
-
-        return {
-            success: true,
-            uid: userRecord.uid,
-            message: `Përdoruesi ${name} u krijua me sukses`
-        };
-
-    } catch (error) {
-        console.error('Gabim në krijim user:', error);
-        throw new functions.https.HttpsError('internal', error.message);
-    }
+    console.log(`✅ User ${user.uid} → role: ${role}`);
+  } catch (e) {
+    console.error('❌ onUserCreate:', e);
+  }
 });
 
-// ═══════════════════════════════════════════════════════════
-// 2. FSHIJ PËRDORUES
-// ═══════════════════════════════════════════════════════════
-exports.deleteUser = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i loguar');
-    }
+// ═══════════════════════════════════════════════════════
+// 2. SETUSERROLE — vetëm manager+ mund të ndryshojë role
+// ═══════════════════════════════════════════════════════
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+  // Kontrollo auth
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i kyçur');
+  }
 
-    const callerDoc = await db.collection('operators').doc(context.auth.uid).get();
-    if (!callerDoc.exists) {
-        throw new functions.https.HttpsError('permission-denied', 'Nuk ka qasje');
-    }
+  const callerRole = context.auth.token.role;
+  const allowedRoles = ['manager', 'director', 'admin'];
 
-    const callerRole = callerDoc.data().role;
-    if (!['director', 'admin'].includes(callerRole)) {
-        throw new functions.https.HttpsError('permission-denied', 'Vetëm drejtori mund të fshijë');
-    }
+  if (!allowedRoles.includes(callerRole)) {
+    throw new functions.https.HttpsError('permission-denied', 'Nuk ke leje');
+  }
 
-    const { uid } = data;
-    if (!uid) {
-        throw new functions.https.HttpsError('invalid-argument', 'UID mungon');
-    }
+  const { targetUserId, newRole } = data;
 
-    // Nuk mund ta fshish veten
-    if (uid === context.auth.uid) {
-        throw new functions.https.HttpsError('invalid-argument', 'Nuk mund të fshish veten');
-    }
+  if (!targetUserId || !newRole) {
+    throw new functions.https.HttpsError('invalid-argument', 'Mungon targetUserId ose newRole');
+  }
 
-    try {
-        // 1. Fshij nga Auth
-        await auth.deleteUser(uid);
+  const validRoles = ['client', 'driver', 'operator', 'dispatcher', 'supervisor', 'manager', 'director', 'admin'];
 
-        // 2. Fshij nga Firestore
-        await db.collection('operators').doc(uid).delete();
+  if (!validRoles.includes(newRole)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Rol i pavlefshëm');
+  }
 
-        // 3. Audit
-        await db.collection('audit_log').add({
-            action: 'user_deleted',
-            details: { uid },
-            userId: context.auth.uid,
-            userEmail: context.auth.token.email,
-            userName: callerDoc.data().name,
-            userRole: callerRole,
-            level: 'warn',
-            timestamp: Date.now(),
-            timestampStr: new Date().toLocaleString('sq-AL')
-        });
+  // Vetëm admin mund të krijojë admin/director
+  if (['admin', 'director'].includes(newRole) && callerRole !== 'admin') {
+    throw new functions.https.HttpsError('permission-denied', 'Vetëm admin mund të krijojë admin/director');
+  }
 
-        return { success: true, message: 'Përdoruesi u fshi' };
+  try {
+    // Vendos claim
+    await auth.setCustomUserClaims(targetUserId, { role: newRole });
 
-    } catch (error) {
-        console.error('Gabim në fshirje:', error);
-        throw new functions.https.HttpsError('internal', error.message);
-    }
+    // Përditëso operators doc nëse ekziston
+    await db.collection('operators').doc(targetUserId).set({
+      role: newRole,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: context.auth.uid
+    }, { merge: true });
+
+    // Audit log
+    await db.collection('audit_log').add({
+      action: 'role_changed',
+      targetUserId,
+      newRole,
+      oldRole: 'unknown',
+      by: context.auth.uid,
+      byEmail: context.auth.token.email || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true, role: newRole };
+  } catch (e) {
+    console.error('❌ setUserRole:', e);
+    throw new functions.https.HttpsError('internal', e.message);
+  }
 });
 
-// ═══════════════════════════════════════════════════════════
-// 3. NDRYSHO PASSWORD
-// ═══════════════════════════════════════════════════════════
-exports.changePassword = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i loguar');
-    }
+// ═══════════════════════════════════════════════════════
+// 3. SEND SMS — vetëm dispatcher+ mund të thërrasë
+// ═══════════════════════════════════════════════════════
+exports.sendSMS = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i kyçur');
+  }
 
-    const { uid, newPassword } = data;
+  const role = context.auth.token.role;
+  if (!['operator', 'dispatcher', 'supervisor', 'manager', 'director', 'admin'].includes(role)) {
+    throw new functions.https.HttpsError('permission-denied', 'Nuk ke leje');
+  }
 
-    // Vetëm vetja ose director
-    const callerDoc = await db.collection('operators').doc(context.auth.uid).get();
-    const callerRole = callerDoc.exists ? callerDoc.data().role : null;
-    const isSelf = uid === context.auth.uid;
+  const { to, message, templateId, orderId } = data;
 
-    if (!isSelf && !['director', 'admin'].includes(callerRole)) {
-        throw new functions.https.HttpsError('permission-denied', 'Nuk ka leje');
-    }
+  if (!to || !message) {
+    throw new functions.https.HttpsError('invalid-argument', 'Mungon numri ose mesazhi');
+  }
 
-    if (!newPassword || newPassword.length < 6) {
-        throw new functions.https.HttpsError('invalid-argument', 'Password duhet të ketë min 6 karaktere');
-    }
+  try {
+    // Ruaj në queue për t'u dërguar nga sistemi SMS
+    const docRef = await db.collection('sms_queue').add({
+      to,
+      message,
+      templateId: templateId || null,
+      orderId: orderId || null,
+      status: 'pending',
+      createdBy: context.auth.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
 
-    try {
-        await auth.updateUser(uid, { password: newPassword });
-        return { success: true, message: 'Password u ndryshua' };
-    } catch (error) {
-        throw new functions.https.HttpsError('internal', error.message);
-    }
+    // Log
+    await db.collection('sms_log').add({
+      to,
+      message,
+      orderId: orderId || null,
+      sentBy: context.auth.uid,
+      status: 'queued',
+      queueId: docRef.id,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true, queueId: docRef.id };
+  } catch (e) {
+    console.error('❌ sendSMS:', e);
+    throw new functions.https.HttpsError('internal', e.message);
+  }
 });
 
-// ═══════════════════════════════════════════════════════════
-// 4. DËRGO SMS — Kur porosia caktohet (SMS #1)
-// ═══════════════════════════════════════════════════════════
-exports.onOrderAssigned = functions.firestore
-    .document('orders/{orderId}')
-    .onUpdate(async (change, context) => {
-        const before = change.before.data();
-        const after = change.after.data();
+// ═══════════════════════════════════════════════════════
+// 4. CALCULATE PRICE — çmimi llogaritet server-side
+// ═══════════════════════════════════════════════════════
+exports.calculatePrice = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i kyçur');
+  }
 
-        // Vetëm kur statusi ndryshon në 'assigned'
-        if (before.status === after.status) return null;
-        if (after.status !== 'assigned') return null;
+  const { distanceKm, durationMin, tariff, zone, isNight } = data;
 
-        // Kontrollo a ka klient
-        if (!after.phone) return null;
+  // Tarifat bazë (mund të lexohen nga settings)
+  const tariffs = {
+    standard: { base: 2.00, perKm: 0.80, perMin: 0.15 },
+    vip:      { base: 3.50, perKm: 1.20, perMin: 0.25 },
+    airport:  { base: 5.00, perKm: 0.90, perMin: 0.15 },
+    night:    { base: 3.00, perKm: 1.00, perMin: 0.20 },
+    van:      { base: 4.00, perKm: 1.00, perMin: 0.20 }
+  };
 
-        try {
-            // Ndërto link tracking
-            const trackingLink = `https://taxiapp-xxxx.web.app/track/${context.params.orderId}`;
+  const t = tariffs[tariff] || tariffs.standard;
 
-            // Shto në SMS queue
-            await db.collection('sms_queue').add({
-                to: after.phone,
-                text: `Taxi ju njofton se vetura ${after.vehicleNum} është nisur drejt jush. Ndjekeni live: ${trackingLink}`,
-                type: 'assigned',
-                orderId: context.params.orderId,
-                status: 'pending',
-                createdAt: Date.now()
-            });
+  let price = t.base + (distanceKm * t.perKm) + (durationMin * t.perMin);
 
-            console.log('✅ SMS #1 u vu në queue për:', after.phone);
-            return null;
+  // Night mode multiplier
+  if (isNight) price *= 1.25;
 
-        } catch (error) {
-            console.error('❌ Gabim SMS #1:', error);
-            return null;
-        }
-    });
+  // Zone multiplier
+  if (zone) {
+    const zoneMultipliers = { zona1: 1.0, zona2: 1.1, zona3: 1.2, zona4: 1.3, zona5: 1.4 };
+    price *= zoneMultipliers[zone] || 1.0;
+  }
 
-// ═══════════════════════════════════════════════════════════
-// 5. DËRGO SMS #2 — Kur shoferi është 20m larg
-// ═══════════════════════════════════════════════════════════
-exports.onOrderArrived = functions.firestore
-    .document('orders/{orderId}')
-    .onUpdate(async (change, context) => {
-        const before = change.before.data();
-        const after = change.after.data();
+  // Min 2.50
+  price = Math.max(2.50, Math.round(price * 100) / 100);
 
-        if (before.status === after.status) return null;
-        if (after.status !== 'arrived') return null;
-        if (!after.phone) return null;
-
-        try {
-            // Merr veturën
-            const vehicleDoc = await db.collection('drivers').doc(after.driverId).get();
-            const vehiclePlate = vehicleDoc.exists ? (vehicleDoc.data().vehiclePlate || '') : '';
-
-            await db.collection('sms_queue').add({
-                to: after.phone,
-                text: `Taxi ju njofton se vetura ${after.vehicleNum} me targa ${vehiclePlate} është duke ju pritur. Ju dëshirojmë udhëtim të këndshëm!`,
-                type: 'arrived',
-                orderId: context.params.orderId,
-                status: 'pending',
-                createdAt: Date.now()
-            });
-
-            console.log('✅ SMS #2 u vu në queue për:', after.phone);
-            return null;
-
-        } catch (error) {
-            console.error('❌ Gabim SMS #2:', error);
-            return null;
-        }
-    });
-
-// ═══════════════════════════════════════════════════════════
-// 6. BACKUP AUTOMATIK — Çdo ditë në 03:00
-// ═══════════════════════════════════════════════════════════
-exports.dailyBackup = functions.pubsub
-    .schedule('0 3 * * *')
-    .timeZone('Europe/Belgrade')
-    .onRun(async (context) => {
-        console.log('🗄️ Filloi backup-i ditor...');
-
-        try {
-            const collections = ['orders', 'operators', 'drivers', 'clients', 'messages'];
-            const backupData = {};
-            let totalRecords = 0;
-
-            for (const col of collections) {
-                const snap = await db.collection(col).get();
-                backupData[col] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                totalRecords += snap.size;
-            }
-
-            // Ruaj metadata
-            await db.collection('backups').add({
-                createdAt: Date.now(),
-                createdAtStr: new Date().toLocaleString('sq-AL'),
-                createdBy: 'sistemi',
-                createdByName: 'Auto-Backup',
-                collections: collections.length,
-                totalRecords: totalRecords,
-                size: Math.round(JSON.stringify(backupData).length / 1024),
-                type: 'automatic'
-            });
-
-            console.log('✅ Backup ditor u krye:', totalRecords, 'rekorde');
-            return null;
-
-        } catch (error) {
-            console.error('❌ Gabim në backup:', error);
-            return null;
-        }
-    });
-
-// ═══════════════════════════════════════════════════════════
-// 7. PASTRO TË DHËNAT E VJETRA — Çdo javë
-// ═══════════════════════════════════════════════════════════
-exports.cleanupOldData = functions.pubsub
-    .schedule('0 4 * * 0')
-    .timeZone('Europe/Belgrade')
-    .onRun(async (context) => {
-        const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000);
-
-        try {
-            const snap = await db.collection('positions_history')
-                .where('timestamp', '<', oneYearAgo)
-                .limit(500)
-                .get();
-
-            const batch = db.batch();
-            snap.docs.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-
-            console.log(`🧹 U fshinë ${snap.size} pozicione të vjetra`);
-            return null;
-
-        } catch (error) {
-            console.error('❌ Gabim në pastrim:', error);
-            return null;
-        }
-    });
-
-// ═══════════════════════════════════════════════════════════
-// 8. STATISTIKA DITORE — Çdo ditë në 23:59
-// ═══════════════════════════════════════════════════════════
-exports.dailyStats = functions.pubsub
-    .schedule('59 23 * * *')
-    .timeZone('Europe/Belgrade')
-    .onRun(async (context) => {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-
-        try {
-            const snap = await db.collection('orders')
-                .where('createdAtLocal', '>=', todayStart.getTime())
-                .get();
-
-            const orders = snap.docs.map(d => d.data());
-            const completed = orders.filter(o => o.status === 'completed');
-            const revenue = completed.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
-
-            await db.collection('daily_stats').doc(new Date().toISOString().slice(0, 10)).set({
-                date: new Date().toISOString().slice(0, 10),
-                totalOrders: orders.length,
-                completedOrders: completed.length,
-                revenue: revenue,
-                cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
-                timestamp: Date.now()
-            });
-
-            console.log('📊 Statistikat ditore u ruajtën');
-            return null;
-
-        } catch (error) {
-            console.error('❌ Gabim statistikat:', error);
-            return null;
-        }
-    });
-
-// ═══════════════════════════════════════════════════════════
-// 9. KRIJO OPERATORIN E PARË (vetëm një herë)
-// ═══════════════════════════════════════════════════════════
-exports.seedFirstAdmin = functions.https.onCall(async (data, context) => {
-    // Kontrollo nëse ka operatorë
-    const snap = await db.collection('operators').limit(1).get();
-    if (!snap.empty) {
-        throw new functions.https.HttpsError('already-exists', 'Sistemi ka tashmë operatorë');
+  return {
+    price,
+    breakdown: {
+      base: t.base,
+      distance: +(distanceKm * t.perKm).toFixed(2),
+      time: +(durationMin * t.perMin).toFixed(2),
+      nightMultiplier: isNight ? 1.25 : 1.0,
+      zoneMultiplier: zone ? 1.0 : 1.0
     }
-
-    const { email, password, name } = data;
-
-    try {
-        const userRecord = await auth.createUser({
-            email: email,
-            password: password,
-            displayName: name
-        });
-
-        await db.collection('operators').doc(userRecord.uid).set({
-            uid: userRecord.uid,
-            email: email,
-            name: name,
-            role: 'director',
-            active: true,
-            avatar: name.slice(0, 2).toUpperCase(),
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            createdAtLocal: Date.now(),
-            stats: { totalMinutes: 0, callsTaken: 0, trips: 0, revenue: 0, callsCancelled: 0 },
-            vacations: { totalDays: 22, usedDays: 0, remainingDays: 22 }
-        });
-
-        return { success: true, uid: userRecord.uid };
-    } catch (error) {
-        throw new functions.https.HttpsError('internal', error.message);
-    }
+  };
 });
 
-console.log('✅ Cloud Functions u ngarkuan');
+// ═══════════════════════════════════════════════════════
+// 5. ASSIGN ORDER — dispatch server-side
+// ═══════════════════════════════════════════════════════
+exports.assignOrderServer = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Duhet të jesh i kyçur');
+  }
+
+  const role = context.auth.token.role;
+  if (!['operator', 'dispatcher', 'supervisor', 'manager', 'director', 'admin'].includes(role)) {
+    throw new functions.https.HttpsError('permission-denied', 'Nuk ke leje');
+  }
+
+  const { orderId, mode } = data;
+
+  if (!orderId) {
+    throw new functions.https.HttpsError('invalid-argument', 'Mungon orderId');
+  }
+
+  try {
+    const orderDoc = await db.collection('orders').doc(orderId).get();
+    if (!orderDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Porosia nuk ekziston');
+    }
+
+    const order = orderDoc.data();
+
+    // Gjej shoferin më të mirë
+    let driverQuery = db.collection('drivers')
+      .where('online', '==', true)
+      .where('mode', '==', 'free');
+
+    const driversSnap = await driverQuery.get();
+    const drivers = driversSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    if (drivers.length === 0) {
+      throw new functions.https.HttpsError('failed-precondition', 'Nuk ka shoferë të lirë');
+    }
+
+    // Zgjedh sipas modalitetit
+    let selected;
+    if (mode === 'closest' && order.pickupLat && order.pickupLng) {
+      selected = drivers.sort((a, b) => {
+        const da = Math.hypot(a.lat - order.pickupLat, a.lng - order.pickupLng);
+        const db_ = Math.hypot(b.lat - order.pickupLat, b.lng - order.pickupLng);
+        return da - db_;
+      })[0];
+    } else {
+      selected = drivers[0]; // FIFO
+    }
+
+    // Update order
+    await db.collection('orders').doc(orderId).update({
+      driverId: selected.id,
+      driverName: selected.name || '',
+      vehicleId: selected.vehicleId || '',
+      vehicleNum: selected.vehicleNum || '',
+      status: 'assigned',
+      assignedAt: admin.firestore.FieldValue.serverTimestamp(),
+      assignedBy: context.auth.uid
+    });
+
+    // Update driver
+    await db.collection('drivers').doc(selected.id).update({
+      mode: 'taximeter',
+      currentOrderId: orderId
+    });
+
+    return { success: true, driver: selected };
+  } catch (e) {
+    console.error('❌ assignOrderServer:', e);
+    throw new functions.https.HttpsError('internal', e.message);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// 6. SYNC DRIVERS_PUBLIC — sinkronizo koleksionin publik
+// ═══════════════════════════════════════════════════════
+exports.syncDriverPublic = functions.firestore
+  .document('drivers/{driverId}')
+  .onWrite(async (change, context) => {
+    const driverId = context.params.driverId;
+
+    if (!change.after.exists) {
+      await db.collection('drivers_public').doc(driverId).delete().catch(() => {});
+      return;
+    }
+
+    const data = change.after.data();
+
+    // Vetëm fushat publike
+    const publicData = {
+      name: data.name || '',
+      vehicleNum: data.vehicleNum || '',
+      plate: data.plate || '',
+      rating: data.rating || 5.0,
+      mode: data.mode || 'inactive',
+      lat: data.lat || null,
+      lng: data.lng || null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('drivers_public').doc(driverId).set(publicData, { merge: true });
+  });
+
+// ═══════════════════════════════════════════════════════
+// 7. CLEANUP POSITIONS_HISTORY — TTL 90 ditë
+// ═══════════════════════════════════════════════════════
+exports.cleanupPositions = functions.pubsub
+  .schedule('every 24 hours')
+  .timeZone('Europe/Belgrade')
+  .onRun(async () => {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+    const snap = await db.collection('positions_history')
+      .where('createdAt', '<', cutoff)
+      .limit(1000)
+      .get();
+
+    if (snap.empty) {
+      console.log('✅ Nuk ka pozicione për fshirje');
+      return null;
+    }
+
+    const batch = db.batch();
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    console.log(`🗑️ Fshirë ${snap.size} pozicione të vjetra`);
+    return null;
+  });
+
+// ═══════════════════════════════════════════════════════
+// 8. AUDIT LOG AUTO — nga triggers (opcionale)
+// ═══════════════════════════════════════════════════════
+exports.auditOrderCreate = functions.firestore
+  .document('orders/{orderId}')
+  .onCreate(async (snap, context) => {
+    await db.collection('audit_log').add({
+      action: 'order_created',
+      orderId: context.params.orderId,
+      phone: snap.data().phone || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+  });
+
+console.log('✅ Cloud Functions gati');
