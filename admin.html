@@ -150,6 +150,10 @@
                     <i class="fa-solid fa-file-import"></i>
                     <span>Import</span>
                 </a>
+                <a href="#" class="sidebar-item" data-page="audit" onclick="AdminApp.switchPage('audit'); return false;">
+                    <i class="fa-solid fa-history"></i>
+                    <span>Audit Log</span>
+                </a>
                 <a href="#" class="sidebar-item" data-page="vacations" onclick="AdminApp.switchPage('vacations'); return false;">
                     <i class="fa-solid fa-umbrella-beach"></i>
                     <span>Pushimet</span>
@@ -324,6 +328,7 @@
             <div class="admin-page" data-page="trackers"></div>
             <div class="admin-page" data-page="streets"></div>
             <div class="admin-page" data-page="mobile-users"></div>
+            <div class="admin-page" data-page="audit"></div>
 
             <!-- VACATIONS -->
             <div class="admin-page" data-page="vacations">
@@ -363,12 +368,14 @@
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
     <script src="js/core/permissions.js"></script>
+    <script src="js/core/auth-claims.js"></script>
 
     <!-- DATA -->
     <script src="data.js"></script>
 
     <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
+    <script src="js/services/auth-guard.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/operators.js"></script>
     <script src="js/services/drivers.js"></script>
@@ -409,6 +416,12 @@
     <script src="js/services/feedback.js"></script>
     <script src="js/services/print.js"></script>
     <script src="js/services/api-keys.js"></script>
+    <script src="js/services/search-global.js"></script>
+    <script src="js/services/print-utils.js"></script>
+    <script src="js/services/trackers-map.js"></script>
+    <script src="js/services/notifications-realtime.js"></script>
+    <script src="js/services/export-excel.js"></script>
+    <script src="js/services/reminders.js"></script>
 
     <!-- ADMIN CORE -->
     <script src="js/admin/login.js"></script>
@@ -436,10 +449,25 @@
     <script src="js/admin/trackers.js"></script>
     <script src="js/admin/streets.js"></script>
     <script src="js/admin/mobile-users.js"></script>
+    <script src="js/admin/audit-viewer.js"></script>
+
+    <!-- AUTH GUARD (para init) -->
+    <script>
+        window.addEventListener('load', () => {
+            if (window.TaxiAuthGuard) {
+                TaxiAuthGuard.init({
+                    roles: ['manager', 'director', 'admin'],
+                    loginUrl: 'index.html',
+                    roleName: 'admin'
+                });
+            }
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.AdminApp) AdminApp.init();
+            if (window.TaxiAuthClaims) TaxiAuthClaims.init();
             if (window.TaxiPWA) TaxiPWA.init();
             if (window.TaxiResponsive) TaxiResponsive.init();
             if (window.TaxiShortcuts) TaxiShortcuts.init();
@@ -455,7 +483,7 @@
             if (window.TaxiHealth) TaxiHealth.start();
             if (window.TaxiApiKeys) TaxiApiKeys.init();
 
-            // ═══ INIT MODULES TË REJA ═══
+            // ═══ MODULET E REJA ═══
             if (window.AdminTargets)       try { AdminTargets.init(); }       catch(e){ console.error('AdminTargets:', e); }
             if (window.AdminLoyalty)       try { AdminLoyalty.init(); }       catch(e){ console.error('AdminLoyalty:', e); }
             if (window.AdminFuel)          try { AdminFuel.init(); }          catch(e){ console.error('AdminFuel:', e); }
@@ -468,6 +496,15 @@
             if (window.AdminTrackers)      try { AdminTrackers.init(); }      catch(e){ console.error('AdminTrackers:', e); }
             if (window.AdminStreets)       try { AdminStreets.init(); }       catch(e){ console.error('AdminStreets:', e); }
             if (window.AdminMobileUsers)   try { AdminMobileUsers.init(); }   catch(e){ console.error('AdminMobileUsers:', e); }
+            if (window.AdminAuditViewer)   try { AdminAuditViewer.init(); }   catch(e){ console.error('AdminAuditViewer:', e); }
+
+            // ═══ Shtesat e reja ═══
+            if (window.TaxiSearchGlobal)          try { TaxiSearchGlobal.init(); }          catch(e){ console.error('SearchGlobal:', e); }
+            if (window.TaxiPrint)                 try { TaxiPrint.init(); }                 catch(e){ console.error('Print:', e); }
+            if (window.TaxiTrackersMap)           try { TaxiTrackersMap.init(); }           catch(e){ console.error('TrackersMap:', e); }
+            if (window.TaxiNotificationsRealtime) try { TaxiNotificationsRealtime.init(); } catch(e){ console.error('NotifRealtime:', e); }
+            if (window.TaxiExportExcel)           try { TaxiExportExcel.init(); }           catch(e){ console.error('ExportExcel:', e); }
+            if (window.TaxiReminders)             try { TaxiReminders.init(); }             catch(e){ console.error('Reminders:', e); }
 
             console.log('👔 Admin Panel v3.0 gati');
         });
