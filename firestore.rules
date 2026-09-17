@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // ═══════════════════════════════════════════════════════
-// TaxiApp 2.0 — Firestore Security Rules
+// TaxiApp 3.0 — Firestore Security Rules
+// Roli lexohet nga Custom Claims (token), jo nga dokumenti
 // ═══════════════════════════════════════════════════════
 
 service cloud.firestore {
@@ -13,128 +14,167 @@ service cloud.firestore {
     }
 
     function getRole() {
-      return get(/databases/$(database)/documents/operators/$(request.auth.uid)).data.role;
+      return request.auth.token.role;
     }
 
-    function isDispatcher() {
-      return isAuthenticated() && getRole() in ['dispatcher', 'supervisor', 'manager', 'director', 'admin'];
-    }
-
-    function isSupervisor() {
-      return isAuthenticated() && getRole() in ['supervisor', 'manager', 'director', 'admin'];
-    }
-
-    function isManager() {
-      return isAuthenticated() && getRole() in ['manager', 'director', 'admin'];
-    }
-
-    function isDirector() {
-      return isAuthenticated() && getRole() in ['director', 'admin'];
+    function hasRole(roles) {
+      return isAuthenticated() && getRole() in roles;
     }
 
     function isDriver() {
-      return isAuthenticated() && exists(/databases/$(database)/documents/drivers/$(request.auth.uid));
+      return hasRole(['driver']);
     }
 
     function isClient() {
-      return isAuthenticated() && exists(/databases/$(database)/documents/clients/$(request.auth.uid));
+      return hasRole(['client']);
+    }
+
+    function isOperator() {
+      return hasRole(['operator', 'dispatcher']);
+    }
+
+    function isDispatcher() {
+      return hasRole(['operator', 'dispatcher', 'supervisor', 'manager', 'director', 'admin']);
+    }
+
+    function isSupervisor() {
+      return hasRole(['supervisor', 'manager', 'director', 'admin']);
+    }
+
+    function isManager() {
+      return hasRole(['manager', 'director', 'admin']);
+    }
+
+    function isDirector() {
+      return hasRole(['director', 'admin']);
+    }
+
+    function isAdmin() {
+      return hasRole(['admin']);
     }
 
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // OPERATORS — Vetëm staf i brendshëm
-    // ═══════════════════════════════════════════════════════
+    // ═══ OPERATORS ═══
+    // Vetëm Cloud Function (Admin SDK) mund të shkruajë
     match /operators/{operatorId} {
-      // Lexim: veten ose manager+
-      allow read: if isOwner(operatorId) || isManager();
-
-      // Krijim: vetëm vetja gjatë login (ose director për të tjerët)
-      allow create: if isOwner(operatorId) || isDirector();
-
-      // Update: vetja (statistika) ose director
-      allow update: if isOwner(operatorId) || isDirector();
-
-      // Fshirje: vetëm director
-      allow delete: if isDirector();
+      allow read: if isOwner(operatorId) || isDispatcher();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // DRIVERS — Shoferët
-    // ═══════════════════════════════════════════════════════
+    // ═══ DRIVERS ═══
+    // Vetëm Cloud Function krijon. Shofer vetëm vetveten.
     match /drivers/{driverId} {
-      allow read: if isAuthenticated();
-      allow create: if isManager();
-      allow update: if isOwner(driverId) || isDispatcher();
-      allow delete: if isDirector();
+      allow read: if isDispatcher() || isOwner(driverId);
+      allow create, delete: if false;
+      allow update: if isDispatcher() ||
+                       (isOwner(driverId) &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['mode', 'lat', 'lng', 'lastSeen', 'online', 'status']));
     }
 
-    // ═══════════════════════════════════════════════════════
-    // VEHICLES — Veturat
-    // ═══════════════════════════════════════════════════════
+    // Koleksion publik për klientin (pa telefon/GPS)
+    match /drivers_public/{driverId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ═══ VEHICLES ═══
     match /vehicles/{vehicleId} {
       allow read: if isAuthenticated();
       allow write: if isManager();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CLIENTS — Klientët
-    // ═══════════════════════════════════════════════════════
+    // ═══ CLIENTS ═══
     match /clients/{clientId} {
       allow read: if isOwner(clientId) || isDispatcher();
       allow create: if isOwner(clientId);
-      allow update: if isOwner(clientId) || isDispatcher();
+      allow update: if isOwner(clientId) ||
+                       (isDispatcher() &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['blocked', 'notes', 'tags']));
       allow delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // ORDERS — Porositë
-    // ═══════════════════════════════════════════════════════
+    // ═══ ORDERS ═══
     match /orders/{orderId} {
-      // Lexim: operatorët, shoferi i caktuar, klienti
       allow read: if isDispatcher() ||
                      (isDriver() && resource.data.driverId == request.auth.uid) ||
                      (isClient() && resource.data.clientId == request.auth.uid);
 
-      // Krijim: operatorët ose klientët
-      allow create: if isDispatcher() || isClient();
+      // Klient krijon vetëm për vete
+      allow create: if (isDispatcher()) ||
+                       (isClient() &&
+                        request.resource.data.clientId == request.auth.uid &&
+                        request.resource.data.status == 'waiting');
 
-      // Update: operatorët, shoferi, klienti (vetëm status i caktuar)
+      // Update me kufizime fushash
       allow update: if isDispatcher() ||
-                       (isDriver() && resource.data.driverId == request.auth.uid) ||
-                       (isClient() && resource.data.clientId == request.auth.uid &&
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+                       (isDriver() &&
+                        resource.data.driverId == request.auth.uid &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['status', 'arrivedAt', 'startedAt', 'completedAt', 'lat', 'lng'])) ||
+                       (isClient() &&
+                        resource.data.clientId == request.auth.uid &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['status', 'cancelledReason', 'cancelledAt']) &&
+                        request.resource.data.status in ['cancelled']);
 
-      // Fshirje: vetëm manager+
       allow delete: if isManager();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // MESSAGES — Mesazhet
-    // ═══════════════════════════════════════════════════════
+    // ═══ MESSAGES (operator↔driver) ═══
     match /messages/{messageId} {
-      allow read: if isDispatcher() || isDriver();
-      allow create: if isDispatcher() || isDriver();
-      allow update: if isDispatcher() || isDriver();
+      allow read: if isDispatcher() ||
+                     (isDriver() && resource.data.to == request.auth.uid) ||
+                     (isDriver() && resource.data.from == request.auth.uid);
+      allow create: if isDispatcher() ||
+                       (isDriver() && request.resource.data.from == request.auth.uid);
+      allow update: if false;
       allow delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CHATS — Chat live
-    // ═══════════════════════════════════════════════════════
-    match /chats/{chatId} {
-      allow read, write: if isAuthenticated();
+    // ═══ DRIVER_MESSAGES (chat i ri) ═══
+    match /driver_messages/{threadId} {
+      allow read: if isDispatcher() ||
+                     (resource.data.driverId == request.auth.uid);
+      allow create: if isAuthenticated() &&
+                       request.resource.data.driverId == request.auth.uid;
+      allow update: if isDispatcher() ||
+                       (resource.data.driverId == request.auth.uid &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['unreadByDriver', 'unreadByOperator', 'lastMessage', 'lastMessageAt']));
 
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
+        allow read: if isDispatcher() ||
+                       (get(/databases/$(database)/documents/driver_messages/$(threadId)).data.driverId == request.auth.uid);
+        allow create: if isDispatcher() ||
+                         (get(/databases/$(database)/documents/driver_messages/$(threadId)).data.driverId == request.auth.uid &&
+                          request.resource.data.senderId == request.auth.uid);
+        allow update, delete: if false;
       }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CALLS — Thirrjet
-    // ═══════════════════════════════════════════════════════
+    // ═══ CHATS — vetëm pjesëmarrës ═══
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated() &&
+                            request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+                       request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow create: if isAuthenticated() &&
+                         request.resource.data.senderId == request.auth.uid &&
+                         request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow update, delete: if false;
+      }
+    }
+
+    // ═══ CALLS ═══
     match /calls/{callId} {
       allow read, create: if isDispatcher();
       allow update: if isDispatcher();
@@ -144,92 +184,86 @@ service cloud.firestore {
     match /call_log/{logId} {
       allow read: if isDispatcher();
       allow create: if isDispatcher();
+      allow update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // TRANSFERS — Transferet
-    // ═══════════════════════════════════════════════════════
+    // ═══ TRANSFERS ═══
     match /transfers/{transferId} {
       allow read, create: if isDispatcher();
       allow update: if isDispatcher();
+      allow delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // SMS — SMS log + queue
-    // ═══════════════════════════════════════════════════════
-    match /sms_log/{logId} {
-      allow read: if isDispatcher();
-      allow create: if isAuthenticated();
-    }
-
+    // ═══ SMS_QUEUE — vetëm Cloud Function shkruan ═══
     match /sms_queue/{queueId} {
       allow read: if isDispatcher();
-      allow create: if isDispatcher();
-      allow update: if isDispatcher();
+      allow create, update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // EMAIL — Email queue
-    // ═══════════════════════════════════════════════════════
+    match /sms_templates/{templateId} {
+      allow read: if isDispatcher();
+      allow write: if isManager();
+    }
+
+    match /sms_log/{logId} {
+      allow read: if isDispatcher();
+      allow create, update, delete: if false;
+    }
+
+    // ═══ EMAIL_QUEUE — vetëm Cloud Function ═══
     match /email_queue/{emailId} {
-      allow read, create, update: if isDispatcher();
+      allow read: if isManager();
+      allow create, update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // LOCATIONS — Adresat
-    // ═══════════════════════════════════════════════════════
+    // ═══ PUSH_QUEUE — vetëm Cloud Function ═══
+    match /push_queue/{pushId} {
+      allow read: if isDispatcher();
+      allow create, update, delete: if false;
+    }
+
+    // ═══ LOCATIONS ═══
     match /locations/{locationId} {
       allow read: if isAuthenticated();
-      allow create: if isDispatcher();
-      allow update: if isDispatcher();
+      allow create, update: if isDispatcher();
       allow delete: if isManager();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // ZONES — Zonat
-    // ═══════════════════════════════════════════════════════
+    // ═══ ZONES ═══
     match /zones/{zoneId} {
       allow read: if isAuthenticated();
       allow write: if isManager();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RELEASES — Lirimet
-    // ═══════════════════════════════════════════════════════
+    // ═══ RELEASES ═══
     match /releases/{releaseId} {
       allow read: if isAuthenticated();
       allow create: if isDispatcher() || isDriver();
+      allow update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // POSITIONS_HISTORY — Historiku (Rewind)
-    // ═══════════════════════════════════════════════════════
+    // ═══ POSITIONS_HISTORY — TTL 90 ditë ═══
     match /positions_history/{positionId} {
       allow read: if isSupervisor();
       allow create: if isDriver() || isDispatcher();
+      allow update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // SHIFTS — Orare pune
-    // ═══════════════════════════════════════════════════════
+    // ═══ SHIFTS ═══
     match /shifts/{shiftId} {
       allow read: if isDispatcher();
       allow write: if isDispatcher();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // VACATIONS — Pushimet
-    // ═══════════════════════════════════════════════════════
+    // ═══ VACATIONS ═══
     match /vacations/{vacationId} {
-      allow read: if isOwner(resource.data.operatorId) || isManager();
+      allow read: if isDispatcher();
       allow create: if isAuthenticated();
-      allow update: if isOwner(resource.data.operatorId) || isManager();
+      allow update: if isDispatcher();
       allow delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // BLACKLIST — Numrat e bllokuar
-    // ═══════════════════════════════════════════════════════
+    // ═══ BLACKLIST ═══
     match /blacklist/{entryId} {
       allow read: if isDispatcher();
       allow create: if isDispatcher();
@@ -237,9 +271,7 @@ service cloud.firestore {
       allow delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // EMERGENCIES — SOS
-    // ═══════════════════════════════════════════════════════
+    // ═══ EMERGENCIES (SOS) ═══
     match /emergencies/{emergencyId} {
       allow read: if isDispatcher();
       allow create: if isAuthenticated();
@@ -247,59 +279,161 @@ service cloud.firestore {
       allow delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RATINGS — Vlerësimet
-    // ═══════════════════════════════════════════════════════
+    // ═══ RATINGS ═══
     match /ratings/{ratingId} {
-      allow read: if isAuthenticated();
-      allow create: if isClient();
+      allow read: if isDispatcher() ||
+                     (isDriver() && resource.data.driverId == request.auth.uid) ||
+                     (isClient() && resource.data.clientId == request.auth.uid);
+      allow create: if isClient() &&
+                       request.resource.data.clientId == request.auth.uid;
       allow update, delete: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // AUDIT_LOG — Log i veprimeve
-    // ═══════════════════════════════════════════════════════
+    // ═══ AUDIT_LOG — vetëm Cloud Function shkruan ═══
     match /audit_log/{logId} {
       allow read: if isDirector();
-      allow create: if isAuthenticated();
-      allow update, delete: if false; // Nuk mund të ndryshohet
+      allow create, update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // SETTINGS — Cilësimet
-    // ═══════════════════════════════════════════════════════
+    // ═══ SETTINGS ═══
     match /settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // WHITELIST — IP Whitelist
-    // ═══════════════════════════════════════════════════════
+    // ═══ WHITELIST ═══
     match /whitelist/{whitelistId} {
       allow read: if isManager();
       allow write: if isDirector();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // BACKUPS — Backup history
-    // ═══════════════════════════════════════════════════════
+    // ═══ BACKUPS — vetëm Cloud Function ═══
     match /backups/{backupId} {
-      allow read, create: if isDirector();
-      allow update, delete: if false;
+      allow read: if isDirector();
+      allow create, update, delete: if false;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // DISPLAY_SETTINGS — Cilësimet e TV
-    // ═══════════════════════════════════════════════════════
+    // ═══ DISPLAY_SETTINGS ═══
     match /display_settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isDispatcher();
     }
 
-    // ═══════════════════════════════════════════════════════
-    // TË TJERA — DENY ALL
-    // ═══════════════════════════════════════════════════════
+    // ═══ TARGETS ═══
+    match /targets/{targetId} {
+      allow read: if isDispatcher();
+      allow create, update: if isManager();
+      allow delete: if isDirector();
+    }
+
+    // ═══ LOYALTY ═══
+    match /loyalty_cards/{cardId} {
+      allow read: if isDispatcher() ||
+                     (isClient() && resource.data.clientId == request.auth.uid) ||
+                     (isClient() && resource.data.phone == request.auth.token.phone_number);
+      allow create, update: if isDispatcher();
+      allow delete: if isManager();
+    }
+
+    match /loyalty_transactions/{txId} {
+      allow read: if isDispatcher() ||
+                     (isClient() && resource.data.clientId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    // ═══ FUEL ═══
+    match /fuel_prices/{priceId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isManager();
+      allow delete: if isDirector();
+    }
+
+    match /fuel_refills/{refillId} {
+      allow read: if isDispatcher() || isDriver();
+      allow create: if isDispatcher() || isDriver();
+      allow update, delete: if isManager();
+    }
+
+    // ═══ SALARIES ═══
+    match /salaries/{salaryId} {
+      allow read: if isManager();
+      allow create, update: if isManager();
+      allow delete: if isDirector();
+    }
+
+    match /salary_adjustments/{adjId} {
+      allow read: if isManager();
+      allow create, update: if isManager();
+      allow delete: if isDirector();
+    }
+
+    // ═══ FIXED ROUTES ═══
+    match /fixed_price_routes/{routeId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager();
+    }
+
+    // ═══ IMPORT LOGS ═══
+    match /import_logs/{logId} {
+      allow read: if isManager();
+      allow create: if isManager();
+      allow update, delete: if false;
+    }
+
+    // ═══ INTEGRATION LOGS ═══
+    match /integration_logs/{logId} {
+      allow read: if isManager();
+      allow create: if isDispatcher();
+      allow update, delete: if false;
+    }
+
+    // ═══ TRACKERS ═══
+    match /trackers/{trackerId} {
+      allow read: if isDispatcher();
+      allow write: if isManager();
+    }
+
+    match /tracker_positions/{posId} {
+      allow read: if isDispatcher();
+      allow create: if isDispatcher() || isDriver();
+      allow update, delete: if isManager();
+    }
+
+    // ═══ STREETS & STANDS ═══
+    match /streets/{streetId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager();
+    }
+
+    match /stands/{standId} {
+      allow read: if isAuthenticated();
+      allow write: if isManager();
+    }
+
+    // ═══ MOBILE USERS ═══
+    match /mobile_users/{userId} {
+      allow read: if isOwner(userId) || isDispatcher();
+      allow create: if isOwner(userId) || isDispatcher();
+      allow update: if isOwner(userId) ||
+                       (isDispatcher() &&
+                        request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['blocked', 'tags', 'notes']));
+      allow delete: if isManager();
+    }
+
+    // ═══ WALLETS ═══
+    match /wallets/{userId} {
+      allow read: if isOwner(userId) || isManager();
+      allow create: if isOwner(userId);
+      allow update: if false; // vetëm Cloud Function
+
+      match /transactions/{txId} {
+        allow read: if isOwner(userId) || isManager();
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ═══ TË TJERA — DENY ALL ═══
     match /{document=**} {
       allow read, write: if false;
     }
