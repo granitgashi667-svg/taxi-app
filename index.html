@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/operator-extras.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
 </head>
 <body class="theme-2">
@@ -474,6 +475,12 @@
     <script src="js/services/qr-generator.js"></script>
     <script src="js/services/referral.js"></script>
 
+    <!-- MODULET E REJA (Operator Extras) -->
+    <script src="js/services/driver-messages.js"></script>
+    <script src="js/services/resizable-panels.js"></script>
+    <script src="js/services/table-columns.js"></script>
+    <script src="js/services/preorder-notes.js"></script>
+
     <!-- SCRIPT.JS -->
     <script src="script.js"></script>
 
@@ -501,6 +508,13 @@
             if (window.TaxiOnboarding) {
                 setTimeout(() => window.TaxiOnboarding.start('index'), 3000);
             }
+
+            // ═══ MODULET E REJA (Operator Extras) ═══
+            if (window.TaxiDriverMessages) window.TaxiDriverMessages.init();
+            if (window.TaxiResizablePanels) window.TaxiResizablePanels.init();
+            if (window.TaxiTableColumns) window.TaxiTableColumns.init();
+            if (window.TaxiPreorderNotes) window.TaxiPreorderNotes.init();
+
             console.log('🚀 Të gjitha modulet u inicializuan');
         });
     </script>
