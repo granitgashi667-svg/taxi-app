@@ -53,7 +53,7 @@
             <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri"><i class="fa-solid fa-volume-high"></i></button>
             <button class="rail-item" id="btn-theme-toggle" title="Dark/Light"><i class="fa-solid fa-sun"></i></button>
             <button class="rail-item" id="btn-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-            <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">?</div>
+            <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">GD</div>
         </div>
     </aside>
 
@@ -65,26 +65,26 @@
                 <span class="brand-badge" style="font-size:9px;font-weight:800;padding:3px 7px;background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);border-radius:4px;letter-spacing:1px;">LIVE</span>
             </div>
 
-            <div id="topbar-personal" style="display:flex;flex-direction:row;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:nowrap;overflow:hidden;">
-                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(96,165,250,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#60a5fa;white-space:nowrap;height:30px;box-sizing:border-box;">
-                    <i class="fa-solid fa-user" style="font-size:11px;color:#60a5fa;"></i>
-                    <span id="tp-name">—</span>
+            <div class="topbar-stats" style="display:flex;gap:8px;flex:1;">
+                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
+                    <i class="fa-solid fa-car" style="color:#22c55e"></i>
+                    <span id="stat-online" style="color:#f5f0ff;font-weight:700;">17</span>
+                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Online</small>
                 </div>
-                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#22c55e;white-space:nowrap;height:30px;box-sizing:border-box;">
-                    <i class="fa-solid fa-clock" style="font-size:11px;color:#22c55e;"></i>
-                    <span id="tp-active">0h 0m</span>
+                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
+                    <i class="fa-solid fa-hourglass-half" style="color:#f59e0b"></i>
+                    <span id="stat-pending" style="color:#f5f0ff;font-weight:700;">2</span>
+                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Në pritje</small>
                 </div>
-                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#f59e0b;white-space:nowrap;height:30px;box-sizing:border-box;">
-                    <i class="fa-solid fa-euro-sign" style="font-size:11px;color:#f59e0b;"></i>
-                    <span id="tp-revenue">€0</span>
+                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
+                    <i class="fa-solid fa-route" style="color:#3b82f6"></i>
+                    <span id="stat-trips" style="color:#f5f0ff;font-weight:700;">2</span>
+                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Udhëtime</small>
                 </div>
-                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#a855f7;white-space:nowrap;height:30px;box-sizing:border-box;">
-                    <i class="fa-solid fa-phone" style="font-size:11px;color:#a855f7;"></i>
-                    <span id="tp-calls">0</span>
-                </div>
-                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#06b6d4;white-space:nowrap;height:30px;box-sizing:border-box;">
-                    <i class="fa-solid fa-bullseye" style="font-size:11px;color:#06b6d4;"></i>
-                    <span id="tp-rate">0%</span>
+                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
+                    <i class="fa-solid fa-euro-sign" style="color:#ec4899"></i>
+                    <span id="stat-revenue" style="color:#f5f0ff;font-weight:700;">€0</span>
+                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Të ardhura</small>
                 </div>
             </div>
 
@@ -176,12 +176,21 @@
                                             <label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
                                             <select id="order-zone" class="input-field">
                                                 <option value="auto">Auto</option>
+                                                <option value="zona1">Zona 1</option>
+                                                <option value="zona2">Zona 2</option>
+                                                <option value="zona3">Zona 3</option>
+                                                <option value="zona4">Zona 4</option>
+                                                <option value="zona5">Zona 5</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
                                             <label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
                                             <select id="order-tariff" class="input-field">
                                                 <option value="standard">Standard</option>
+                                                <option value="vip">VIP</option>
+                                                <option value="airport">Aeroport</option>
+                                                <option value="night">Natë</option>
+                                                <option value="van">Van</option>
                                             </select>
                                         </div>
                                     </div>
@@ -241,10 +250,15 @@
                                             <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
                                         </div>
                                         <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
-                                            <label><i class="fa-solid fa-car"></i> Nr. veturës</label>
-                                            <input type="text" id="manual-vehicle-input" class="input-field" placeholder="Shkruaj numrin..." autocomplete="off">
+                                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
+                                            <select id="manual-vehicle-select" class="input-field"><option value="">-- Zgjedh --</option></select>
                                         </div>
                                     </div>
+
+                                    <button type="button" class="btn-submit-order-inline" id="btn-submit-order">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                        <span>DËRGO POROSINË</span>
+                                    </button>
                                 </form>
                             </div>
                         </section>
@@ -356,10 +370,7 @@
                 <button class="modal-close" data-close="modal-manual-assign">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label><i class="fa-solid fa-car"></i> Nr. veturës</label>
-                    <input type="text" id="assign-vehicle-input" class="input-field" placeholder="Shkruaj numrin..." autocomplete="off">
-                </div>
+                <div class="form-group"><label><i class="fa-solid fa-car"></i> Veturën</label><select id="assign-vehicle-select" class="input-field"><option value="">-- Zgjedh --</option></select></div>
                 <div class="form-group"><label><i class="fa-solid fa-user"></i> Shoferi</label><input type="text" id="assign-driver-name" class="input-field" readonly></div>
                 <div class="form-group"><label><i class="fa-solid fa-clock"></i> Pritja</label><input type="text" id="assign-wait-time" class="input-field" readonly></div>
             </div>
@@ -405,13 +416,55 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- ═══════════════════════════════════════════════════════
-         SCRIPTS
+         FIREBASE STUB — bën që script.js të mos dështojë
     ═══════════════════════════════════════════════════════ -->
+    <script>
+        window.firebase = {
+            auth: () => ({
+                currentUser: null,
+                signOut: () => Promise.resolve(),
+                onAuthStateChanged: () => {},
+                signInWithEmailAndPassword: () => Promise.reject(new Error('Firebase joaktiv'))
+            }),
+            firestore: () => ({
+                collection: () => ({
+                    doc: () => ({
+                        get: () => Promise.resolve({ exists: false, data: () => ({}) }),
+                        set: () => Promise.resolve(),
+                        update: () => Promise.resolve(),
+                        delete: () => Promise.resolve()
+                    }),
+                    get: () => Promise.resolve({ docs: [] }),
+                    add: () => Promise.resolve({ id: 'demo' }),
+                    where: function() { return this; },
+                    orderBy: function() { return this; },
+                    limit: function() { return this; }
+                })
+            }),
+            initializeApp: () => {}
+        };
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SCRIPTS — TË GJITHA
+    ═══════════════════════════════════════════════════════ -->
+
+    <!-- CORE -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+
+    <!-- API + AUTH -->
     <script src="js/api.js"></script>
     <script src="js/socket-client.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/core/utils.js"></script>
-    <script src="js/core/state.js"></script>
+
+    <!-- DATA -->
+    <script src="data.js"></script>
+
+    <!-- SERVICES -->
     <script src="js/services/maps.js"></script>
     <script src="js/services/geocoding.js"></script>
     <script src="js/services/pricing.js"></script>
@@ -432,14 +485,14 @@
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
-    <script src="js/navigation.js"></script>
-    <script src="js/operator.js"></script>
-    <script src="js/app.js"></script>
 
+    <!-- SCRIPT.JS — FUNKSIONALITETI KRYESOR (i vjetër, punon) -->
+    <script src="script.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ORA LIVE
+    ═══════════════════════════════════════════════════════ -->
     <script>
-        // ═══════════════════════════════════════════════════════
-        // ORA LIVE
-        // ═══════════════════════════════════════════════════════
         function startClock() {
             const updateClock = () => {
                 const now = new Date();
@@ -459,77 +512,35 @@
             setInterval(updateClock, 1000);
         }
 
-        // ═══════════════════════════════════════════════════════
-        // TOP BAR — përditësim
-        // ═══════════════════════════════════════════════════════
-        async function updateTopBarStats() {
-            const user = window.TaxiAuth?.getUser?.();
-            if (!user) return;
-
-            const nameEl = document.getElementById('tp-name');
-            const avatarEl = document.getElementById('rail-user');
-            if (nameEl) nameEl.textContent = user.name || user.username || '—';
-            if (avatarEl) avatarEl.textContent = (user.name || 'G').slice(0, 2).toUpperCase();
-
-            const activeEl = document.getElementById('tp-active');
-            if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
-                activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
-            }
-
-            try {
-                const stats = await window.TaxiAPI.stats.daily();
-                const userStats = stats.stats?.find(s => s.operator_id === user.id);
-
-                const revenueEl = document.getElementById('tp-revenue');
-                const callsEl = document.getElementById('tp-calls');
-                const rateEl = document.getElementById('tp-rate');
-
-                if (revenueEl) revenueEl.textContent = '€' + (userStats?.revenue || 0).toFixed(0);
-                if (callsEl) callsEl.textContent = userStats?.total_orders || 0;
-                if (rateEl) rateEl.textContent = (userStats?.success_rate || 0).toFixed(1) + '%';
-            } catch (e) {}
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // KONTROLLO SERVERIN
-        // ═══════════════════════════════════════════════════════
-        async function checkServerInBackground() {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
-                const response = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Server OK:', data.version || 'v3.0');
-                }
-            } catch (e) {
-                console.warn('⚠️ Server nuk përgjigjet:', e.message);
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // BOOTSTRAP
-        // ═══════════════════════════════════════════════════════
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 TaxiApp 3.0 — Operator Console');
-
+        document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 document.getElementById('loading-overlay')?.classList.add('hidden');
-            }, 500);
+            }, 600);
 
             startClock();
 
-            // Init modulet
-            const modules = [
-                'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
-                'TaxiDarkMode', 'TaxiVoice',
-                'TaxiDriverMessages', 'TaxiResizablePanels',
-                'TaxiTableColumns', 'TaxiPreorderNotes'
+            // KONTROLLO SERVERIN
+            (async () => {
+                try {
+                    const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        console.log('✅ Server OK:', data.version);
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Server nuk përgjigjet');
+                }
+            })();
+
+            // INIT MODULET E REJA (pa konflikt)
+            const safeModules = [
+                'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
+                'TaxiDarkMode', 'TaxiDriverMessages',
+                'TaxiResizablePanels', 'TaxiTableColumns', 'TaxiPreorderNotes'
             ];
 
-            modules.forEach(name => {
+            safeModules.forEach(name => {
                 try {
                     if (window[name] && typeof window[name].init === 'function') {
                         window[name].init();
@@ -537,263 +548,8 @@
                 } catch (e) { console.warn(`⚠️ ${name}:`, e.message); }
             });
 
-            try {
-                if (window.TaxiHealth && typeof window.TaxiHealth.start === 'function') {
-                    window.TaxiHealth.start();
-                }
-            } catch (e) {}
-
-            // ═══ NAVIGATION ═══
-            try {
-                if (window.TaxiNavigation) window.TaxiNavigation.init();
-            } catch (e) { console.warn('TaxiNavigation:', e.message); }
-
-            // ═══ OPERATOR ═══
-            try {
-                if (window.TaxiOperator) window.TaxiOperator.init();
-            } catch (e) { console.warn('TaxiOperator:', e.message); }
-
-            checkServerInBackground();
-
-            // ═══ DEV MODE ═══
-            if (window.TAXI_CONFIG?.DEV_MODE) {
-                console.log('🔓 DEV MODE aktiv');
-
-                const devUser = { id: 1, username: 'G', name: 'Granit Gashi', role: 'admin', tenantId: 1 };
-
-                if (window.TaxiAuth) {
-                    try { window.TaxiAuth._setDevUser?.(devUser); } catch (e) {}
-                }
-
-                document.getElementById('modal-login')?.classList.remove('active');
-
-                await updateTopBarStats();
-                setInterval(updateTopBarStats, 30000);
-                setInterval(() => {
-                    const activeEl = document.getElementById('tp-active');
-                    if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
-                        activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
-                    }
-                }, 1000);
-
-                console.log('✅ Dev user aktiv:', devUser.name);
-                console.log('👔 Operator Console v3.0 gati');
-                return;
-            }
-
-            // ═══ LOGIN REAL ═══
-            try {
-                if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
-                    const isAuth = await window.TaxiAuth.init();
-                    if (!isAuth) {
-                        document.getElementById('modal-login')?.classList.add('active');
-                    } else {
-                        await updateTopBarStats();
-                        setInterval(updateTopBarStats, 30000);
-                        setInterval(() => {
-                            const activeEl = document.getElementById('tp-active');
-                            if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
-                                activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
-                            }
-                        }, 1000);
-                    }
-                }
-            } catch (e) {
-                console.error('❌ Auth init:', e);
-                document.getElementById('modal-login')?.classList.add('active');
-            }
-
             console.log('👔 Operator Console v3.0 gati');
         });
-
-        // ═══════════════════════════════════════════════════════
-        // GLOBAL SWITCH PAGE (për kompatibilitet me onclick)
-        // ═══════════════════════════════════════════════════════
-        window.switchPage = function(pageName) {
-            if (window.TaxiNavigation?.switchPage) {
-                window.TaxiNavigation.switchPage(pageName);
-            }
-        };
-    </script>
-
-    <!-- ═══════════════════════════════════════════════════════
-         DEV DATA — Demo për testim UI (VETËM NË DEV_MODE)
-    ═══════════════════════════════════════════════════════ -->
-    <script>
-        if (window.TAXI_CONFIG?.DEV_MODE) {
-            window.addEventListener('load', () => {
-                setTimeout(() => {
-                    console.log('🎭 DEV DATA: Duke injektuar demo...');
-
-                    // ═══ EMRI I USERIT ═══
-                    const nameEl = document.getElementById('tp-name');
-                    const avatarEl = document.getElementById('rail-user');
-                    if (nameEl) nameEl.textContent = 'Granit Gashi';
-                    if (avatarEl) avatarEl.textContent = 'GG';
-
-                    // ═══ DEMO THIRRJE HYRËSE ═══
-                    if (window.TaxiOperator) {
-                        window.TaxiOperator.addDemoCall({
-                            id: 1,
-                            phone: '+383 44 123 456',
-                            name: 'Ardit Krasniqi',
-                            lastAddress: 'Grand Hotel Prishtina',
-                            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                            ringing: true
-                        });
-                        window.TaxiOperator.addDemoCall({
-                            id: 2,
-                            phone: '+383 49 555 777',
-                            name: 'Blerim Hoxha',
-                            lastAddress: 'Albi Mall',
-                            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
-                            ringing: false
-                        });
-                    }
-
-                    // ═══ DEMO POROSI NË PRITJE ═══
-                    const waitingTbody = document.getElementById('waiting-tbody');
-                    if (waitingTbody) {
-                        waitingTbody.innerHTML = `
-                            <tr style="background:rgba(236,72,153,.06);border-left:3px solid #ec4899;">
-                                <td><strong>#T001</strong></td>
-                                <td style="font-family:monospace;font-size:11px;">14:30</td>
-                                <td style="font-family:monospace;font-size:11px;">+383 44 111 222</td>
-                                <td>Grand Hotel</td>
-                                <td>Aeroporti</td>
-                                <td><em style="color:#8b7aa8;">—</em></td>
-                                <td><span style="background:rgba(34,197,94,.15);color:#22c55e;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">2 min</span></td>
-                                <td>
-                                    <button style="padding:4px 8px;background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3);border-radius:4px;font-size:9px;font-weight:800;cursor:pointer;">AUTO</button>
-                                    <button style="padding:4px 8px;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:4px;font-size:9px;font-weight:800;cursor:pointer;">MANUAL</button>
-                                </td>
-                            </tr>
-                            <tr style="background:rgba(236,72,153,.06);border-left:3px solid #ec4899;">
-                                <td><strong>#T002</strong></td>
-                                <td style="font-family:monospace;font-size:11px;">14:32</td>
-                                <td style="font-family:monospace;font-size:11px;">+383 49 333 444</td>
-                                <td>Albi Mall</td>
-                                <td>Qendra</td>
-                                <td><em style="color:#8b7aa8;">Nr.48</em></td>
-                                <td><span style="background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">5 min</span></td>
-                                <td>
-                                    <button style="padding:4px 8px;background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3);border-radius:4px;font-size:9px;font-weight:800;cursor:pointer;">AUTO</button>
-                                    <button style="padding:4px 8px;background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:4px;font-size:9px;font-weight:800;cursor:pointer;">MANUAL</button>
-                                </td>
-                            </tr>
-                        `;
-                    }
-                    const waitingCount = document.getElementById('waiting-count');
-                    if (waitingCount) waitingCount.textContent = '2';
-
-                    // ═══ DEMO POROSI AKTIVE ═══
-                    const ordersTbody = document.getElementById('orders-tbody');
-                    if (ordersTbody) {
-                        ordersTbody.innerHTML = `
-                            <tr style="background:rgba(59,130,246,.08);border-left:3px solid #3b82f6;">
-                                <td><span style="background:rgba(59,130,246,.15);color:#60a5fa;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;">NË RRUGË</span></td>
-                                <td style="font-family:monospace;font-size:11px;color:#8b7aa8;">14:25</td>
-                                <td><span style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.15));border:1px solid rgba(168,85,247,.4);padding:3px 8px;border-radius:6px;font-family:monospace;font-size:11px;font-weight:800;color:#a855f7;">05</span></td>
-                                <td style="font-family:monospace;font-size:11px;">+383 44 999 111</td>
-                                <td>Rrethi i Royalit</td>
-                                <td>Aeroporti</td>
-                                <td>Granit Gashi</td>
-                                <td><span style="color:#06b6d4;font-family:monospace;font-weight:700;">🟢 3 min</span></td>
-                                <td><em style="color:#8b7aa8;">—</em></td>
-                                <td>—</td>
-                            </tr>
-                            <tr style="background:rgba(59,130,246,.08);border-left:3px solid #3b82f6;">
-                                <td><span style="background:rgba(250,204,21,.15);color:#facc15;padding:3px 8px;border-radius:6px;font-size:9px;font-weight:700;">NË VEND</span></td>
-                                <td style="font-family:monospace;font-size:11px;color:#8b7aa8;">14:28</td>
-                                <td><span style="background:linear-gradient(135deg,rgba(168,85,247,.2),rgba(236,72,153,.15));border:1px solid rgba(168,85,247,.4);padding:3px 8px;border-radius:6px;font-family:monospace;font-size:11px;font-weight:800;color:#a855f7;">12</span></td>
-                                <td style="font-family:monospace;font-size:11px;">+383 49 222 333</td>
-                                <td>Qafa</td>
-                                <td>Kalabria</td>
-                                <td>Ardit Krasniqi</td>
-                                <td><span style="color:#facc15;font-family:monospace;font-weight:700;">🟡 Duke pritur</span></td>
-                                <td><em style="color:#8b7aa8;">Zilja</em></td>
-                                <td>—</td>
-                            </tr>
-                        `;
-                    }
-                    const ordersCount = document.getElementById('orders-count');
-                    if (ordersCount) ordersCount.textContent = '2';
-
-                    // ═══ DEMO TERMINE ═══
-                    const preordersTbody = document.getElementById('preorders-tbody');
-                    if (preordersTbody) {
-                        preordersTbody.innerHTML = `
-                            <tr>
-                                <td><span style="background:rgba(6,182,212,.1);color:#06b6d4;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:10px;font-weight:700;">19/09</span></td>
-                                <td style="font-family:monospace;font-size:11px;">16:00</td>
-                                <td style="font-family:monospace;font-size:11px;">+383 44 555 666</td>
-                                <td>Aeroporti</td>
-                                <td>Grand Hotel</td>
-                                <td><button style="padding:4px 8px;background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3);border-radius:4px;font-size:9px;font-weight:800;cursor:pointer;">AKTIVIZO</button></td>
-                            </tr>
-                        `;
-                    }
-                    const preordersCount = document.getElementById('preorders-count');
-                    if (preordersCount) preordersCount.textContent = '1';
-
-                    // ═══ HARTA — FORCO LEAFLET ═══
-                    if (window.L && document.getElementById('map')) {
-                        try {
-                            if (window.AppState?.map) {
-                                try { window.AppState.map.remove(); } catch {}
-                            }
-
-                            const map = L.map('map', {
-                                center: [42.6629, 21.1655],
-                                zoom: 13,
-                                zoomControl: true,
-                                attributionControl: false
-                            });
-
-                            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                                maxZoom: 19,
-                                subdomains: 'abcd'
-                            }).addTo(map);
-
-                            const demoCars = [
-                                { id: '05', lat: 42.6629, lng: 21.1655, color: '#22c55e' },
-                                { id: '12', lat: 42.6580, lng: 21.1590, color: '#3b82f6' },
-                                { id: '08', lat: 42.6660, lng: 21.1720, color: '#22c55e' },
-                                { id: '23', lat: 42.6550, lng: 21.1680, color: '#facc15' },
-                                { id: '03', lat: 42.6700, lng: 21.1600, color: '#22c55e' },
-                                { id: '17', lat: 42.6600, lng: 21.1550, color: '#3b82f6' },
-                                { id: '11', lat: 42.6650, lng: 21.1680, color: '#22c55e' },
-                                { id: '19', lat: 42.6520, lng: 21.1620, color: '#ef4444' }
-                            ];
-
-                            demoCars.forEach(car => {
-                                const icon = L.divIcon({
-                                    className: 'vehicle-marker',
-                                    html: `<div class="vehicle-marker-inner" data-number="${car.id}" style="background:linear-gradient(135deg,${car.color},${car.color}dd);box-shadow:0 0 12px ${car.color}aa;"></div>`,
-                                    iconSize: [28, 28],
-                                    iconAnchor: [14, 14]
-                                });
-                                L.marker([car.lat, car.lng], { icon }).addTo(map);
-                            });
-
-                            const mapCounter = document.getElementById('map-counter');
-                            if (mapCounter) mapCounter.textContent = demoCars.length + ' taksí';
-
-                            if (!window.AppState) window.AppState = {};
-                            window.AppState.map = map;
-
-                            setTimeout(() => {
-                                try { map.invalidateSize(); } catch {}
-                            }, 300);
-                        } catch (e) {
-                            console.error('❌ Harta:', e);
-                        }
-                    }
-
-                    console.log('🎭 DEV DATA: U injektua me sukses');
-                }, 1500);
-            });
-        }
     </script>
 </body>
 </html>
