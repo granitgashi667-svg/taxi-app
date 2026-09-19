@@ -1,41 +1,25 @@
 'use strict';
 
-/**
- * js/maps/app.js — TV Display për zyrën
- * Shfaq live: hartën, shoferët, porositë, statistikat
- */
-
 window.MapsApp = (() => {
     let map = null;
-    let vehicleMarkers = new Map(); // driverId -> marker
+    let vehicleMarkers = new Map();
     let driversCache = [];
     let ordersCache = [];
     let unsubscribers = [];
     let clockTimer = null;
     let refreshTimer = null;
 
-    // ═══════════════════════════════════════════════════════
-    // INIT
-    // ═══════════════════════════════════════════════════════
     function init() {
         console.log('📺 MapsApp: Init...');
-
-        // Clock
         startClock();
-
-        // Wait pak për Firebase
         setTimeout(() => {
             initMap();
             startListeners();
             startAutoRefresh();
         }, 500);
-
         console.log('✅ TV Display gati');
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CLOCK
-    // ═══════════════════════════════════════════════════════
     function startClock() {
         const update = () => {
             const now = new Date();
@@ -52,9 +36,6 @@ window.MapsApp = (() => {
         clockTimer = setInterval(update, 1000);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // MAP
-    // ═══════════════════════════════════════════════════════
     function initMap() {
         const el = document.getElementById('tv-map');
         if (!el || !window.L) {
@@ -69,23 +50,18 @@ window.MapsApp = (() => {
             attributionControl: false
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
-            subdomains: 'abcd'
+            attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        console.log('✅ Harta u inicializua');
-
+        console.log('✅ Harta OpenStreetMap u inicializua');
         setTimeout(() => map.invalidateSize(), 300);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // LISTENERS — Live Firestore
-    // ═══════════════════════════════════════════════════════
     function startListeners() {
         const db = window.TaxiFirebase?.db || firebase.firestore();
 
-        // ═══ DRIVERS — Live ═══
         try {
             const unsub1 = db.collection('drivers').onSnapshot(snap => {
                 driversCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -96,7 +72,6 @@ window.MapsApp = (() => {
             unsubscribers.push(unsub1);
         } catch (e) { console.warn(e); }
 
-        // ═══ ORDERS — Live ═══
         try {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -110,7 +85,6 @@ window.MapsApp = (() => {
                     renderWaitingOrders();
                     updateTicker();
                 }, err => {
-                    // Fallback: pa filter
                     db.collection('orders').limit(500).get().then(s => {
                         ordersCache = s.docs.map(d => ({ id: d.id, ...d.data() }));
                         updateStats();
@@ -123,9 +97,6 @@ window.MapsApp = (() => {
         } catch (e) { console.warn(e); }
     }
 
-    // ═══════════════════════════════════════════════════════
-    // AUTO REFRESH
-    // ═══════════════════════════════════════════════════════
     function startAutoRefresh() {
         if (refreshTimer) clearInterval(refreshTimer);
         refreshTimer = setInterval(() => {
@@ -135,24 +106,18 @@ window.MapsApp = (() => {
         }, 30000);
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RENDER VEHICLES ON MAP
-    // ═══════════════════════════════════════════════════════
     function renderVehiclesOnMap() {
         if (!map) return;
-
         const activeIds = new Set();
 
         driversCache.forEach(driver => {
             const lat = parseFloat(driver.lat);
             const lng = parseFloat(driver.lng);
-
             if (!lat || !lng) return;
 
             const num = String(driver.vehicle_number || driver.vehicleNum || '?').padStart(2, '0');
             const mode = driver.mode || 'inactive';
 
-            // Zgjidh ngjyrën
             let colorClass = 'inactive';
             if (mode === 'free') colorClass = 'free';
             else if (mode === 'taximeter' || mode === 'fixed' || mode === 'busy') colorClass = 'busy';
@@ -184,11 +149,9 @@ window.MapsApp = (() => {
                 `);
                 vehicleMarkers.set(driver.id, marker);
             }
-
             activeIds.add(driver.id);
         });
 
-        // Fshij marker-at e vjetër
         vehicleMarkers.forEach((marker, id) => {
             if (!activeIds.has(id)) {
                 marker.remove();
@@ -197,9 +160,6 @@ window.MapsApp = (() => {
         });
     }
 
-    // ═══════════════════════════════════════════════════════
-    // UPDATE STATS
-    // ═══════════════════════════════════════════════════════
     function updateStats() {
         const free = driversCache.filter(d => d.mode === 'free').length;
         const busy = driversCache.filter(d => ['taximeter', 'fixed', 'busy'].includes(d.mode)).length;
@@ -225,9 +185,6 @@ window.MapsApp = (() => {
         if (el) el.textContent = val;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RENDER TOP DRIVERS
-    // ═══════════════════════════════════════════════════════
     function renderTopDrivers() {
         const el = document.getElementById('tv-top-drivers');
         if (!el) return;
@@ -238,7 +195,6 @@ window.MapsApp = (() => {
             (o.createdAtLocal || 0) >= today.getTime() && o.status === 'completed'
         );
 
-        // Grumbullo sipas driverId
         const byDriver = {};
         todayOrders.forEach(o => {
             if (!o.driverId) return;
@@ -283,9 +239,6 @@ window.MapsApp = (() => {
         }).join('');
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RENDER ACTIVE ORDERS
-    // ═══════════════════════════════════════════════════════
     function renderActiveOrders() {
         const el = document.getElementById('tv-active-orders');
         const cnt = document.getElementById('tv-active-count');
@@ -307,7 +260,6 @@ window.MapsApp = (() => {
             const time = o.createdAtLocal
                 ? new Date(o.createdAtLocal).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
                 : '—';
-
             return `
                 <div class="tv-order-item">
                     <div class="tv-order-vehicle">${num}</div>
@@ -321,16 +273,12 @@ window.MapsApp = (() => {
         }).join('');
     }
 
-    // ═══════════════════════════════════════════════════════
-    // RENDER WAITING ORDERS
-    // ═══════════════════════════════════════════════════════
     function renderWaitingOrders() {
         const el = document.getElementById('tv-waiting-orders');
         const cnt = document.getElementById('tv-waiting-count');
         if (!el) return;
 
         const waiting = ordersCache.filter(o => o.status === 'waiting');
-
         if (cnt) cnt.textContent = waiting.length;
 
         if (!waiting.length) {
@@ -339,16 +287,9 @@ window.MapsApp = (() => {
         }
 
         el.innerHTML = waiting.slice(0, 8).map(o => {
-            const time = o.createdAtLocal
-                ? new Date(o.createdAtLocal).toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' })
-                : '—';
-
-            const waitSec = o.createdAtLocal
-                ? Math.floor((Date.now() - o.createdAtLocal) / 1000)
-                : 0;
+            const waitSec = o.createdAtLocal ? Math.floor((Date.now() - o.createdAtLocal) / 1000) : 0;
             const waitMin = Math.floor(waitSec / 60);
             const waitText = waitMin < 1 ? 'Tani' : `${waitMin}m`;
-
             return `
                 <div class="tv-order-item waiting">
                     <div class="tv-order-vehicle" style="background:linear-gradient(135deg,#ec4899,#be185d);">
@@ -364,9 +305,6 @@ window.MapsApp = (() => {
         }).join('');
     }
 
-    // ═══════════════════════════════════════════════════════
-    // TICKER
-    // ═══════════════════════════════════════════════════════
     function updateTicker() {
         const el = document.getElementById('tv-ticker');
         if (!el) return;
@@ -393,16 +331,12 @@ window.MapsApp = (() => {
                 cancelled: '❌ Anuluar',
                 taximeter: '🚕 Taksimetër'
             }[o.status] || o.status;
-
             return `[${time}] ${statusLbl} · ${o.phone || '—'} · ${o.pickup || '—'}`;
         });
 
         el.textContent = items.join('     ●     ');
     }
 
-    // ═══════════════════════════════════════════════════════
-    // CLEANUP
-    // ═══════════════════════════════════════════════════════
     function destroy() {
         unsubscribers.forEach(u => { try { u(); } catch (e) {} });
         unsubscribers = [];
