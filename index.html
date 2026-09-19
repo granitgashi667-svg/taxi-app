@@ -12,16 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="css/operator-extras.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
-
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script>
-        window.TAXI_CONFIG = {
-            API_URL: 'http://localhost:3000',
-            DEV_MODE: true
-        };
-    </script>
 </head>
 <body class="theme-2">
 
@@ -58,40 +49,22 @@
     </aside>
 
     <main class="dispatch-main">
-        <header class="dispatch-topbar" style="display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap;gap:12px;height:60px;padding:0 20px;">
-            <div class="topbar-brand" onclick="switchPage('dispatch')" style="cursor:pointer;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                <i class="fa-solid fa-bolt" style="color:#a855f7;font-size:16px;"></i>
-                <span class="brand-title" style="font-size:15px;font-weight:700;letter-spacing:-0.3px;">TaxiDispatch <span style="background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">PRO</span></span>
-                <span class="brand-badge" style="font-size:9px;font-weight:800;padding:3px 7px;background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);border-radius:4px;letter-spacing:1px;">LIVE</span>
+        <header class="dispatch-topbar">
+            <div class="topbar-brand" onclick="switchPage('dispatch')" style="cursor:pointer;">
+                <i class="fa-solid fa-bolt"></i>
+                <span class="brand-title">TaxiDispatch <span class="brand-accent">PRO</span></span>
+                <span class="brand-badge">LIVE</span>
             </div>
-
-            <div class="topbar-stats" style="display:flex;gap:8px;flex:1;">
-                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
-                    <i class="fa-solid fa-car" style="color:#22c55e"></i>
-                    <span id="stat-online" style="color:#f5f0ff;font-weight:700;">17</span>
-                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Online</small>
-                </div>
-                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
-                    <i class="fa-solid fa-hourglass-half" style="color:#f59e0b"></i>
-                    <span id="stat-pending" style="color:#f5f0ff;font-weight:700;">2</span>
-                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Në pritje</small>
-                </div>
-                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
-                    <i class="fa-solid fa-route" style="color:#3b82f6"></i>
-                    <span id="stat-trips" style="color:#f5f0ff;font-weight:700;">2</span>
-                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Udhëtime</small>
-                </div>
-                <div class="stat-pill" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:#1e1035;border:1px solid #2d1a4a;border-radius:10px;font-size:12px;font-weight:600;">
-                    <i class="fa-solid fa-euro-sign" style="color:#ec4899"></i>
-                    <span id="stat-revenue" style="color:#f5f0ff;font-weight:700;">€0</span>
-                    <small style="font-size:10px;color:#8b7aa8;font-weight:500;text-transform:uppercase;">Të ardhura</small>
-                </div>
+            <div class="topbar-stats">
+                <div class="stat-pill"><i class="fa-solid fa-car" style="color:var(--accent-green)"></i><span id="stat-online">0</span><small>Online</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-hourglass-half" style="color:var(--accent-yellow)"></i><span id="stat-pending">0</span><small>Në pritje</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-route" style="color:var(--accent-blue)"></i><span id="stat-trips">0</span><small>Udhëtime</small></div>
+                <div class="stat-pill"><i class="fa-solid fa-euro-sign" style="color:var(--accent-pink)"></i><span id="stat-revenue">€0</span><small>Të ardhura</small></div>
             </div>
-
-            <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-                <div class="topbar-time" style="text-align:right;font-family:'JetBrains Mono',monospace;">
-                    <div class="time-clock" id="clock-time" style="font-size:15px;font-weight:700;color:#a855f7;line-height:1.1;">--:--:--</div>
-                    <div class="time-date" id="clock-date" style="font-size:10px;color:#8b7aa8;letter-spacing:0.5px;">--/--/----</div>
+            <div class="topbar-actions">
+                <div class="topbar-time">
+                    <div class="time-clock" id="clock-time">--:--:--</div>
+                    <div class="time-date" id="clock-date">--/--/----</div>
                 </div>
             </div>
         </header>
@@ -233,9 +206,9 @@
                                                 <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
                                                 <select id="termin-repeat" class="input-field">
                                                     <option value="none">Vetëm një herë</option>
-                                                    <option value="daily">Çdo ditë</option>
-                                                    <option value="weekdays">Ditë pune</option>
-                                                    <option value="weekly">Çdo javë</option>
+                                                    <option value="daily">Çdo ditë (1 muaj)</option>
+                                                    <option value="weekdays">Ditë pune (1 muaj)</option>
+                                                    <option value="weekly">Çdo javë (1 muaj)</option>
                                                     <option value="monthly">Çdo muaj</option>
                                                 </select>
                                             </div>
@@ -388,7 +361,7 @@
                 <button class="modal-close" data-close="modal-login">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-user"></i> Username</label><input type="text" id="login-username" class="input-field" placeholder="g" autocomplete="off"></div>
+                <div class="form-group"><label><i class="fa-solid fa-envelope"></i> Email</label><input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com"></div>
                 <div class="form-group"><label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label><input type="password" id="login-password" class="input-field" placeholder="••••••••"></div>
                 <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
             </div>
@@ -416,139 +389,147 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- ═══════════════════════════════════════════════════════
-         FIREBASE STUB — bën që script.js të mos dështojë
+         FIREBASE + EXTERNAL LIBRARIES
     ═══════════════════════════════════════════════════════ -->
-    <script>
-        window.firebase = {
-            auth: () => ({
-                currentUser: null,
-                signOut: () => Promise.resolve(),
-                onAuthStateChanged: () => {},
-                signInWithEmailAndPassword: () => Promise.reject(new Error('Firebase joaktiv'))
-            }),
-            firestore: () => ({
-                collection: () => ({
-                    doc: () => ({
-                        get: () => Promise.resolve({ exists: false, data: () => ({}) }),
-                        set: () => Promise.resolve(),
-                        update: () => Promise.resolve(),
-                        delete: () => Promise.resolve()
-                    }),
-                    get: () => Promise.resolve({ docs: [] }),
-                    add: () => Promise.resolve({ id: 'demo' }),
-                    where: function() { return this; },
-                    orderBy: function() { return this; },
-                    limit: function() { return this; }
-                })
-            }),
-            initializeApp: () => {}
-        };
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════
-         SCRIPTS — TË GJITHA
+         CORE
     ═══════════════════════════════════════════════════════ -->
-
-    <!-- CORE -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
+    <script src="js/core/permissions.js"></script>
 
-    <!-- API + AUTH -->
-    <script src="js/api.js"></script>
-    <script src="js/socket-client.js"></script>
-    <script src="js/auth.js"></script>
-
-    <!-- DATA -->
+    <!-- ═══════════════════════════════════════════════════════
+         DATA
+    ═══════════════════════════════════════════════════════ -->
     <script src="data.js"></script>
 
-    <!-- SERVICES -->
-    <script src="js/services/maps.js"></script>
-    <script src="js/services/geocoding.js"></script>
-    <script src="js/services/pricing.js"></script>
+    <!-- ═══════════════════════════════════════════════════════
+         SERVICES
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/services/auth.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/orders-bridge.js"></script>
+    <script src="js/services/clients.js"></script>
+    <script src="js/services/operators.js"></script>
+    <script src="js/services/calls.js"></script>
+    <script src="js/services/call-center.js"></script>
+    <script src="js/services/messages.js"></script>
     <script src="js/services/sound.js"></script>
-    <script src="js/services/logger.js"></script>
-    <script src="js/services/cache.js"></script>
+    <script src="js/services/stats.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/sms.js"></script>
+    <script src="js/services/taximeter.js"></script>
+    <script src="js/services/dispatch.js"></script>
+    <script src="js/services/navigation.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/shifts.js"></script>
+    <script src="js/services/target-edit.js"></script>
+    <script src="js/services/geofencing.js"></script>
+    <script src="js/services/notifications.js"></script>
+    <script src="js/services/zones.js"></script>
+    <script src="js/services/blacklist.js"></script>
+    <script src="js/services/history.js"></script>
+    <script src="js/services/target-history.js"></script>
+    <script src="js/services/control-unit.js"></script>
+    <script src="js/services/reports.js"></script>
+    <script src="js/services/export.js"></script>
+    <script src="js/services/releases.js"></script>
+    <script src="js/services/rewind.js"></script>
+    <script src="js/services/rewind-ui.js"></script>
+    <script src="js/services/zones-ui.js"></script>
+    <script src="js/services/analytics.js"></script>
     <script src="js/services/validation.js"></script>
-    <script src="js/services/responsive.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/localization.js"></script>
+    <script src="js/services/themes.js"></script>
+    <script src="js/services/backup.js"></script>
+    <script src="js/services/sync.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/maps.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/ip-whitelist.js"></script>
+    <script src="js/services/session.js"></script>
+    <script src="js/services/map-context-menu.js"></script>
+    <script src="js/services/tv-display.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/voice-commands.js"></script>
+    <script src="js/services/email-notifications.js"></script>
     <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/two-factor.js"></script>
+    <script src="js/services/responsive.js"></script>
     <script src="js/services/shortcuts.js"></script>
     <script src="js/services/pwa.js"></script>
-    <script src="js/services/offline.js"></script>
-    <script src="js/services/voice-commands.js"></script>
     <script src="js/services/system-health.js"></script>
+    <script src="js/services/onboarding.js"></script>
     <script src="js/services/help-center.js"></script>
     <script src="js/services/feedback.js"></script>
+    <script src="js/services/api-keys.js"></script>
+    <script src="js/services/print.js"></script>
+    <script src="js/services/wallet.js"></script>
+    <script src="js/services/qr-generator.js"></script>
+    <script src="js/services/referral.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MODULES E REJA
+    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/driver-messages.js"></script>
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
 
-    <!-- SCRIPT.JS — FUNKSIONALITETI KRYESOR (i vjetër, punon) -->
+    <!-- ═══════════════════════════════════════════════════════
+         SCRIPT.JS — FUNKSIONALITETI KRYESOR
+    ═══════════════════════════════════════════════════════ -->
     <script src="script.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════
-         ORA LIVE
+         APP BOOTSTRAP
     ═══════════════════════════════════════════════════════ -->
+    <script src="js/app.js"></script>
+
     <script>
-        function startClock() {
-            const updateClock = () => {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('sq-AL', {
-                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-                });
-                const dateStr = now.toLocaleDateString('sq-AL', {
-                    day: '2-digit', month: '2-digit', year: 'numeric'
-                });
-
-                const timeEl = document.getElementById('clock-time');
-                const dateEl = document.getElementById('clock-date');
-                if (timeEl) timeEl.textContent = timeStr;
-                if (dateEl) dateEl.textContent = dateStr;
-            };
-            updateClock();
-            setInterval(updateClock, 1000);
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                document.getElementById('loading-overlay')?.classList.add('hidden');
-            }, 600);
-
-            startClock();
-
-            // KONTROLLO SERVERIN
-            (async () => {
-                try {
-                    const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const data = await res.json();
-                        console.log('✅ Server OK:', data.version);
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Server nuk përgjigjet');
-                }
-            })();
-
-            // INIT MODULET E REJA (pa konflikt)
-            const safeModules = [
-                'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
-                'TaxiDarkMode', 'TaxiDriverMessages',
-                'TaxiResizablePanels', 'TaxiTableColumns', 'TaxiPreorderNotes'
-            ];
-
-            safeModules.forEach(name => {
-                try {
-                    if (window[name] && typeof window[name].init === 'function') {
-                        window[name].init();
-                    }
-                } catch (e) { console.warn(`⚠️ ${name}:`, e.message); }
+            if (window.TaxiApp) window.TaxiApp.init();
+            if (window.TaxiPWA) window.TaxiPWA.init();
+            if (window.TaxiResponsive) window.TaxiResponsive.init();
+            if (window.TaxiShortcuts) window.TaxiShortcuts.init();
+            if (window.TaxiDarkMode) window.TaxiDarkMode.init();
+            if (window.TaxiVoice) {
+                window.TaxiVoice.init();
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => window.TaxiVoice.toggle());
+            }
+            document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+                if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
             });
+            if (window.TaxiEmergency) window.TaxiEmergency.init();
+            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
+            if (window.TaxiHealth) window.TaxiHealth.start();
+            if (window.TaxiApiKeys) window.TaxiApiKeys.init();
+            if (window.TaxiOnboarding) {
+                setTimeout(() => window.TaxiOnboarding.start('index'), 3000);
+            }
 
-            console.log('👔 Operator Console v3.0 gati');
+            // ═══ MODULET E REJA ═══
+            try { if (window.TaxiDriverMessages) TaxiDriverMessages.init(); } catch(e) { console.warn(e); }
+            try { if (window.TaxiResizablePanels) TaxiResizablePanels.init(); } catch(e) { console.warn(e); }
+            try { if (window.TaxiTableColumns) TaxiTableColumns.init(); } catch(e) { console.warn(e); }
+            try { if (window.TaxiPreorderNotes) TaxiPreorderNotes.init(); } catch(e) { console.warn(e); }
+
+            console.log('🚀 Të gjitha modulet u inicializuan');
         });
     </script>
 </body>
