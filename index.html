@@ -19,9 +19,7 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         window.TAXI_CONFIG = {
-            API_URL: window.location.origin === 'null'
-                ? 'http://localhost:3000'
-                : window.location.origin
+            API_URL: 'http://localhost:3000'
         };
     </script>
 </head>
@@ -67,7 +65,6 @@
                 <span class="brand-badge">LIVE</span>
             </div>
 
-            <!-- ═══ TOP BAR PERSONAL (i ri) ═══ -->
             <div class="topbar-personal" id="topbar-personal">
                 <div class="tp-pill tp-operator">
                     <i class="fa-solid fa-user"></i>
@@ -248,8 +245,6 @@
                                             <input type="text" id="manual-vehicle-input" class="input-field" placeholder="Shkruaj numrin..." autocomplete="off">
                                         </div>
                                     </div>
-
-                                    <!-- Butoni u hoq sipas kërkesës (Enter dërgon) -->
                                 </form>
                             </div>
                         </section>
@@ -423,7 +418,7 @@
     <script src="js/core/state.js"></script>
 
     <!-- ═══════════════════════════════════════════════════════
-         SERVICES TË REJA (pa Firebase)
+         SERVICES
     ═══════════════════════════════════════════════════════ -->
     <script src="js/services/maps.js"></script>
     <script src="js/services/geocoding.js"></script>
@@ -456,46 +451,85 @@
     <script src="js/app.js"></script>
 
     <script>
+        // ═══════════════════════════════════════════════════════
+        // BOOTSTRAP — me mbrojtje nga gabimet
+        // ═══════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 TaxiApp 3.0 — Operator Console');
 
-            // ═══ INIT MODULET BAZË ═══
-            if (window.TaxiSound) TaxiSound.init();
-            if (window.TaxiPWA) TaxiPWA.init();
-            if (window.TaxiResponsive) TaxiResponsive.init();
-            if (window.TaxiShortcuts) TaxiShortcuts.init();
-            if (window.TaxiDarkMode) TaxiDarkMode.init();
-            if (window.TaxiVoice) TaxiVoice.init();
-            if (window.TaxiHealth) TaxiHealth.start();
+            // ═══ FSHEH LOADING MENJËHERË ═══
+            setTimeout(() => {
+                const loader = document.getElementById('loading-overlay');
+                if (loader) loader.classList.add('hidden');
+            }, 500);
 
-            // ═══ TEST LIDHJA ME SERVER ═══
-            try {
-                const health = await window.TaxiAPI.health();
-                console.log('✅ Server OK:', health.version);
-            } catch (e) {
-                console.error('❌ Server nuk përgjigjet:', e.message);
-                if (window.showToast) {
-                    showToast('error', 'Server nuk lidhet', 'Kontrollo që serveri është ndezur');
+            // ═══ INIT MODULET (me try/catch për secilin) ═══
+            const modules = [
+                'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
+                'TaxiDarkMode', 'TaxiVoice', 'TaxiHealth',
+                'TaxiDriverMessages', 'TaxiResizablePanels',
+                'TaxiTableColumns', 'TaxiPreorderNotes'
+            ];
+
+            modules.forEach(name => {
+                try {
+                    if (window[name] && typeof window[name].init === 'function') {
+                        window[name].init();
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ ${name}:`, e.message);
                 }
-            }
+            });
+
+            // TaxiHealth ka metodën .start()
+            try {
+                if (window.TaxiHealth && typeof window.TaxiHealth.start === 'function') {
+                    window.TaxiHealth.start();
+                }
+            } catch (e) { console.warn('⚠️ TaxiHealth.start:', e.message); }
+
+            // ═══ KONTROLLO SERVERIN (në background) ═══
+            checkServerInBackground();
 
             // ═══ INIT AUTH ═══
-            const isAuth = await window.TaxiAuth.init();
-            if (!isAuth) {
-                // Shfaq login modal
-                if (window.TaxiApp?.showLogin) {
-                    window.TaxiApp.showLogin();
+            try {
+                if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
+                    const isAuth = await window.TaxiAuth.init();
+                    if (!isAuth) {
+                        // Shfaq login modal
+                        document.getElementById('modal-login')?.classList.add('active');
+                    }
                 }
+            } catch (e) {
+                console.error('❌ Auth init:', e);
+                document.getElementById('modal-login')?.classList.add('active');
             }
-
-            // ═══ MODULET E REJA ═══
-            if (window.TaxiDriverMessages) TaxiDriverMessages.init();
-            if (window.TaxiResizablePanels) TaxiResizablePanels.init();
-            if (window.TaxiTableColumns) TaxiTableColumns.init();
-            if (window.TaxiPreorderNotes) TaxiPreorderNotes.init();
 
             console.log('👔 Operator Console v3.0 gati');
         });
+
+        // ═══════════════════════════════════════════════════════
+        // KONTROLLO SERVERIN NË BACKGROUND
+        // ═══════════════════════════════════════════════════════
+        async function checkServerInBackground() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Server OK:', data.version || 'v3.0');
+                } else {
+                    console.warn('⚠️ Server përgjigjet me status:', response.status);
+                }
+            } catch (e) {
+                console.warn('⚠️ Server nuk përgjigjet:', e.message);
+            }
+        }
     </script>
 </body>
 </html>
