@@ -1,1 +1,175 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxiApp TV | Live Display</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="css/maps.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📺</text></svg>">
+</head>
+<body>
 
+    <header class="tv-header">
+        <div class="tv-brand">
+            <i class="fa-solid fa-taxi"></i>
+            <span class="tv-brand-name">TaxiApp <span class="tv-brand-accent">LIVE</span></span>
+            <span class="tv-brand-badge">
+                <span class="tv-live-dot"></span>
+                LIVE
+            </span>
+        </div>
+
+        <div class="tv-stats" id="tv-stats">
+            <div class="tv-stat tv-stat-green">
+                <i class="fa-solid fa-circle"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-free">0</span>
+                    <span class="tv-stat-label">Lirë</span>
+                </div>
+            </div>
+            <div class="tv-stat tv-stat-blue">
+                <i class="fa-solid fa-car"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-busy">0</span>
+                    <span class="tv-stat-label">Në udhëtim</span>
+                </div>
+            </div>
+            <div class="tv-stat tv-stat-yellow">
+                <i class="fa-solid fa-pause"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-pause">0</span>
+                    <span class="tv-stat-label">Pauzë</span>
+                </div>
+            </div>
+            <div class="tv-stat tv-stat-gray">
+                <i class="fa-solid fa-power-off"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-inactive">0</span>
+                    <span class="tv-stat-label">Joaktiv</span>
+                </div>
+            </div>
+            <div class="tv-stat tv-stat-pink">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-orders">0</span>
+                    <span class="tv-stat-label">Porosi sot</span>
+                </div>
+            </div>
+            <div class="tv-stat tv-stat-gold">
+                <i class="fa-solid fa-euro-sign"></i>
+                <div class="tv-stat-content">
+                    <span class="tv-stat-value" id="stat-revenue">€0</span>
+                    <span class="tv-stat-label">Të ardhura sot</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tv-clock">
+            <div class="tv-clock-time" id="tv-clock-time">--:--:--</div>
+            <div class="tv-clock-date" id="tv-clock-date">--/--/----</div>
+        </div>
+    </header>
+
+    <main class="tv-main">
+
+        <div class="tv-map-wrap">
+            <div id="tv-map"></div>
+
+            <div class="tv-legend">
+                <div class="tv-legend-item">
+                    <span class="tv-dot tv-dot-free"></span>
+                    Lirë
+                </div>
+                <div class="tv-legend-item">
+                    <span class="tv-dot tv-dot-busy"></span>
+                    Në udhëtim
+                </div>
+                <div class="tv-legend-item">
+                    <span class="tv-dot tv-dot-pause"></span>
+                    Pauzë
+                </div>
+                <div class="tv-legend-item">
+                    <span class="tv-dot tv-dot-inactive"></span>
+                    Joaktiv
+                </div>
+            </div>
+        </div>
+
+        <aside class="tv-sidebar">
+
+            <div class="tv-panel">
+                <div class="tv-panel-header">
+                    <i class="fa-solid fa-trophy"></i>
+                    <h3>TOP SHOferët (Sot)</h3>
+                </div>
+                <div class="tv-panel-body" id="tv-top-drivers">
+                    <div class="tv-empty">Duke ngarkuar...</div>
+                </div>
+            </div>
+
+            <div class="tv-panel">
+                <div class="tv-panel-header">
+                    <i class="fa-solid fa-route"></i>
+                    <h3>POROSI AKTIVE</h3>
+                    <span class="tv-panel-badge" id="tv-active-count">0</span>
+                </div>
+                <div class="tv-panel-body" id="tv-active-orders">
+                    <div class="tv-empty">Duke ngarkuar...</div>
+                </div>
+            </div>
+
+            <div class="tv-panel">
+                <div class="tv-panel-header">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <h3>NË PRITJE</h3>
+                    <span class="tv-panel-badge tv-badge-warning" id="tv-waiting-count">0</span>
+                </div>
+                <div class="tv-panel-body" id="tv-waiting-orders">
+                    <div class="tv-empty">Duke ngarkuar...</div>
+                </div>
+            </div>
+
+        </aside>
+    </main>
+
+    <footer class="tv-footer">
+        <div class="tv-ticker">
+            <div class="tv-ticker-label">
+                <i class="fa-solid fa-bolt"></i>
+                AKTIVITETI
+            </div>
+            <div class="tv-ticker-content" id="tv-ticker">
+                Duke ngarkuar aktivitetin...
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script src="js/core/config.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/firebase.js"></script>
+
+    <script src="js/services/maps.js"></script>
+    <script src="js/services/stats.js"></script>
+    <script src="js/services/logger.js"></script>
+
+    <script src="js/maps/app.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📺 TaxiApp TV Display — Duke u nisur...');
+            if (window.MapsApp) MapsApp.init();
+        });
+    </script>
+</body>
+</html>
