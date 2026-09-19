@@ -3058,3 +3058,94 @@ body.light-mode .leaflet-container { background: #f0f0f0; }
 .modal-api-keys input[type="password"] {
     font-family: var(--font-mono);
 }
+/* ═══════════════════════════════════════════════════════
+   TOP BAR PERSONAL — ME FORCË
+   ═══════════════════════════════════════════════════════ */
+
+.dispatch-topbar .topbar-personal {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    max-height: 44px !important;
+}
+
+.topbar-personal .tp-pill {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 5px 10px !important;
+    background: #1e1035 !important;
+    border: 1px solid #2d1a4a !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    color: #f5f0ff !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    height: 30px !important;
+    box-sizing: border-box !important;
+}
+
+.topbar-personal .tp-pill i {
+    font-size: 11px !important;
+    margin: 0 !important;
+}
+
+.topbar-personal .tp-pill span {
+    font-weight: 700 !important;
+    line-height: 1 !important;
+}
+
+/* ═══ NGJYRAT ═══ */
+.topbar-personal .tp-pill.tp-operator {
+    border-color: rgba(96, 165, 250, 0.4) !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    color: #60a5fa !important;
+}
+.topbar-personal .tp-pill.tp-operator i { color: #60a5fa !important; }
+
+.topbar-personal .tp-pill.tp-active {
+    border-color: rgba(34, 197, 94, 0.4) !important;
+    background: rgba(34, 197, 94, 0.1) !important;
+    color: #22c55e !important;
+}
+.topbar-personal .tp-pill.tp-active i { color: #22c55e !important; }
+
+.topbar-personal .tp-pill.tp-revenue {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
+}
+.topbar-personal .tp-pill.tp-revenue i { color: #f59e0b !important; }
+
+.topbar-personal .tp-pill.tp-calls {
+    border-color: rgba(168, 85, 247, 0.4) !important;
+    background: rgba(168, 85, 247, 0.1) !important;
+    color: #a855f7 !important;
+}
+.topbar-personal .tp-pill.tp-calls i { color: #a855f7 !important; }
+
+.topbar-personal .tp-pill.tp-rate {
+    border-color: rgba(6, 182, 212, 0.4) !important;
+    background: rgba(6, 182, 212, 0.1) !important;
+    color: #06b6d4 !important;
+}
+.topbar-personal .tp-pill.tp-rate i { color: #06b6d4 !important; }
+
+/* ═══ TOP BAR — stabilizim ═══ */
+.dispatch-topbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    height: 60px !important;
+    padding: 0 20px !important;
+}
