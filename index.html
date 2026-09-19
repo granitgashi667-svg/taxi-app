@@ -432,6 +432,8 @@
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/operator.js"></script>
     <script src="js/app.js"></script>
 
     <script>
@@ -519,6 +521,7 @@
 
             startClock();
 
+            // Init modulet
             const modules = [
                 'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
                 'TaxiDarkMode', 'TaxiVoice',
@@ -540,8 +543,19 @@
                 }
             } catch (e) {}
 
+            // ═══ NAVIGATION ═══
+            try {
+                if (window.TaxiNavigation) window.TaxiNavigation.init();
+            } catch (e) { console.warn('TaxiNavigation:', e.message); }
+
+            // ═══ OPERATOR ═══
+            try {
+                if (window.TaxiOperator) window.TaxiOperator.init();
+            } catch (e) { console.warn('TaxiOperator:', e.message); }
+
             checkServerInBackground();
 
+            // ═══ DEV MODE ═══
             if (window.TAXI_CONFIG?.DEV_MODE) {
                 console.log('🔓 DEV MODE aktiv');
 
@@ -567,6 +581,7 @@
                 return;
             }
 
+            // ═══ LOGIN REAL ═══
             try {
                 if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
                     const isAuth = await window.TaxiAuth.init();
@@ -590,6 +605,15 @@
 
             console.log('👔 Operator Console v3.0 gati');
         });
+
+        // ═══════════════════════════════════════════════════════
+        // GLOBAL SWITCH PAGE (për kompatibilitet me onclick)
+        // ═══════════════════════════════════════════════════════
+        window.switchPage = function(pageName) {
+            if (window.TaxiNavigation?.switchPage) {
+                window.TaxiNavigation.switchPage(pageName);
+            }
+        };
     </script>
 
     <!-- ═══════════════════════════════════════════════════════
@@ -601,44 +625,33 @@
                 setTimeout(() => {
                     console.log('🎭 DEV DATA: Duke injektuar demo...');
 
-                    // ═══ 1. EMRI I USERIT ═══
+                    // ═══ EMRI I USERIT ═══
                     const nameEl = document.getElementById('tp-name');
                     const avatarEl = document.getElementById('rail-user');
                     if (nameEl) nameEl.textContent = 'Granit Gashi';
                     if (avatarEl) avatarEl.textContent = 'GG';
 
-                    // ═══ 2. DEMO THIRRJE HYRËSE ═══
-                    const callsList = document.getElementById('calls-list');
-                    if (callsList) {
-                        callsList.innerHTML = `
-                            <div style="padding:12px;background:#1e1035;border-left:3px solid #ec4899;border-radius:8px;margin-bottom:8px;">
-                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                    <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#a855f7;">+383 44 123 456</span>
-                                    <span style="font-size:10px;color:#8b7aa8;">14:32</span>
-                                </div>
-                                <div style="font-size:12px;color:#b8a8d9;margin-bottom:8px;">Ardit Krasniqi</div>
-                                <div style="font-size:11px;color:#8b7aa8;margin-bottom:10px;">📍 Grand Hotel Prishtina</div>
-                                <div style="display:flex;gap:6px;">
-                                    <button style="flex:1;padding:6px;background:linear-gradient(135deg,#a855f7,#ec4899);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">KRIJO</button>
-                                    <button style="padding:6px 10px;background:#2a1648;color:#8b7aa8;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">✕</button>
-                                </div>
-                            </div>
-                            <div style="padding:12px;background:#1e1035;border-left:3px solid #a855f7;border-radius:8px;margin-bottom:8px;">
-                                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-                                    <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#a855f7;">+383 49 555 777</span>
-                                    <span style="font-size:10px;color:#8b7aa8;">14:35</span>
-                                </div>
-                                <div style="font-size:12px;color:#b8a8d9;margin-bottom:8px;">Blerim Hoxha</div>
-                                <div style="font-size:11px;color:#8b7aa8;margin-bottom:10px;">📍 Albi Mall</div>
-                                <div style="display:flex;gap:6px;">
-                                    <button style="flex:1;padding:6px;background:linear-gradient(135deg,#a855f7,#ec4899);color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">KRIJO</button>
-                                    <button style="padding:6px 10px;background:#2a1648;color:#8b7aa8;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">✕</button>
-                                </div>
-                            </div>
-                        `;
+                    // ═══ DEMO THIRRJE HYRËSE ═══
+                    if (window.TaxiOperator) {
+                        window.TaxiOperator.addDemoCall({
+                            id: 1,
+                            phone: '+383 44 123 456',
+                            name: 'Ardit Krasniqi',
+                            lastAddress: 'Grand Hotel Prishtina',
+                            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                            ringing: true
+                        });
+                        window.TaxiOperator.addDemoCall({
+                            id: 2,
+                            phone: '+383 49 555 777',
+                            name: 'Blerim Hoxha',
+                            lastAddress: 'Albi Mall',
+                            time: new Date().toLocaleTimeString('sq-AL', { hour: '2-digit', minute: '2-digit' }),
+                            ringing: false
+                        });
                     }
 
-                    // ═══ 3. DEMO POROSI NË PRITJE ═══
+                    // ═══ DEMO POROSI NË PRITJE ═══
                     const waitingTbody = document.getElementById('waiting-tbody');
                     if (waitingTbody) {
                         waitingTbody.innerHTML = `
@@ -670,8 +683,10 @@
                             </tr>
                         `;
                     }
+                    const waitingCount = document.getElementById('waiting-count');
+                    if (waitingCount) waitingCount.textContent = '2';
 
-                    // ═══ 4. DEMO POROSI AKTIVE ═══
+                    // ═══ DEMO POROSI AKTIVE ═══
                     const ordersTbody = document.getElementById('orders-tbody');
                     if (ordersTbody) {
                         ordersTbody.innerHTML = `
@@ -701,8 +716,10 @@
                             </tr>
                         `;
                     }
+                    const ordersCount = document.getElementById('orders-count');
+                    if (ordersCount) ordersCount.textContent = '2';
 
-                    // ═══ 5. DEMO TERMINE ═══
+                    // ═══ DEMO TERMINE ═══
                     const preordersTbody = document.getElementById('preorders-tbody');
                     if (preordersTbody) {
                         preordersTbody.innerHTML = `
@@ -716,22 +733,12 @@
                             </tr>
                         `;
                     }
-
-                    // ═══ 6. COUNTERS ═══
-                    const callsCount = document.getElementById('calls-count');
-                    const waitingCount = document.getElementById('waiting-count');
-                    const ordersCount = document.getElementById('orders-count');
                     const preordersCount = document.getElementById('preorders-count');
-
-                    if (callsCount) callsCount.textContent = '2';
-                    if (waitingCount) waitingCount.textContent = '2';
-                    if (ordersCount) ordersCount.textContent = '2';
                     if (preordersCount) preordersCount.textContent = '1';
 
-                    // ═══ 7. HARTA — FORCO LEAFLET ═══
+                    // ═══ HARTA — FORCO LEAFLET ═══
                     if (window.L && document.getElementById('map')) {
                         try {
-                            // Fshij map-in e vjetër nëse ekziston
                             if (window.AppState?.map) {
                                 try { window.AppState.map.remove(); } catch {}
                             }
@@ -748,16 +755,15 @@
                                 subdomains: 'abcd'
                             }).addTo(map);
 
-                            // Demo vetura
                             const demoCars = [
-                                { id: '05', lat: 42.6629, lng: 21.1655, color: '#22c55e', status: 'free' },
-                                { id: '12', lat: 42.6580, lng: 21.1590, color: '#3b82f6', status: 'taximeter' },
-                                { id: '08', lat: 42.6660, lng: 21.1720, color: '#22c55e', status: 'free' },
-                                { id: '23', lat: 42.6550, lng: 21.1680, color: '#facc15', status: 'pause' },
-                                { id: '03', lat: 42.6700, lng: 21.1600, color: '#22c55e', status: 'free' },
-                                { id: '17', lat: 42.6600, lng: 21.1550, color: '#3b82f6', status: 'taximeter' },
-                                { id: '11', lat: 42.6650, lng: 21.1680, color: '#22c55e', status: 'free' },
-                                { id: '19', lat: 42.6520, lng: 21.1620, color: '#ef4444', status: 'fixed' }
+                                { id: '05', lat: 42.6629, lng: 21.1655, color: '#22c55e' },
+                                { id: '12', lat: 42.6580, lng: 21.1590, color: '#3b82f6' },
+                                { id: '08', lat: 42.6660, lng: 21.1720, color: '#22c55e' },
+                                { id: '23', lat: 42.6550, lng: 21.1680, color: '#facc15' },
+                                { id: '03', lat: 42.6700, lng: 21.1600, color: '#22c55e' },
+                                { id: '17', lat: 42.6600, lng: 21.1550, color: '#3b82f6' },
+                                { id: '11', lat: 42.6650, lng: 21.1680, color: '#22c55e' },
+                                { id: '19', lat: 42.6520, lng: 21.1620, color: '#ef4444' }
                             ];
 
                             demoCars.forEach(car => {
@@ -776,8 +782,6 @@
                             if (!window.AppState) window.AppState = {};
                             window.AppState.map = map;
 
-                            console.log('✅ Harta u inicializua me', demoCars.length, 'vetura');
-
                             setTimeout(() => {
                                 try { map.invalidateSize(); } catch {}
                             }, 300);
@@ -787,7 +791,7 @@
                     }
 
                     console.log('🎭 DEV DATA: U injektua me sukses');
-                }, 1200);
+                }, 1500);
             });
         }
     </script>
