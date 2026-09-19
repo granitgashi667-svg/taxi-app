@@ -15,12 +15,11 @@
     <link rel="stylesheet" href="css/operator-extras.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
 
-    <!-- ═══ SOCKET.IO + CONFIG ═══ -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         window.TAXI_CONFIG = {
             API_URL: 'http://localhost:3000',
-            DEV_MODE: true   // ← true = pa login, false = login normal
+            DEV_MODE: true
         };
     </script>
 </head>
@@ -59,40 +58,40 @@
     </aside>
 
     <main class="dispatch-main">
-        <header class="dispatch-topbar">
-            <div class="topbar-brand" onclick="switchPage('dispatch')" style="cursor:pointer;">
-                <i class="fa-solid fa-bolt"></i>
-                <span class="brand-title">TaxiDispatch <span class="brand-accent">PRO</span></span>
-                <span class="brand-badge">LIVE</span>
+        <header class="dispatch-topbar" style="display:flex;flex-direction:row;align-items:center;flex-wrap:nowrap;gap:12px;height:60px;padding:0 20px;">
+            <div class="topbar-brand" onclick="switchPage('dispatch')" style="cursor:pointer;display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <i class="fa-solid fa-bolt" style="color:#a855f7;font-size:16px;"></i>
+                <span class="brand-title" style="font-size:15px;font-weight:700;letter-spacing:-0.3px;">TaxiDispatch <span style="background:linear-gradient(135deg,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">PRO</span></span>
+                <span class="brand-badge" style="font-size:9px;font-weight:800;padding:3px 7px;background:rgba(244,63,94,0.15);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);border-radius:4px;letter-spacing:1px;">LIVE</span>
             </div>
 
-            <div class="topbar-personal" id="topbar-personal">
-                <div class="tp-pill tp-operator">
-                    <i class="fa-solid fa-user"></i>
+            <div id="topbar-personal" style="display:flex;flex-direction:row;align-items:center;gap:6px;flex:1;justify-content:center;flex-wrap:nowrap;overflow:hidden;">
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(59,130,246,.1);border:1px solid rgba(96,165,250,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#60a5fa;white-space:nowrap;height:30px;box-sizing:border-box;">
+                    <i class="fa-solid fa-user" style="font-size:11px;color:#60a5fa;"></i>
                     <span id="tp-name">—</span>
                 </div>
-                <div class="tp-pill tp-active">
-                    <i class="fa-solid fa-clock"></i>
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#22c55e;white-space:nowrap;height:30px;box-sizing:border-box;">
+                    <i class="fa-solid fa-clock" style="font-size:11px;color:#22c55e;"></i>
                     <span id="tp-active">0h 0m</span>
                 </div>
-                <div class="tp-pill tp-revenue">
-                    <i class="fa-solid fa-euro-sign"></i>
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#f59e0b;white-space:nowrap;height:30px;box-sizing:border-box;">
+                    <i class="fa-solid fa-euro-sign" style="font-size:11px;color:#f59e0b;"></i>
                     <span id="tp-revenue">€0</span>
                 </div>
-                <div class="tp-pill tp-calls">
-                    <i class="fa-solid fa-phone"></i>
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#a855f7;white-space:nowrap;height:30px;box-sizing:border-box;">
+                    <i class="fa-solid fa-phone" style="font-size:11px;color:#a855f7;"></i>
                     <span id="tp-calls">0</span>
                 </div>
-                <div class="tp-pill tp-rate">
-                    <i class="fa-solid fa-bullseye"></i>
+                <div style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.4);border-radius:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#06b6d4;white-space:nowrap;height:30px;box-sizing:border-box;">
+                    <i class="fa-solid fa-bullseye" style="font-size:11px;color:#06b6d4;"></i>
                     <span id="tp-rate">0%</span>
                 </div>
             </div>
 
-            <div class="topbar-actions">
-                <div class="topbar-time">
-                    <div class="time-clock" id="clock-time">--:--:--</div>
-                    <div class="time-date" id="clock-date">--/--/----</div>
+            <div class="topbar-actions" style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+                <div class="topbar-time" style="text-align:right;font-family:'JetBrains Mono',monospace;">
+                    <div class="time-clock" id="clock-time" style="font-size:15px;font-weight:700;color:#a855f7;line-height:1.1;">--:--:--</div>
+                    <div class="time-date" id="clock-date" style="font-size:10px;color:#8b7aa8;letter-spacing:0.5px;">--/--/----</div>
                 </div>
             </div>
         </header>
@@ -405,22 +404,11 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════
-         CORE API
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/api.js"></script>
     <script src="js/socket-client.js"></script>
     <script src="js/auth.js"></script>
-
-    <!-- ═══════════════════════════════════════════════════════
-         SHARED SERVICES
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
-
-    <!-- ═══════════════════════════════════════════════════════
-         SERVICES
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/maps.js"></script>
     <script src="js/services/geocoding.js"></script>
     <script src="js/services/pricing.js"></script>
@@ -437,34 +425,20 @@
     <script src="js/services/system-health.js"></script>
     <script src="js/services/help-center.js"></script>
     <script src="js/services/feedback.js"></script>
-
-    <!-- ═══════════════════════════════════════════════════════
-         DRIVER MESSAGES + EXTRAS
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/driver-messages.js"></script>
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
-
-    <!-- ═══════════════════════════════════════════════════════
-         APP BOOTSTRAP
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/app.js"></script>
 
     <script>
-        // ═══════════════════════════════════════════════════════
-        // BOOTSTRAP
-        // ═══════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 TaxiApp 3.0 — Operator Console');
 
-            // ═══ FSHEH LOADING MENJËHERË ═══
             setTimeout(() => {
-                const loader = document.getElementById('loading-overlay');
-                if (loader) loader.classList.add('hidden');
+                document.getElementById('loading-overlay')?.classList.add('hidden');
             }, 500);
 
-            // ═══ INIT MODULET ═══
             const modules = [
                 'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
                 'TaxiDarkMode', 'TaxiVoice',
@@ -477,9 +451,7 @@
                     if (window[name] && typeof window[name].init === 'function') {
                         window[name].init();
                     }
-                } catch (e) {
-                    console.warn(`⚠️ ${name}:`, e.message);
-                }
+                } catch (e) { console.warn(`⚠️ ${name}:`, e.message); }
             });
 
             try {
@@ -488,32 +460,22 @@
                 }
             } catch (e) {}
 
-            // ═══ KONTROLLO SERVERIN ═══
             checkServerInBackground();
 
-            // ═══════════════════════════════════════════════════════
-            // ═══ DEV MODE — Skip login ═══
-            // ═══════════════════════════════════════════════════════
             if (window.TAXI_CONFIG?.DEV_MODE) {
-                console.log('🔓 DEV MODE aktiv — login-i është i çaktivizuar');
+                console.log('🔓 DEV MODE aktiv');
 
-                const devUser = {
-                    id: 1,
-                    username: 'G',
-                    name: 'Granit Gashi',
-                    role: 'admin',
-                    tenantId: 1
-                };
+                const devUser = { id: 1, username: 'G', name: 'Granit Gashi', role: 'admin', tenantId: 1 };
 
                 if (window.TaxiAuth) {
-                    try {
-                        window.TaxiAuth._setDevUser?.(devUser);
-                    } catch (e) {}
+                    try { window.TaxiAuth._setDevUser?.(devUser); } catch (e) {}
                 }
 
-                updateTopBar(devUser);
+                const nameEl = document.getElementById('tp-name');
+                const avatarEl = document.getElementById('rail-user');
+                if (nameEl) nameEl.textContent = devUser.name;
+                if (avatarEl) avatarEl.textContent = 'GG';
 
-                // Fshih modalin e login-it
                 document.getElementById('modal-login')?.classList.remove('active');
 
                 console.log('✅ Dev user aktiv:', devUser.name);
@@ -521,15 +483,10 @@
                 return;
             }
 
-            // ═══════════════════════════════════════════════════════
-            // ═══ PRODHIM — Login normal ═══
-            // ═══════════════════════════════════════════════════════
             try {
                 if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
                     const isAuth = await window.TaxiAuth.init();
-                    if (!isAuth) {
-                        document.getElementById('modal-login')?.classList.add('active');
-                    }
+                    if (!isAuth) document.getElementById('modal-login')?.classList.add('active');
                 }
             } catch (e) {
                 console.error('❌ Auth init:', e);
@@ -539,29 +496,13 @@
             console.log('👔 Operator Console v3.0 gati');
         });
 
-        // ═══════════════════════════════════════════════════════
-        // PËRDITËSO TOP BAR
-        // ═══════════════════════════════════════════════════════
-        function updateTopBar(user) {
-            const nameEl = document.getElementById('tp-name');
-            const avatarEl = document.getElementById('rail-user');
-
-            if (nameEl) nameEl.textContent = user.name || user.username || '—';
-            if (avatarEl) avatarEl.textContent = (user.name || 'G').slice(0, 2).toUpperCase();
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // KONTROLLO SERVERIN
-        // ═══════════════════════════════════════════════════════
         async function checkServerInBackground() {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
-
                 const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
                 const response = await fetch(url, { signal: controller.signal });
                 clearTimeout(timeoutId);
-
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Server OK:', data.version || 'v3.0');
