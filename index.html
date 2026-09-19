@@ -12,14 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/operator-extras.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
-
-    <script>
-        window.TAXI_CONFIG = {
-            MODE: 'local',
-            API_URL: ''
-        };
-    </script>
 </head>
 <body class="theme-2">
 
@@ -213,9 +207,9 @@
                                                 <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
                                                 <select id="termin-repeat" class="input-field">
                                                     <option value="none">Vetëm një herë</option>
-                                                    <option value="daily">Çdo ditë</option>
-                                                    <option value="weekdays">Ditë pune</option>
-                                                    <option value="weekly">Çdo javë</option>
+                                                    <option value="daily">Çdo ditë (1 muaj)</option>
+                                                    <option value="weekdays">Ditë pune (1 muaj)</option>
+                                                    <option value="weekly">Çdo javë (1 muaj)</option>
                                                     <option value="monthly">Çdo muaj</option>
                                                 </select>
                                             </div>
@@ -368,7 +362,7 @@
                 <button class="modal-close" data-close="modal-login">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-user"></i> Username</label><input type="text" id="login-email" class="input-field" placeholder="G" autocomplete="off"></div>
+                <div class="form-group"><label><i class="fa-solid fa-envelope"></i> Email</label><input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com"></div>
                 <div class="form-group"><label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label><input type="password" id="login-password" class="input-field" placeholder="••••••••"></div>
                 <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
             </div>
@@ -395,12 +389,15 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ FIREBASE SHIM — PARA ÇDO GJËJE ═══ -->
-    <script src="js/firebase-shim.js"></script>
-
-    <!-- ═══ EXTERNAL ═══ -->
+    <!-- ═══════════════════════════════════════════════════════
+         FIREBASE + EXTERNAL
+    ═══════════════════════════════════════════════════════ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
 
     <!-- ═══ CORE ═══ -->
     <script src="js/core/config.js"></script>
@@ -408,6 +405,7 @@
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
     <script src="js/core/permissions.js"></script>
 
     <!-- ═══ DATA ═══ -->
@@ -480,12 +478,13 @@
     <script src="js/services/qr-generator.js"></script>
     <script src="js/services/referral.js"></script>
 
+    <!-- ═══ MODULES E REJA ═══ -->
     <script src="js/services/driver-messages.js"></script>
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
 
-    <!-- ═══ SCRIPT.JS — FUNKSIONALITETI KRYESOR ═══ -->
+    <!-- ═══ SCRIPT.JS ═══ -->
     <script src="script.js"></script>
 
     <!-- ═══ APP BOOTSTRAP ═══ -->
