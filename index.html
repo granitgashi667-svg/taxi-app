@@ -19,7 +19,8 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         window.TAXI_CONFIG = {
-            API_URL: 'http://localhost:3000'
+            API_URL: 'http://localhost:3000',
+            DEV_MODE: true   // ← true = pa login, false = login normal
         };
     </script>
 </head>
@@ -452,7 +453,7 @@
 
     <script>
         // ═══════════════════════════════════════════════════════
-        // BOOTSTRAP — me mbrojtje nga gabimet
+        // BOOTSTRAP
         // ═══════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 TaxiApp 3.0 — Operator Console');
@@ -463,10 +464,10 @@
                 if (loader) loader.classList.add('hidden');
             }, 500);
 
-            // ═══ INIT MODULET (me try/catch për secilin) ═══
+            // ═══ INIT MODULET ═══
             const modules = [
                 'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
-                'TaxiDarkMode', 'TaxiVoice', 'TaxiHealth',
+                'TaxiDarkMode', 'TaxiVoice',
                 'TaxiDriverMessages', 'TaxiResizablePanels',
                 'TaxiTableColumns', 'TaxiPreorderNotes'
             ];
@@ -481,22 +482,52 @@
                 }
             });
 
-            // TaxiHealth ka metodën .start()
             try {
                 if (window.TaxiHealth && typeof window.TaxiHealth.start === 'function') {
                     window.TaxiHealth.start();
                 }
-            } catch (e) { console.warn('⚠️ TaxiHealth.start:', e.message); }
+            } catch (e) {}
 
-            // ═══ KONTROLLO SERVERIN (në background) ═══
+            // ═══ KONTROLLO SERVERIN ═══
             checkServerInBackground();
 
-            // ═══ INIT AUTH ═══
+            // ═══════════════════════════════════════════════════════
+            // ═══ DEV MODE — Skip login ═══
+            // ═══════════════════════════════════════════════════════
+            if (window.TAXI_CONFIG?.DEV_MODE) {
+                console.log('🔓 DEV MODE aktiv — login-i është i çaktivizuar');
+
+                const devUser = {
+                    id: 1,
+                    username: 'G',
+                    name: 'Granit Gashi',
+                    role: 'admin',
+                    tenantId: 1
+                };
+
+                if (window.TaxiAuth) {
+                    try {
+                        window.TaxiAuth._setDevUser?.(devUser);
+                    } catch (e) {}
+                }
+
+                updateTopBar(devUser);
+
+                // Fshih modalin e login-it
+                document.getElementById('modal-login')?.classList.remove('active');
+
+                console.log('✅ Dev user aktiv:', devUser.name);
+                console.log('👔 Operator Console v3.0 gati');
+                return;
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // ═══ PRODHIM — Login normal ═══
+            // ═══════════════════════════════════════════════════════
             try {
                 if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
                     const isAuth = await window.TaxiAuth.init();
                     if (!isAuth) {
-                        // Shfaq login modal
                         document.getElementById('modal-login')?.classList.add('active');
                     }
                 }
@@ -509,7 +540,18 @@
         });
 
         // ═══════════════════════════════════════════════════════
-        // KONTROLLO SERVERIN NË BACKGROUND
+        // PËRDITËSO TOP BAR
+        // ═══════════════════════════════════════════════════════
+        function updateTopBar(user) {
+            const nameEl = document.getElementById('tp-name');
+            const avatarEl = document.getElementById('rail-user');
+
+            if (nameEl) nameEl.textContent = user.name || user.username || '—';
+            if (avatarEl) avatarEl.textContent = (user.name || 'G').slice(0, 2).toUpperCase();
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // KONTROLLO SERVERIN
         // ═══════════════════════════════════════════════════════
         async function checkServerInBackground() {
             try {
@@ -523,8 +565,6 @@
                 if (response.ok) {
                     const data = await response.json();
                     console.log('✅ Server OK:', data.version || 'v3.0');
-                } else {
-                    console.warn('⚠️ Server përgjigjet me status:', response.status);
                 }
             } catch (e) {
                 console.warn('⚠️ Server nuk përgjigjet:', e.message);
