@@ -14,6 +14,16 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="css/operator-extras.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
+
+    <!-- ═══ SOCKET.IO + CONFIG ═══ -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        window.TAXI_CONFIG = {
+            API_URL: window.location.origin === 'null'
+                ? 'http://localhost:3000'
+                : window.location.origin
+        };
+    </script>
 </head>
 <body class="theme-2">
 
@@ -45,7 +55,7 @@
             <button class="rail-item sound-on" id="btn-sound-toggle" title="Zëri"><i class="fa-solid fa-volume-high"></i></button>
             <button class="rail-item" id="btn-theme-toggle" title="Dark/Light"><i class="fa-solid fa-sun"></i></button>
             <button class="rail-item" id="btn-fullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-            <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">GD</div>
+            <div class="rail-user" id="rail-user" title="Login" style="cursor:pointer;">?</div>
         </div>
     </aside>
 
@@ -56,12 +66,31 @@
                 <span class="brand-title">TaxiDispatch <span class="brand-accent">PRO</span></span>
                 <span class="brand-badge">LIVE</span>
             </div>
-            <div class="topbar-stats">
-                <div class="stat-pill"><i class="fa-solid fa-car" style="color:var(--accent-green)"></i><span id="stat-online">0</span><small>Online</small></div>
-                <div class="stat-pill"><i class="fa-solid fa-hourglass-half" style="color:var(--accent-yellow)"></i><span id="stat-pending">0</span><small>Në pritje</small></div>
-                <div class="stat-pill"><i class="fa-solid fa-route" style="color:var(--accent-blue)"></i><span id="stat-trips">0</span><small>Udhëtime</small></div>
-                <div class="stat-pill"><i class="fa-solid fa-euro-sign" style="color:var(--accent-pink)"></i><span id="stat-revenue">€0</span><small>Të ardhura</small></div>
+
+            <!-- ═══ TOP BAR PERSONAL (i ri) ═══ -->
+            <div class="topbar-personal" id="topbar-personal">
+                <div class="tp-pill tp-operator">
+                    <i class="fa-solid fa-user"></i>
+                    <span id="tp-name">—</span>
+                </div>
+                <div class="tp-pill tp-active">
+                    <i class="fa-solid fa-clock"></i>
+                    <span id="tp-active">0h 0m</span>
+                </div>
+                <div class="tp-pill tp-revenue">
+                    <i class="fa-solid fa-euro-sign"></i>
+                    <span id="tp-revenue">€0</span>
+                </div>
+                <div class="tp-pill tp-calls">
+                    <i class="fa-solid fa-phone"></i>
+                    <span id="tp-calls">0</span>
+                </div>
+                <div class="tp-pill tp-rate">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span id="tp-rate">0%</span>
+                </div>
             </div>
+
             <div class="topbar-actions">
                 <div class="topbar-time">
                     <div class="time-clock" id="clock-time">--:--:--</div>
@@ -150,21 +179,12 @@
                                             <label><i class="fa-solid fa-map-location-dot"></i> Zona</label>
                                             <select id="order-zone" class="input-field">
                                                 <option value="auto">Auto</option>
-                                                <option value="zona1">Zona 1</option>
-                                                <option value="zona2">Zona 2</option>
-                                                <option value="zona3">Zona 3</option>
-                                                <option value="zona4">Zona 4</option>
-                                                <option value="zona5">Zona 5</option>
                                             </select>
                                         </div>
                                         <div class="form-group">
                                             <label><i class="fa-solid fa-money-bill"></i> Tarifa</label>
                                             <select id="order-tariff" class="input-field">
                                                 <option value="standard">Standard</option>
-                                                <option value="vip">VIP</option>
-                                                <option value="airport">Aeroport</option>
-                                                <option value="night">Natë</option>
-                                                <option value="van">Van</option>
                                             </select>
                                         </div>
                                     </div>
@@ -207,9 +227,9 @@
                                                 <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
                                                 <select id="termin-repeat" class="input-field">
                                                     <option value="none">Vetëm një herë</option>
-                                                    <option value="daily">Çdo ditë (1 muaj)</option>
-                                                    <option value="weekdays">Ditë pune (1 muaj)</option>
-                                                    <option value="weekly">Çdo javë (1 muaj)</option>
+                                                    <option value="daily">Çdo ditë</option>
+                                                    <option value="weekdays">Ditë pune</option>
+                                                    <option value="weekly">Çdo javë</option>
                                                     <option value="monthly">Çdo muaj</option>
                                                 </select>
                                             </div>
@@ -224,15 +244,12 @@
                                             <button type="button" class="dispatch-btn" data-dispatch="manual"><i class="fa-solid fa-hand-pointer"></i><span>Manual</span></button>
                                         </div>
                                         <div id="manual-vehicle-picker" class="manual-picker" style="display:none;">
-                                            <label><i class="fa-solid fa-car"></i> Zgjedh veturën</label>
-                                            <select id="manual-vehicle-select" class="input-field"><option value="">-- Zgjedh --</option></select>
+                                            <label><i class="fa-solid fa-car"></i> Nr. veturës</label>
+                                            <input type="text" id="manual-vehicle-input" class="input-field" placeholder="Shkruaj numrin..." autocomplete="off">
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn-submit-order-inline" id="btn-submit-order">
-                                        <i class="fa-solid fa-paper-plane"></i>
-                                        <span>DËRGO POROSINË</span>
-                                    </button>
+                                    <!-- Butoni u hoq sipas kërkesës (Enter dërgon) -->
                                 </form>
                             </div>
                         </section>
@@ -344,7 +361,10 @@
                 <button class="modal-close" data-close="modal-manual-assign">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-car"></i> Veturën</label><select id="assign-vehicle-select" class="input-field"><option value="">-- Zgjedh --</option></select></div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-car"></i> Nr. veturës</label>
+                    <input type="text" id="assign-vehicle-input" class="input-field" placeholder="Shkruaj numrin..." autocomplete="off">
+                </div>
                 <div class="form-group"><label><i class="fa-solid fa-user"></i> Shoferi</label><input type="text" id="assign-driver-name" class="input-field" readonly></div>
                 <div class="form-group"><label><i class="fa-solid fa-clock"></i> Pritja</label><input type="text" id="assign-wait-time" class="input-field" readonly></div>
             </div>
@@ -362,7 +382,7 @@
                 <button class="modal-close" data-close="modal-login">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-envelope"></i> Email</label><input type="email" id="login-email" class="input-field" placeholder="granit@taxi.com"></div>
+                <div class="form-group"><label><i class="fa-solid fa-user"></i> Username</label><input type="text" id="login-username" class="input-field" placeholder="g" autocomplete="off"></div>
                 <div class="form-group"><label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label><input type="password" id="login-password" class="input-field" placeholder="••••••••"></div>
                 <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
             </div>
@@ -389,133 +409,92 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- ═══════════════════════════════════════════════════════
+         CORE API
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/api.js"></script>
+    <script src="js/socket-client.js"></script>
+    <script src="js/auth.js"></script>
 
-    <!-- CORE -->
-    <script src="js/core/config.js"></script>
-    <script src="js/core/events.js"></script>
-    <script src="js/core/storage.js"></script>
+    <!-- ═══════════════════════════════════════════════════════
+         SHARED SERVICES
+    ═══════════════════════════════════════════════════════ -->
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
-    <script src="js/core/firebase.js"></script>
-    <script src="js/core/permissions.js"></script>
 
-    <!-- DATA -->
-    <script src="data.js"></script>
-
-    <!-- SERVICES -->
-    <script src="js/services/auth.js"></script>
-    <script src="js/services/orders.js"></script>
-    <script src="js/services/orders-bridge.js"></script>
-    <script src="js/services/clients.js"></script>
-    <script src="js/services/operators.js"></script>
-    <script src="js/services/calls.js"></script>
-    <script src="js/services/call-center.js"></script>
-    <script src="js/services/messages.js"></script>
-    <script src="js/services/sound.js"></script>
-    <script src="js/services/stats.js"></script>
-    <script src="js/services/pricing.js"></script>
-    <script src="js/services/geocoding.js"></script>
-    <script src="js/services/sms.js"></script>
-    <script src="js/services/taximeter.js"></script>
-    <script src="js/services/dispatch.js"></script>
-    <script src="js/services/navigation.js"></script>
-    <script src="js/services/drivers.js"></script>
-    <script src="js/services/shifts.js"></script>
-    <script src="js/services/target-edit.js"></script>
-    <script src="js/services/geofencing.js"></script>
-    <script src="js/services/notifications.js"></script>
-    <script src="js/services/zones.js"></script>
-    <script src="js/services/blacklist.js"></script>
-    <script src="js/services/history.js"></script>
-    <script src="js/services/target-history.js"></script>
-    <script src="js/services/control-unit.js"></script>
-    <script src="js/services/reports.js"></script>
-    <script src="js/services/export.js"></script>
-    <script src="js/services/releases.js"></script>
-    <script src="js/services/rewind.js"></script>
-    <script src="js/services/rewind-ui.js"></script>
-    <script src="js/services/zones-ui.js"></script>
-    <script src="js/services/analytics.js"></script>
-    <script src="js/services/validation.js"></script>
-    <script src="js/services/cache.js"></script>
-    <script src="js/services/offline.js"></script>
-    <script src="js/services/localization.js"></script>
-    <script src="js/services/themes.js"></script>
-    <script src="js/services/backup.js"></script>
-    <script src="js/services/sync.js"></script>
-    <script src="js/services/logger.js"></script>
+    <!-- ═══════════════════════════════════════════════════════
+         SERVICES TË REJA (pa Firebase)
+    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/maps.js"></script>
-    <script src="js/services/audit-log.js"></script>
-    <script src="js/services/ip-whitelist.js"></script>
-    <script src="js/services/session.js"></script>
-    <script src="js/services/map-context-menu.js"></script>
-    <script src="js/services/tv-display.js"></script>
-    <script src="js/services/chat.js"></script>
-    <script src="js/services/emergency.js"></script>
-    <script src="js/services/voice-commands.js"></script>
-    <script src="js/services/email-notifications.js"></script>
-    <script src="js/services/dark-mode.js"></script>
-    <script src="js/services/two-factor.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/validation.js"></script>
     <script src="js/services/responsive.js"></script>
+    <script src="js/services/dark-mode.js"></script>
     <script src="js/services/shortcuts.js"></script>
     <script src="js/services/pwa.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/voice-commands.js"></script>
     <script src="js/services/system-health.js"></script>
-    <script src="js/services/onboarding.js"></script>
     <script src="js/services/help-center.js"></script>
     <script src="js/services/feedback.js"></script>
-    <script src="js/services/api-keys.js"></script>
-    <script src="js/services/print.js"></script>
-    <script src="js/services/wallet.js"></script>
-    <script src="js/services/qr-generator.js"></script>
-    <script src="js/services/referral.js"></script>
 
-    <!-- MODULET E REJA (Operator Extras) -->
+    <!-- ═══════════════════════════════════════════════════════
+         DRIVER MESSAGES + EXTRAS
+    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/driver-messages.js"></script>
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
 
-    <!-- SCRIPT.JS -->
-    <script src="script.js"></script>
-
-    <!-- APP BOOTSTRAP -->
+    <!-- ═══════════════════════════════════════════════════════
+         APP BOOTSTRAP
+    ═══════════════════════════════════════════════════════ -->
     <script src="js/app.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.TaxiApp) window.TaxiApp.init();
-            if (window.TaxiPWA) window.TaxiPWA.init();
-            if (window.TaxiResponsive) window.TaxiResponsive.init();
-            if (window.TaxiShortcuts) window.TaxiShortcuts.init();
-            if (window.TaxiDarkMode) window.TaxiDarkMode.init();
-            if (window.TaxiVoice) {
-                window.TaxiVoice.init();
-                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => window.TaxiVoice.toggle());
-            }
-            document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
-                if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
-            });
-            if (window.TaxiEmergency) window.TaxiEmergency.init();
-            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
-            if (window.TaxiHealth) window.TaxiHealth.start();
-            if (window.TaxiApiKeys) window.TaxiApiKeys.init();
-            if (window.TaxiOnboarding) {
-                setTimeout(() => window.TaxiOnboarding.start('index'), 3000);
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 TaxiApp 3.0 — Operator Console');
+
+            // ═══ INIT MODULET BAZË ═══
+            if (window.TaxiSound) TaxiSound.init();
+            if (window.TaxiPWA) TaxiPWA.init();
+            if (window.TaxiResponsive) TaxiResponsive.init();
+            if (window.TaxiShortcuts) TaxiShortcuts.init();
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
+            if (window.TaxiVoice) TaxiVoice.init();
+            if (window.TaxiHealth) TaxiHealth.start();
+
+            // ═══ TEST LIDHJA ME SERVER ═══
+            try {
+                const health = await window.TaxiAPI.health();
+                console.log('✅ Server OK:', health.version);
+            } catch (e) {
+                console.error('❌ Server nuk përgjigjet:', e.message);
+                if (window.showToast) {
+                    showToast('error', 'Server nuk lidhet', 'Kontrollo që serveri është ndezur');
+                }
             }
 
-            // ═══ MODULET E REJA (Operator Extras) ═══
-            if (window.TaxiDriverMessages) window.TaxiDriverMessages.init();
-            if (window.TaxiResizablePanels) window.TaxiResizablePanels.init();
-            if (window.TaxiTableColumns) window.TaxiTableColumns.init();
-            if (window.TaxiPreorderNotes) window.TaxiPreorderNotes.init();
+            // ═══ INIT AUTH ═══
+            const isAuth = await window.TaxiAuth.init();
+            if (!isAuth) {
+                // Shfaq login modal
+                if (window.TaxiApp?.showLogin) {
+                    window.TaxiApp.showLogin();
+                }
+            }
 
-            console.log('🚀 Të gjitha modulet u inicializuan');
+            // ═══ MODULET E REJA ═══
+            if (window.TaxiDriverMessages) TaxiDriverMessages.init();
+            if (window.TaxiResizablePanels) TaxiResizablePanels.init();
+            if (window.TaxiTableColumns) TaxiTableColumns.init();
+            if (window.TaxiPreorderNotes) TaxiPreorderNotes.init();
+
+            console.log('👔 Operator Console v3.0 gati');
         });
     </script>
 </body>
