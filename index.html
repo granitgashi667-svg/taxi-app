@@ -16,9 +16,8 @@
 
     <script>
         window.TAXI_CONFIG = {
-            API_URL: window.location.origin.includes('localhost')
-                ? 'http://localhost:3000'
-                : window.location.origin
+            MODE: 'local',
+            API_URL: ''
         };
     </script>
 </head>
@@ -214,9 +213,9 @@
                                                 <label><i class="fa-solid fa-repeat"></i> Përsëritje</label>
                                                 <select id="termin-repeat" class="input-field">
                                                     <option value="none">Vetëm një herë</option>
-                                                    <option value="daily">Çdo ditë (1 muaj)</option>
-                                                    <option value="weekdays">Ditë pune (1 muaj)</option>
-                                                    <option value="weekly">Çdo javë (1 muaj)</option>
+                                                    <option value="daily">Çdo ditë</option>
+                                                    <option value="weekdays">Ditë pune</option>
+                                                    <option value="weekly">Çdo javë</option>
                                                     <option value="monthly">Çdo muaj</option>
                                                 </select>
                                             </div>
@@ -369,7 +368,7 @@
                 <button class="modal-close" data-close="modal-login">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group"><label><i class="fa-solid fa-envelope"></i> Email / Username</label><input type="text" id="login-email" class="input-field" placeholder="granit@taxi.com"></div>
+                <div class="form-group"><label><i class="fa-solid fa-user"></i> Username</label><input type="text" id="login-email" class="input-field" placeholder="G" autocomplete="off"></div>
                 <div class="form-group"><label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label><input type="password" id="login-password" class="input-field" placeholder="••••••••"></div>
                 <div id="login-error" style="display:none;color:var(--accent-red);font-size:12px;margin-top:8px;padding:8px;background:rgba(244,63,94,.1);border-radius:6px;"></div>
             </div>
@@ -396,20 +395,14 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════
-         FIREBASE SHIM — Të dhënat shkojnë në server lokal
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ FIREBASE SHIM — PARA ÇDO GJËJE ═══ -->
     <script src="js/firebase-shim.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         EXTERNAL LIBRARIES
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ EXTERNAL ═══ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         CORE
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ CORE ═══ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -417,14 +410,10 @@
     <script src="js/core/state.js"></script>
     <script src="js/core/permissions.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         DATA
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ DATA ═══ -->
     <script src="data.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         SERVICES
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ SERVICES ═══ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
@@ -491,51 +480,43 @@
     <script src="js/services/qr-generator.js"></script>
     <script src="js/services/referral.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         MODULES E REJA
-    ═══════════════════════════════════════════════════════ -->
     <script src="js/services/driver-messages.js"></script>
     <script src="js/services/resizable-panels.js"></script>
     <script src="js/services/table-columns.js"></script>
     <script src="js/services/preorder-notes.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         SCRIPT.JS — FUNKSIONALITETI KRYESOR
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ SCRIPT.JS — FUNKSIONALITETI KRYESOR ═══ -->
     <script src="script.js"></script>
 
-    <!-- ═══════════════════════════════════════════════════════
-         APP BOOTSTRAP
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ APP BOOTSTRAP ═══ -->
     <script src="js/app.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.TaxiApp) window.TaxiApp.init();
-            if (window.TaxiPWA) window.TaxiPWA.init();
-            if (window.TaxiResponsive) window.TaxiResponsive.init();
-            if (window.TaxiShortcuts) window.TaxiShortcuts.init();
-            if (window.TaxiDarkMode) window.TaxiDarkMode.init();
+            if (window.TaxiPWA) TaxiPWA.init();
+            if (window.TaxiResponsive) TaxiResponsive.init();
+            if (window.TaxiShortcuts) TaxiShortcuts.init();
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
             if (window.TaxiVoice) {
-                window.TaxiVoice.init();
-                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => window.TaxiVoice.toggle());
+                TaxiVoice.init();
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => TaxiVoice.toggle());
             }
             document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
-                if (window.TaxiDarkMode) window.TaxiDarkMode.toggle();
+                if (window.TaxiDarkMode) TaxiDarkMode.toggle();
             });
-            if (window.TaxiEmergency) window.TaxiEmergency.init();
-            if (window.TaxiTwoFactor) window.TaxiTwoFactor.init();
-            if (window.TaxiHealth) window.TaxiHealth.start();
-            if (window.TaxiApiKeys) window.TaxiApiKeys.init();
+            if (window.TaxiEmergency) TaxiEmergency.init();
+            if (window.TaxiTwoFactor) TaxiTwoFactor.init();
+            if (window.TaxiHealth) TaxiHealth.start();
+            if (window.TaxiApiKeys) TaxiApiKeys.init();
             if (window.TaxiOnboarding) {
                 setTimeout(() => window.TaxiOnboarding.start('index'), 3000);
             }
 
-            // Modulet e reja
-            try { if (window.TaxiDriverMessages) TaxiDriverMessages.init(); } catch(e) { console.warn(e); }
-            try { if (window.TaxiResizablePanels) TaxiResizablePanels.init(); } catch(e) { console.warn(e); }
-            try { if (window.TaxiTableColumns) TaxiTableColumns.init(); } catch(e) { console.warn(e); }
-            try { if (window.TaxiPreorderNotes) TaxiPreorderNotes.init(); } catch(e) { console.warn(e); }
+            try { if (window.TaxiDriverMessages) TaxiDriverMessages.init(); } catch(e) {}
+            try { if (window.TaxiResizablePanels) TaxiResizablePanels.init(); } catch(e) {}
+            try { if (window.TaxiTableColumns) TaxiTableColumns.init(); } catch(e) {}
+            try { if (window.TaxiPreorderNotes) TaxiPreorderNotes.init(); } catch(e) {}
 
             console.log('🚀 Të gjitha modulet u inicializuan');
         });
