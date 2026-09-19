@@ -212,3 +212,94 @@ table th.dragging {
 .dmp-messages::-webkit-scrollbar-thumb:hover {
     background: #a855f7;
 }
+/* ═══════════════════════════════════════════════════════
+   TOP BAR PERSONAL — Info i operatorit
+   ═══════════════════════════════════════════════════════ */
+
+.topbar-personal {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+.tp-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+
+.tp-pill i {
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.tp-pill span {
+    font-weight: 700;
+}
+
+/* ═══ NGJYRAT SIPAS TIPIT ═══ */
+.tp-pill.tp-operator {
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.08);
+    color: #60a5fa;
+}
+.tp-pill.tp-operator i { color: #60a5fa; }
+
+.tp-pill.tp-active {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.08);
+    color: var(--accent-green);
+}
+.tp-pill.tp-active i { color: var(--accent-green); }
+
+.tp-pill.tp-revenue {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.08);
+    color: var(--accent-yellow);
+}
+.tp-pill.tp-revenue i { color: var(--accent-yellow); }
+
+.tp-pill.tp-calls {
+    border-color: rgba(168, 85, 247, 0.3);
+    background: rgba(168, 85, 247, 0.08);
+    color: var(--accent-purple);
+}
+.tp-pill.tp-calls i { color: var(--accent-purple); }
+
+.tp-pill.tp-rate {
+    border-color: rgba(6, 182, 212, 0.3);
+    background: rgba(6, 182, 212, 0.08);
+    color: var(--accent-cyan);
+}
+.tp-pill.tp-rate i { color: var(--accent-cyan); }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 1400px) {
+    .topbar-personal { gap: 6px; }
+    .tp-pill { padding: 5px 10px; font-size: 11px; }
+}
+
+@media (max-width: 1200px) {
+    .tp-pill.tp-calls,
+    .tp-pill.tp-rate {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .topbar-personal { display: none; }
+}
