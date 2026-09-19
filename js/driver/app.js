@@ -1,76 +1,89 @@
 'use strict';
 
 /**
- * js/driver/app.js — Logjika kryesore e App-it të Shoferit
+ * js/driver/app.js — Logjika kryesore e AppShofer
  */
 
 window.DriverApp = (() => {
     let currentDriver = null;
-    let currentOrder = null;
-    let unsubscribeOrders = null;
-    let orderTimerInterval = null;
-    let activeTimeInterval = null;
-    let activeSeconds = 0;
     let currentTab = 'orders';
+    let currentStatus = 'inactive';
+    let activeOrder = null;
+    let queueOrders = [];
+    let newOrderTimer = null;
+    let newOrderCountdown = 30;
+    let pendingOrder = null;
+    let map = null;
+    let orderUnsubscribe = null;
+    let gpsWatchId = null;
+    let activeOrderTimer = null;
+    let activeOrderSeconds = 0;
 
-    // ═══ INIT ═══
-    async function init() {
-        console.log('🚗 Driver App: Init...');
+    // ═══════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════
+    function init() {
+        console.log('🚗 DriverApp: Init...');
 
-        // Init modulet
-        if (window.TaxiLocale) window.TaxiLocale.init();
-        if (window.TaxiOffline) window.TaxiOffline.init();
-        if (window.TaxiSound) window.TaxiSound.init();
+        // Init login
+        if (window.DriverLogin) DriverLogin.init();
 
-        // Firebase
-        if (window.TaxiFirebase) window.TaxiFirebase.init();
+        // Init navigation
+        if (window.DriverNavigation) DriverNavigation.init();
 
-        // DriverLogin init
-        if (window.DriverLogin) window.DriverLogin.init();
+        // Init queue
+        if (window.DriverQueue) DriverQueue.init();
 
-        // Kontrollo sesion ekzistues
-        const existing = await window.DriverLogin?.checkExistingSession();
-        if (existing) {
-            console.log('✅ Sesion ekzistues:', existing.name);
-            onLoginSuccess(existing);
-        } else {
-            showScreen('login');
-        }
-
-        // Fshij loading
+        // Fshih loading
         setTimeout(() => {
             document.getElementById('loading-overlay')?.classList.add('hidden');
-        }, 600);
+        }, 800);
 
-        // Event listeners
-        setupEventListeners();
+        // Setup buttons
+        setupButtons();
     }
 
-    // ═══ SETUP EVENT LISTENERS ═══
-    function setupEventListeners() {
+    // ═══════════════════════════════════════════════════════
+    // SETUP BUTTONS
+    // ═══════════════════════════════════════════════════════
+    function setupButtons() {
         // Status toggle
-        document.getElementById('sb-toggle')?.addEventListener('click', openStatusModal);
+        document.getElementById('sb-toggle')?.addEventListener('click', () => openStatusModal());
 
         // Status options
         document.querySelectorAll('.status-option').forEach(btn => {
             btn.addEventListener('click', () => {
                 const status = btn.dataset.status;
                 changeStatus(status);
+                closeStatusModal();
             });
         });
 
-        // Modal buttons
-        document.getElementById('btn-accept-order')?.addEventListener('click', acceptNewOrder);
-        document.getElementById('btn-reject-order')?.addEventListener('click', rejectNewOrder);
-        document.getElementById('btn-navigate')?.addEventListener('click', navigateToPickup);
+        // Modal new order — accept/reject
+        document.getElementById('btn-accept-order')?.addEventListener('click', acceptOrder);
+        document.getElementById('btn-reject-order')?.addEventListener('click', rejectOrder);
+
+        // Active order buttons
+        document.getElementById('btn-navigate')?.addEventListener('click', () => {
+            if (activeOrder && window.DriverNavigation) {
+                DriverNavigation.openNavigation(activeOrder);
+            }
+        });
+
         document.getElementById('btn-arrived')?.addEventListener('click', markArrived);
-        document.getElementById('btn-finish')?.addEventListener('click', finishTrip);
-        document.getElementById('btn-cancel-order')?.addEventListener('click', cancelActiveOrder);
+        document.getElementById('btn-finish')?.addEventListener('click', finishOrder);
+        document.getElementById('btn-cancel-order')?.addEventListener('click', cancelOrder);
+
+        // Map FAB
+        // (tashmë është handle nga switchTab)
     }
 
-    // ═══ KUR LOGIN ME SUKSES ═══
+    // ═══════════════════════════════════════════════════════
+    // KUR LOGIN ME SUKSES
+    // ═══════════════════════════════════════════════════════
     function onLoginSuccess(driver) {
         currentDriver = driver;
+        console.log('✅ Shoferi u ngarkua:', driver.name);
 
         // Update UI
         updateDriverUI(driver);
@@ -78,71 +91,51 @@ window.DriverApp = (() => {
         // Switch screen
         showScreen('main');
 
-        // Load stats
-        loadDriverStats(driver);
+        // Start GPS tracking
+        startGPSTracking();
 
-        // Dëgjo porositë
-        subscribeToOrders(driver);
+        // Load orders
+        loadActiveOrders();
 
-        // Nis tracking
-        startActiveTracking();
+        // Listen për porosi të reja
+        listenForNewOrders();
 
-        // Nis heartbeat
-        startHeartbeat(driver);
+        // Set status free by default
+        changeStatus('free');
 
-        // Sound
-        if (window.TaxiSound) window.TaxiSound.activate();
+        // Start clock
+        startOrderClock();
 
         // Toast
-        showToast('success', '👋 Mirë se vjen', driver.name);
+        showToast('success', `Mirë se vjen, ${driver.name}!`);
     }
 
-    // ═══ UPDATE UI ═══
+    // ═══════════════════════════════════════════════════════
+    // UPDATE UI
+    // ═══════════════════════════════════════════════════════
     function updateDriverUI(driver) {
-        document.getElementById('driver-avatar').textContent = driver.avatar || driver.name.slice(0, 2).toUpperCase();
-        document.getElementById('driver-name').textContent = driver.name;
-        document.getElementById('driver-vehicle').textContent = `🚗 Vetura ${String(driver.vehicleId || 0).padStart(2, '0')}`;
-        updateStatusPill(driver.mode || 'free');
+        const avatar = (driver.name || 'S').slice(0, 2).toUpperCase();
+        const vehicleNum = driver.vehicle_number || driver.vehicleNum || '—';
+
+        document.getElementById('driver-avatar').textContent = avatar;
+        document.getElementById('driver-name').textContent = driver.name || 'Shoferi';
+        document.getElementById('driver-vehicle').textContent = `Vetura ${vehicleNum}`;
+        document.getElementById('profile-avatar').textContent = avatar;
+        document.getElementById('profile-name').textContent = driver.name || 'Shoferi';
+        document.getElementById('profile-vehicle').textContent = `Vetura ${vehicleNum}`;
     }
 
-    // ═══ UPDATE STATUS PILL ═══
-    function updateStatusPill(mode) {
-        const pill = document.getElementById('driver-status-pill');
-        const text = document.getElementById('driver-status-text');
-        const banner = document.getElementById('status-banner');
-        const sbTitle = document.getElementById('sb-title');
-        const sbSub = document.getElementById('sb-sub');
-        const sbIcon = document.getElementById('sb-icon');
-
-        const labels = {
-            free: { pill: 'Lirë', title: 'Statusi: Lirë', sub: 'Duke pritur porosi...', icon: 'fa-car' },
-            busy: { pill: 'Në udhëtim', title: 'Në udhëtim', sub: 'Me klient', icon: 'fa-route' },
-            pause: { pill: 'Pauzë', title: 'Statusi: Pauzë', sub: 'Pushim i shkurtër', icon: 'fa-pause' },
-            inactive: { pill: 'Offline', title: 'Statusi: Offline', sub: 'Jashtë turnit', icon: 'fa-power-off' }
-        };
-
-        const lbl = labels[mode] || labels.free;
-        text.textContent = lbl.pill;
-        sbTitle.textContent = lbl.title;
-        sbSub.textContent = lbl.sub;
-        sbIcon.innerHTML = `<i class="fa-solid ${lbl.icon}"></i>`;
-
-        if (pill) {
-            pill.classList.remove('pause', 'inactive', 'busy');
-            if (mode === 'pause') pill.classList.add('pause');
-            if (mode === 'inactive') pill.classList.add('inactive');
-            if (mode === 'busy') pill.classList.add('busy');
-        }
-
-        if (banner) {
-            banner.classList.remove('pause', 'inactive', 'busy');
-            if (mode === 'pause') banner.classList.add('pause');
-            if (mode === 'inactive') banner.classList.add('inactive');
-            if (mode === 'busy') banner.classList.add('busy');
-        }
+    // ═══════════════════════════════════════════════════════
+    // SHFAQ SCREEN
+    // ═══════════════════════════════════════════════════════
+    function showScreen(name) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(`screen-${name}`)?.classList.add('active');
     }
 
-    // ═══ SHFAQ STATUS MODAL ═══
+    // ═══════════════════════════════════════════════════════
+    // STATUS
+    // ═══════════════════════════════════════════════════════
     function openStatusModal() {
         document.getElementById('modal-status')?.classList.add('active');
     }
@@ -151,79 +144,112 @@ window.DriverApp = (() => {
         document.getElementById('modal-status')?.classList.remove('active');
     }
 
-    // ═══ NDRYSHO STATUS ═══
     async function changeStatus(status) {
         if (!currentDriver) return;
 
-        closeStatusModal();
+        currentStatus = status;
 
+        // Update UI
+        const statusText = {
+            free: 'Lirë',
+            pause: 'Pauzë',
+            inactive: 'Offline',
+            busy: 'I zënë'
+        };
+
+        document.getElementById('driver-status-text').textContent = statusText[status] || status;
+        document.getElementById('sb-title').textContent = `Statusi: ${statusText[status]}`;
+
+        const sbIcon = document.getElementById('sb-icon');
+        const sbSub = document.getElementById('sb-sub');
+        const pill = document.getElementById('driver-status-pill');
+
+        // Ngjyrat
+        if (status === 'free') {
+            sbIcon.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+            sbSub.textContent = 'Duke pritur porosi...';
+            pill.style.borderColor = '#22c55e';
+        } else if (status === 'pause') {
+            sbIcon.style.background = 'linear-gradient(135deg,#facc15,#eab308)';
+            sbSub.textContent = 'Në pauzë';
+            pill.style.borderColor = '#facc15';
+        } else if (status === 'busy') {
+            sbIcon.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+            sbSub.textContent = 'Me klient';
+            pill.style.borderColor = '#3b82f6';
+        } else {
+            sbIcon.style.background = 'linear-gradient(135deg,#6b7280,#4b5563)';
+            sbSub.textContent = 'Jashtë turnit';
+            pill.style.borderColor = '#6b7280';
+        }
+
+        // Ruaj në Firestore
         try {
-            // Update në Firestore
-            if (window.TaxiDrivers) {
-                await window.TaxiDrivers.setMode(currentDriver.id, status);
-            }
-
-            currentDriver.mode = status;
-            updateStatusPill(status);
-
-            showToast('success', '✅ Statusi', 'U ndryshua në ' + status);
-
-            // Audit
-            if (window.TaxiAuditLog) {
-                window.TaxiAuditLog.log('driver_status_change', { driverId: currentDriver.id, status });
-            }
+            await firebase.firestore().collection('drivers').doc(currentDriver.id).update({
+                mode: status,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                online: status !== 'inactive'
+            });
         } catch (e) {
-            console.error('❌ changeStatus:', e);
-            showToast('error', 'Gabim', 'Nuk mund të ndryshohet statusi');
+            console.warn('Status update:', e);
         }
     }
 
-    // ═══ DËGJO POROSITË NË FIRESTORE ═══
-    function subscribeToOrders(driver) {
-        if (unsubscribeOrders) unsubscribeOrders();
-
-        const db = window.TaxiFirebase?.db;
-        if (!db) return;
-
-        console.log('🔔 Duke dëgjuar porositë për shoferin:', driver.name);
-
-        unsubscribeOrders = db.collection('orders')
-            .where('driverId', '==', driver.id)
-            .onSnapshot((snap) => {
-                snap.docChanges().forEach(change => {
-                    const data = { id: change.doc.id, ...change.doc.data() };
-
-                    if (change.type === 'added') {
-                        console.log('📥 Porosi e re:', data);
-                        // Nëse është "waiting" dhe e caktuar për mua → shfaq modal
-                        if (data.status === 'assigned') {
-                            showNewOrderModal(data);
-                        }
-                    }
-
-                    if (change.type === 'modified') {
-                        console.log('✏️ Porosi u ndryshua:', data.status);
-                        handleOrderUpdate(data);
-                    }
-
-                    if (change.type === 'removed') {
-                        console.log('🗑️ Porosi u fshi');
-                    }
-                });
-            }, (err) => {
-                console.error('❌ Firestore listen error:', err);
-            });
+    function toggleStatus() {
+        openStatusModal();
     }
 
-    // ═══ POROSI E RE — MODAL ═══
-    let pendingOrder = null;
-    let pendingTimer = null;
+    // ═══════════════════════════════════════════════════════
+    // TABS
+    // ═══════════════════════════════════════════════════════
+    function switchTab(tab) {
+        currentTab = tab;
 
+        document.querySelectorAll('.nav-item').forEach(i => {
+            i.classList.toggle('active', i.dataset.tab === tab);
+        });
+
+        if (tab === 'map') {
+            initMap();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // LISTEN PËR POROSI TË REJA
+    // ═══════════════════════════════════════════════════════
+    function listenForNewOrders() {
+        if (!currentDriver) return;
+
+        if (orderUnsubscribe) orderUnsubscribe();
+
+        try {
+            orderUnsubscribe = firebase.firestore().collection('orders')
+                .where('driverId', '==', currentDriver.id)
+                .where('status', '==', 'assigned')
+                .onSnapshot(snap => {
+                    snap.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const order = { id: change.doc.id, ...change.doc.data() };
+                            showNewOrderModal(order);
+                        }
+                    });
+                }, err => {
+                    console.warn('Orders listener:', err.message);
+                });
+        } catch (e) {
+            console.warn('Listener error:', e);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MODAL POROSI E RE
+    // ═══════════════════════════════════════════════════════
     function showNewOrderModal(order) {
         pendingOrder = order;
 
-        document.getElementById('om-phone').textContent = order.phone;
-        document.getElementById('om-pickup').textContent = order.pickup;
+        // Plotëso
+        document.getElementById('om-phone').textContent = order.phone || '—';
+        document.getElementById('om-pickup').textContent = order.pickup || '—';
         document.getElementById('om-destination').textContent = order.destination || '—';
 
         if (order.remark) {
@@ -233,99 +259,102 @@ window.DriverApp = (() => {
             document.getElementById('om-remark').style.display = 'none';
         }
 
-        document.getElementById('modal-new-order').classList.add('active');
+        // Shfaq modal
+        document.getElementById('modal-new-order')?.classList.add('active');
 
-        // Nis timer 30 sek
-        let remaining = 30;
-        document.getElementById('om-timer').textContent = remaining;
+        // Audio
+        if (window.TaxiSound) TaxiSound.playRing?.();
 
-        if (pendingTimer) clearInterval(pendingTimer);
-        pendingTimer = setInterval(() => {
-            remaining--;
-            document.getElementById('om-timer').textContent = remaining;
+        // Timer 30 sekonda
+        newOrderCountdown = 30;
+        document.getElementById('om-timer').textContent = newOrderCountdown;
 
-            if (remaining <= 0) {
-                clearInterval(pendingTimer);
-                rejectNewOrder();
+        if (newOrderTimer) clearInterval(newOrderTimer);
+        newOrderTimer = setInterval(() => {
+            newOrderCountdown--;
+            document.getElementById('om-timer').textContent = newOrderCountdown;
+
+            if (newOrderCountdown <= 0) {
+                clearInterval(newOrderTimer);
+                newOrderTimer = null;
+                rejectOrder();
             }
         }, 1000);
-
-        // Luaj tingull
-        if (window.TaxiSound) {
-            window.TaxiSound.playNotification();
-            setTimeout(() => window.TaxiSound.playNotification(), 500);
-        }
     }
 
-    // ═══ PRANO POROSINË ═══
-    async function acceptNewOrder() {
+    // ═══════════════════════════════════════════════════════
+    // ACCEPT ORDER
+    // ═══════════════════════════════════════════════════════
+    async function acceptOrder() {
         if (!pendingOrder) return;
 
-        if (pendingTimer) clearInterval(pendingTimer);
-        document.getElementById('modal-new-order').classList.remove('active');
-
-        currentOrder = pendingOrder;
-        pendingOrder = null;
-
-        // Update status
-        await changeStatus('busy');
-
-        // Shfaq kartën aktive
-        showActiveOrder(currentOrder);
-
-        // Toast
-        showToast('success', '✅ Prano', 'Porosia u pranua. Shko te klienti.');
-
-        // Audit
-        if (window.TaxiAuditLog) {
-            window.TaxiAuditLog.log('driver_accepted_order', { orderId: currentOrder.id });
+        if (newOrderTimer) {
+            clearInterval(newOrderTimer);
+            newOrderTimer = null;
         }
-    }
 
-    // ═══ REFUZO POROSINË ═══
-    async function rejectNewOrder() {
-        if (!pendingOrder) return;
-
-        if (pendingTimer) clearInterval(pendingTimer);
-        document.getElementById('modal-new-order').classList.remove('active');
-
-        const order = pendingOrder;
-        pendingOrder = null;
-
-        // Update në Firestore — kthe në waiting
         try {
-            const db = window.TaxiFirebase?.db;
-            if (db) {
-                await db.collection('orders').doc(order.id).update({
-                    status: 'waiting',
-                    driverId: null,
-                    driverName: null,
-                    vehicleNum: null,
-                    vehicleId: null,
-                    rejectedBy: currentDriver.id,
-                    rejectedAt: Date.now()
-                });
-            }
+            await firebase.firestore().collection('orders').doc(pendingOrder.id).update({
+                status: 'onroute',
+                acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            activeOrder = { ...pendingOrder, status: 'onroute' };
+            pendingOrder = null;
+
+            document.getElementById('modal-new-order')?.classList.remove('active');
+
+            showActiveOrder(activeOrder);
+            changeStatus('busy');
+            startActiveOrderTimer();
+
+            showToast('success', '✅ Porosia u pranua');
+
         } catch (e) {
-            console.error('❌ Reject error:', e);
-        }
-
-        showToast('info', '❌ Refuzuar', 'Porosia u refuzua');
-
-        if (window.TaxiAuditLog) {
-            window.TaxiAuditLog.log('driver_rejected_order', { orderId: order.id });
+            console.error('Accept order:', e);
+            showToast('error', 'Gabim gjatë pranimit');
         }
     }
 
-    // ═══ SHFAQ POROSINË AKTIVE ═══
+    // ═══════════════════════════════════════════════════════
+    // REJECT ORDER
+    // ═══════════════════════════════════════════════════════
+    async function rejectOrder() {
+        if (!pendingOrder) return;
+
+        if (newOrderTimer) {
+            clearInterval(newOrderTimer);
+            newOrderTimer = null;
+        }
+
+        try {
+            await firebase.firestore().collection('orders').doc(pendingOrder.id).update({
+                driverId: null,
+                driverName: null,
+                status: 'waiting',
+                rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                rejectedBy: currentDriver.id
+            });
+        } catch (e) {
+            console.warn('Reject order:', e);
+        }
+
+        pendingOrder = null;
+        document.getElementById('modal-new-order')?.classList.remove('active');
+        showToast('info', '❌ Porosia u refuzua');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // SHOW ACTIVE ORDER
+    // ═══════════════════════════════════════════════════════
     function showActiveOrder(order) {
-        const ao = document.getElementById('active-order');
-        if (!ao) return;
+        const el = document.getElementById('active-order');
+        if (!el) return;
 
-        ao.style.display = 'block';
+        el.style.display = 'block';
 
-        document.getElementById('ao-phone').textContent = order.phone;
-        document.getElementById('ao-pickup').textContent = order.pickup;
+        document.getElementById('ao-phone').textContent = order.phone || '—';
+        document.getElementById('ao-pickup').textContent = order.pickup || '—';
         document.getElementById('ao-destination').textContent = order.destination || '—';
 
         if (order.remark) {
@@ -335,349 +364,370 @@ window.DriverApp = (() => {
             document.getElementById('ao-remark').style.display = 'none';
         }
 
-        // Butonat sipas statusit
-        const btnNavigate = document.getElementById('btn-navigate');
-        const btnArrived = document.getElementById('btn-arrived');
-        const btnFinish = document.getElementById('btn-finish');
+        // Butonat
+        document.getElementById('btn-navigate').style.display = 'flex';
+        document.getElementById('btn-arrived').style.display = 'flex';
+        document.getElementById('btn-finish').style.display = 'none';
 
-        if (order.status === 'assigned' || order.status === 'onroute') {
-            btnNavigate.style.display = 'flex';
-            btnArrived.style.display = 'flex';
-            btnFinish.style.display = 'none';
+        if (order.status === 'onroute') {
+            document.getElementById('ao-badge').textContent = 'NË RRUGË';
+            document.getElementById('ao-badge').style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
         } else if (order.status === 'arrived') {
-            btnNavigate.style.display = 'flex';
-            btnArrived.style.display = 'none';
-            btnFinish.style.display = 'flex';
-        } else if (order.status === 'taximeter' || order.status === 'fixed') {
-            btnNavigate.style.display = 'none';
-            btnArrived.style.display = 'none';
-            btnFinish.style.display = 'flex';
-        }
-
-        // Nis timer
-        startOrderTimer();
-    }
-
-    // ═══ TIMER I POROSISË ═══
-    function startOrderTimer() {
-        if (orderTimerInterval) clearInterval(orderTimerInterval);
-
-        let seconds = 0;
-        orderTimerInterval = setInterval(() => {
-            seconds++;
-            const m = Math.floor(seconds / 60);
-            const s = seconds % 60;
-            const el = document.getElementById('ao-time');
-            if (el) el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }, 1000);
-    }
-
-    // ═══ UPDATE POROSI ═══
-    function handleOrderUpdate(order) {
-        if (!currentOrder || currentOrder.id !== order.id) {
-            // Nëse është porosi e re e caktuar për mua
-            if (order.status === 'assigned' && !currentOrder) {
-                currentOrder = order;
-                showActiveOrder(order);
-            }
-            return;
-        }
-
-        // Update statusin
-        currentOrder = order;
-        showActiveOrder(order);
-    }
-
-    // ═══ NAVIGO ═══
-    function navigateToPickup() {
-        if (!currentOrder) return;
-
-        const addr = window.TaxiData?.addresses?.find(a => a.name === currentOrder.pickup);
-        if (!addr) {
-            showToast('warning', '⚠️ Adresa', 'Koordinatat nuk u gjetën');
-            // Provo me Google Maps direkt
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentOrder.pickup)}`;
-            window.open(url, '_blank');
-            return;
-        }
-
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${addr.lat},${addr.lng}`;
-        window.open(url, '_blank');
-
-        showToast('info', '🗺️ Navigim', 'Google Maps u hap');
-
-        if (window.TaxiAuditLog) {
-            window.TaxiAuditLog.log('driver_navigate', { orderId: currentOrder.id });
+            document.getElementById('ao-badge').textContent = 'ARRITUR';
+            document.getElementById('ao-badge').style.background = 'linear-gradient(135deg,#facc15,#eab308)';
+            document.getElementById('btn-arrived').style.display = 'none';
+            document.getElementById('btn-finish').style.display = 'flex';
+        } else if (order.status === 'taximeter') {
+            document.getElementById('ao-badge').textContent = 'ME KLIENT';
+            document.getElementById('ao-badge').style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+            document.getElementById('btn-navigate').style.display = 'none';
+            document.getElementById('btn-arrived').style.display = 'none';
+            document.getElementById('btn-finish').style.display = 'flex';
         }
     }
 
-    // ═══ KËTU JAM ═══
+    // ═══════════════════════════════════════════════════════
+    // MARK ARRIVED
+    // ═══════════════════════════════════════════════════════
     async function markArrived() {
-        if (!currentOrder) return;
+        if (!activeOrder) return;
 
         try {
-            const db = window.TaxiFirebase?.db;
-            if (db) {
-                await db.collection('orders').doc(currentOrder.id).update({
-                    status: 'arrived',
-                    arrivedAt: Date.now(),
-                    arrivedAtStr: new Date().toLocaleTimeString('sq-AL')
-                });
-            }
+            await firebase.firestore().collection('orders').doc(activeOrder.id).update({
+                status: 'arrived',
+                arrivedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-            currentOrder.status = 'arrived';
-            showActiveOrder(currentOrder);
-            showToast('success', '📍 Këtu jam', 'Statusi u përditësua');
-
-            // Dërgo SMS #2
-            if (window.TaxiSms) {
-                await window.TaxiSms.sendArrived(currentOrder);
-            }
+            activeOrder.status = 'arrived';
+            showActiveOrder(activeOrder);
+            showToast('info', '📍 Ke arritur');
         } catch (e) {
-            console.error('❌ markArrived:', e);
-            showToast('error', 'Gabim', 'Nuk mund të përditësohet');
+            console.warn('Arrived:', e);
         }
     }
 
-    // ═══ PËRFUNDO UDHËTIMIN ═══
-    async function finishTrip() {
-        if (!currentOrder) return;
+    // ═══════════════════════════════════════════════════════
+    // FINISH ORDER
+    // ═══════════════════════════════════════════════════════
+    async function finishOrder() {
+        if (!activeOrder) return;
 
-        // Pyet çmimin final
-        const priceStr = prompt('Çmimi final (€):', currentOrder.price || currentOrder.tariff === 'airport' ? '15' : '4.50');
+        const priceStr = prompt('Çmimi final (€):', activeOrder.price || '5.00');
         if (priceStr === null) return;
 
         const price = parseFloat(priceStr);
-        if (isNaN(price) || price < 0) {
-            showToast('error', 'Gabim', 'Çmimi nuk është valid');
-            return;
-        }
+        if (isNaN(price)) return;
 
         try {
-            const db = window.TaxiFirebase?.db;
-            if (db) {
-                await db.collection('orders').doc(currentOrder.id).update({
-                    status: 'completed',
-                    price: price,
-                    completedAt: Date.now(),
-                    completedAtStr: new Date().toLocaleString('sq-AL')
-                });
-            }
-
-            if (orderTimerInterval) clearInterval(orderTimerInterval);
-
-            // Fshij kartën
-            document.getElementById('active-order').style.display = 'none';
-
-            // Update status
-            await changeStatus('free');
-
-            // Njofto zyrën
-            if (window.TaxiEvents) {
-                window.TaxiEvents.emit('order:completed', { orderId: currentOrder.id, price });
-            }
-
-            currentOrder = null;
-
-            showToast('success', '✅ Përfundoi', `€${price.toFixed(2)} u regjistrua`);
-
-            if (window.TaxiAuditLog) {
-                window.TaxiAuditLog.log('driver_completed_order', { price });
-            }
-        } catch (e) {
-            console.error('❌ finishTrip:', e);
-            showToast('error', 'Gabim', 'Nuk mund të përfundohet');
-        }
-    }
-
-    // ═══ ANULO POROSINË ═══
-    async function cancelActiveOrder() {
-        if (!currentOrder) return;
-        if (!confirm('A jeni i sigurt që dëshironi të anuloni porosinë?')) return;
-
-        try {
-            const db = window.TaxiFirebase?.db;
-            if (db) {
-                await db.collection('orders').doc(currentOrder.id).update({
-                    status: 'waiting',
-                    driverId: null,
-                    driverName: null,
-                    vehicleNum: null,
-                    vehicleId: null,
-                    cancelledBy: currentDriver.id,
-                    cancelledAt: Date.now()
-                });
-            }
-
-            if (orderTimerInterval) clearInterval(orderTimerInterval);
-            document.getElementById('active-order').style.display = 'none';
-
-            await changeStatus('free');
-
-            showToast('info', '❌ Anuluar', 'Porosia u anulua');
-
-            currentOrder = null;
-        } catch (e) {
-            console.error('❌ cancelOrder:', e);
-        }
-    }
-
-    // ═══ TELEFONO KLIENTIN ═══
-    function callClient() {
-        if (!currentOrder) return;
-        window.location.href = `tel:${currentOrder.phone}`;
-    }
-
-    // ═══ SWITCH TAB ═══
-    function switchTab(tab) {
-        currentTab = tab;
-
-        document.querySelectorAll('.nav-item').forEach(i => {
-            i.classList.toggle('active', i.dataset.tab === tab);
-        });
-
-        const queueSection = document.getElementById('queue-section');
-        if (queueSection) {
-            queueSection.style.display = tab === 'orders' ? 'block' : 'none';
-        }
-
-        showToast('info', '📱 ' + tab, '');
-    }
-
-    // ═══ TOGGLE MAP ═══
-    function toggleMap() {
-        showToast('info', '🗺️ Harta', 'Google Maps');
-        if (currentOrder) {
-            const addr = window.TaxiData?.addresses?.find(a => a.name === currentOrder.pickup);
-            if (addr) {
-                window.open(`https://www.google.com/maps?q=${addr.lat},${addr.lng}`, '_blank');
-            }
-        }
-    }
-
-    // ═══ TRACKING (dërgim GPS në Firestore) ═══
-    function startActiveTracking() {
-        if (activeTimeInterval) clearInterval(activeTimeInterval);
-
-        activeTimeInterval = setInterval(async () => {
-            if (!currentDriver || !navigator.geolocation) return;
-
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude, longitude } = pos.coords;
-
-                const db = window.TaxiFirebase?.db;
-                if (db) {
-                    try {
-                        await db.collection('drivers').doc(currentDriver.id).update({
-                            lat: latitude,
-                            lng: longitude,
-                            lastSeen: Date.now()
-                        });
-                    } catch (e) { /* silent */ }
-                }
-            }, () => {}, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 30000
+            await firebase.firestore().collection('orders').doc(activeOrder.id).update({
+                status: 'completed',
+                price: price,
+                completedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-        }, 15000); // Çdo 15 sek
 
-        console.log('📍 GPS tracking aktivizuar');
+            activeOrder = null;
+            document.getElementById('active-order').style.display = 'none';
+            stopActiveOrderTimer();
+            changeStatus('free');
+
+            showToast('success', `✅ Përfunduar — €${price.toFixed(2)}`);
+        } catch (e) {
+            console.error('Finish:', e);
+            showToast('error', 'Gabim');
+        }
     }
 
-    // ═══ HEARTBEAT (regjistro kohën aktive) ═══
-    function startHeartbeat(driver) {
-        activeSeconds = 0;
-        setInterval(() => {
-            activeSeconds++;
-            // Çdo 60 sek, ruaj në Firestore
-            if (activeSeconds % 60 === 0) {
-                const db = window.TaxiFirebase?.db;
-                if (db) {
-                    db.collection('drivers').doc(driver.id).update({
-                        activeMinutes: firebase.firestore.FieldValue.increment(1),
-                        lastHeartbeat: Date.now()
-                    }).catch(() => {});
-                }
-            }
+    // ═══════════════════════════════════════════════════════
+    // CANCEL ORDER
+    // ═══════════════════════════════════════════════════════
+    async function cancelOrder() {
+        if (!activeOrder) return;
+        if (!confirm('Anulo porosinë?')) return;
+
+        try {
+            await firebase.firestore().collection('orders').doc(activeOrder.id).update({
+                status: 'cancelled',
+                cancelReason: 'Anuluar nga shoferi',
+                cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            activeOrder = null;
+            document.getElementById('active-order').style.display = 'none';
+            stopActiveOrderTimer();
+            changeStatus('free');
+
+            showToast('info', 'Porosia u anulua');
+        } catch (e) {
+            console.warn('Cancel:', e);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // TIMER POROSIE AKTIVE
+    // ═══════════════════════════════════════════════════════
+    function startActiveOrderTimer() {
+        activeOrderSeconds = 0;
+        if (activeOrderTimer) clearInterval(activeOrderTimer);
+        activeOrderTimer = setInterval(() => {
+            activeOrderSeconds++;
+            const min = String(Math.floor(activeOrderSeconds / 60)).padStart(2, '0');
+            const sec = String(activeOrderSeconds % 60).padStart(2, '0');
+            document.getElementById('ao-time').textContent = `${min}:${sec}`;
         }, 1000);
     }
 
-    // ═══ LOAD DRIVER STATS ═══
-    async function loadDriverStats(driver) {
-        const db = window.TaxiFirebase?.db;
-        if (!db) return;
+    function stopActiveOrderTimer() {
+        if (activeOrderTimer) clearInterval(activeOrderTimer);
+        activeOrderTimer = null;
+        activeOrderSeconds = 0;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // LOAD ACTIVE ORDERS
+    // ═══════════════════════════════════════════════════════
+    async function loadActiveOrders() {
+        if (!currentDriver) return;
 
         try {
-            const ordersSnap = await db.collection('orders')
-                .where('driverId', '==', driver.id)
-                .where('status', '==', 'completed')
-                .get();
+            // Gjej porosi aktive për këtë shofer
+            const snap = await firebase.firestore().collection('orders')
+                .where('driverId', '==', currentDriver.id)
+                .where('status', 'in', ['assigned', 'onroute', 'arrived', 'taximeter', 'fixed'])
+                .limit(1).get();
 
-            const completed = ordersSnap.size;
-            const revenue = ordersSnap.docs.reduce((s, d) => s + (parseFloat(d.data().price) || 0), 0);
-
-            // Ruaj në state për statistikat
-            if (window.TaxiState) {
-                window.TaxiState.set('driverStats', {
-                    completed,
-                    revenue: +revenue.toFixed(2),
-                    avgPrice: completed > 0 ? +(revenue / completed).toFixed(2) : 0
-                });
+            if (!snap.empty) {
+                const doc = snap.docs[0];
+                activeOrder = { id: doc.id, ...doc.data() };
+                showActiveOrder(activeOrder);
+                changeStatus('busy');
+                startActiveOrderTimer();
             }
         } catch (e) {
-            console.warn('Stats load:', e);
+            console.warn('Load active:', e);
         }
     }
 
-    // ═══ SHFAQ SCREEN ═══
-    function showScreen(name) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(`screen-${name}`)?.classList.add('active');
+    // ═══════════════════════════════════════════════════════
+    // GPS TRACKING
+    // ═══════════════════════════════════════════════════════
+    function startGPSTracking() {
+        if (!navigator.geolocation) {
+            console.warn('GPS nuk mbështetet');
+            return;
+        }
+
+        gpsWatchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                const { latitude, longitude, speed } = pos.coords;
+                updateGPSOnServer(latitude, longitude, speed);
+            },
+            (err) => console.warn('GPS error:', err.message),
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+        );
     }
 
-    // ═══ LOGOUT ═══
-    async function logout() {
-        if (!confirm('A jeni i sigurt që dëshironi të dilni?')) return;
+    async function updateGPSOnServer(lat, lng, speed) {
+        if (!currentDriver) return;
 
         try {
-            await firebase.auth().signOut();
-            window.TaxiStorage?.remove('taxi.driver');
-            if (unsubscribeOrders) unsubscribeOrders();
-            if (orderTimerInterval) clearInterval(orderTimerInterval);
-            if (activeTimeInterval) clearInterval(activeTimeInterval);
-
-            location.reload();
+            await firebase.firestore().collection('drivers').doc(currentDriver.id).update({
+                lat: lat,
+                lng: lng,
+                speed: speed || 0,
+                lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+            });
         } catch (e) {
-            console.error('Logout error:', e);
+            // Nuk bëj asgjë — mund të dështojë nëse internet dobët
         }
     }
 
-    // ═══ TOAST ═══
-    function showToast(type, title, msg) {
+    // ═══════════════════════════════════════════════════════
+    // MAP
+    // ═══════════════════════════════════════════════════════
+    function initMap() {
+        const el = document.getElementById('driver-map');
+        if (!el || !window.L) return;
+
+        if (map) {
+            setTimeout(() => map.invalidateSize(), 200);
+            return;
+        }
+
+        map = L.map('driver-map', {
+            center: [42.6629, 21.1655],
+            zoom: 14,
+            zoomControl: false
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+        }).addTo(map);
+
+        setTimeout(() => map.invalidateSize(), 300);
+    }
+
+    function toggleMap() {
+        switchTab('map');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // CLOCK
+    // ═══════════════════════════════════════════════════════
+    function startOrderClock() {
+        // Përditëso kohën çdo minutë për stats
+        setInterval(() => {
+            // Llogarit statistika ditore
+            updateDailyStats();
+        }, 60000);
+    }
+
+    async function updateDailyStats() {
+        if (!currentDriver) return;
+
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const snap = await firebase.firestore().collection('orders')
+                .where('driverId', '==', currentDriver.id)
+                .where('status', '==', 'completed')
+                .where('completedAt', '>=', today)
+                .get();
+
+            const orders = snap.docs.map(d => d.data());
+            const earnings = orders.reduce((s, o) => s + (parseFloat(o.price) || 0), 0);
+
+            document.getElementById('ps-trips').textContent = orders.length;
+            document.getElementById('ps-earnings').textContent = `€${earnings.toFixed(2)}`;
+
+        } catch (e) {}
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // CHAT
+    // ═══════════════════════════════════════════════════════
+    function openChat() {
+        switchTab('profile');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // SOS
+    // ═══════════════════════════════════════════════════════
+    async function activateSOS() {
+        if (!confirm('Aktivizo SOS? Zyra do të njoftohet menjëherë!')) return;
+        if (!currentDriver) return;
+
+        try {
+            // Merr pozicionin
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                await firebase.firestore().collection('emergencies').add({
+                    driverId: currentDriver.id,
+                    driverName: currentDriver.name,
+                    vehicleNum: currentDriver.vehicle_number,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    type: 'sos',
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('warning', '🚨 SOS u dërgua!');
+            }, () => {
+                // Nëse GPS nuk punon, dërgo pa pozicion
+                firebase.firestore().collection('emergencies').add({
+                    driverId: currentDriver.id,
+                    driverName: currentDriver.name,
+                    type: 'sos',
+                    status: 'active',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showToast('warning', '🚨 SOS u dërgua!');
+            });
+        } catch (e) {
+            console.error('SOS:', e);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // LOGOUT
+    // ═══════════════════════════════════════════════════════
+    async function logout() {
+        if (!confirm('Dil nga llogaria?')) return;
+
+        // Set offline
+        if (currentDriver) {
+            try {
+                await firebase.firestore().collection('drivers').doc(currentDriver.id).update({
+                    online: false,
+                    mode: 'inactive'
+                });
+            } catch (e) {}
+        }
+
+        // Pastro
+        if (gpsWatchId) navigator.geolocation.clearWatch(gpsWatchId);
+        if (orderUnsubscribe) orderUnsubscribe();
+        if (newOrderTimer) clearInterval(newOrderTimer);
+        if (activeOrderTimer) clearInterval(activeOrderTimer);
+
+        await firebase.auth().signOut();
+        location.reload();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════════════════════
+    function showToast(type, msg) {
         const c = document.getElementById('toast-container');
         if (!c) return;
-        const icons = { success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+
+        const colors = {
+            success: '#22c55e',
+            error: '#ef4444',
+            warning: '#f59e0b',
+            info: '#a855f7'
+        };
+
         const t = document.createElement('div');
-        t.className = `toast ${type}`;
-        t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><div class="toast-content"><div class="toast-title">${title}</div><div class="toast-message">${msg || ''}</div></div>`;
+        t.style.cssText = `
+            background:#1a0f30;
+            border-left:4px solid ${colors[type] || colors.info};
+            border-radius:10px;
+            padding:12px 16px;
+            margin-bottom:8px;
+            font-size:13px;
+            color:#f5f0ff;
+            box-shadow:0 10px 30px rgba(0,0,0,.5);
+            animation:slideIn .3s ease;
+        `;
+        t.textContent = msg;
         c.appendChild(t);
-        setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; setTimeout(() => t.remove(), 300); }, 3500);
-        if (window.TaxiSound) {
-            if (type === 'success') window.TaxiSound.playSuccess();
-            else if (type === 'error') window.TaxiSound.playError();
-        }
+
+        setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateY(-10px)';
+            setTimeout(() => t.remove(), 300);
+        }, 3500);
     }
 
     return {
-        init, onLoginSuccess, logout,
-        changeStatus, openStatusModal, closeStatusModal,
-        acceptNewOrder, rejectNewOrder,
-        navigateToPickup, markArrived, finishTrip, cancelActiveOrder, callClient,
-        switchTab, toggleMap, showToast,
-        get currentDriver() { return currentDriver; },
-        get currentOrder() { return currentOrder; }
+        init,
+        onLoginSuccess,
+        switchTab,
+        changeStatus,
+        toggleStatus,
+        openStatusModal,
+        closeStatusModal,
+        acceptOrder,
+        rejectOrder,
+        markArrived,
+        finishOrder,
+        cancelOrder,
+        activateSOS,
+        logout,
+        openChat,
+        toggleMap
     };
 })();
 
-console.log('✅ driver/app.js ngarkuar');
+console.log('✅ js/driver/app.js ngarkuar');
