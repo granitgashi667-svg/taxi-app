@@ -1,9 +1,8 @@
 'use strict';
 
 /**
- * js/firebase-shim.js
- * Firebase i zëvendësuar me localStorage — punon pa server
- * Punon në Cloudflare, GitHub Pages, çdo host
+ * js/firebase-shim.js — Firebase i zëvendësuar me localStorage
+ * Punon pa server. Punon në Cloudflare, GitHub Pages, çdo host.
  */
 
 (function() {
@@ -22,51 +21,24 @@
             if (raw) return JSON.parse(raw);
         } catch (e) {}
         return {
-            orders: [],
-            drivers: [],
-            vehicles: [],
-            clients: [],
-            zones: [],
-            stands: [],
-            locations: [],
-            tariffs: [],
-            workers: [],
-            operators: [],
-            messages: [],
-            remarks: [],
-            tenants: [],
-            driver_messages: [],
-            loyalty_cards: [],
-            mobile_users: [],
-            fuel_refills: [],
-            fuel_prices: [],
-            salaries: [],
-            sms_templates: [],
-            fixed_price_routes: [],
-            trackers: [],
-            streets: [],
-            stands_list: [],
-            target_history: [],
-            preorders: [],
-            ipay: [],
-            mobile: [],
-            audit_log: [],
-            blacklist: [],
-            vacations: []
+            orders: [], drivers: [], vehicles: [], clients: [],
+            zones: [], stands: [], locations: [], tariffs: [],
+            workers: [], operators: [], messages: [], remarks: [],
+            tenants: [], driver_messages: [], loyalty_cards: [],
+            mobile_users: [], fuel_refills: [], fuel_prices: [],
+            salaries: [], sms_templates: [], fixed_price_routes: [],
+            trackers: [], streets: [], target_history: [],
+            preorders: [], ipay: [], mobile: [], audit_log: [],
+            blacklist: [], vacations: [], hours_log: []
         };
     }
 
     function saveDB(db) {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-        } catch (e) {
-            console.error('localStorage save error:', e);
-        }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) {}
     }
 
     let DB = loadDB();
 
-    // Seed me demo data nëse është herë e parë
     function seedDemo() {
         if (DB.workers.length === 0) {
             DB.workers = [
@@ -91,38 +63,21 @@
 
     seedDemo();
 
-    // ═══════════════════════════════════════════════════════
-    // HELPER: Gjenero ID
-    // ═══════════════════════════════════════════════════════
-    function newId() {
-        return Date.now() + Math.floor(Math.random() * 1000);
-    }
+    function newId() { return Date.now() + Math.floor(Math.random() * 1000); }
 
-    // ═══════════════════════════════════════════════════════
-    // CLEAN: FieldValue handling
-    // ═══════════════════════════════════════════════════════
     function resolveFieldValues(data) {
         if (!data || typeof data !== 'object') return data;
         if (Array.isArray(data)) return data.map(resolveFieldValues);
-
         const out = {};
         Object.keys(data).forEach(k => {
             const v = data[k];
             if (v && typeof v === 'object') {
-                if (v.__isFieldValue === 'serverTimestamp') {
-                    out[k] = new Date().toISOString();
-                } else if (v.__isFieldValue === 'increment') {
-                    out[k] = v.value;
-                } else if (v.__isFieldValue === 'arrayUnion') {
-                    out[k] = v.value;
-                } else if (v.__isFieldValue === 'delete') {
-                    out[k] = null;
-                } else {
-                    out[k] = resolveFieldValues(v);
-                }
-            } else {
-                out[k] = v;
-            }
+                if (v.__isFieldValue === 'serverTimestamp') out[k] = new Date().toISOString();
+                else if (v.__isFieldValue === 'increment') out[k] = v.value;
+                else if (v.__isFieldValue === 'arrayUnion') out[k] = v.value;
+                else if (v.__isFieldValue === 'delete') out[k] = null;
+                else out[k] = resolveFieldValues(v);
+            } else out[k] = v;
         });
         return out;
     }
@@ -136,17 +91,13 @@
         async signInWithEmailAndPassword(email, password) {
             const username = String(email).split('@')[0].toLowerCase();
 
-            // Gjej user me username ose email
             let user = DB.workers.find(w =>
                 (w.username || '').toLowerCase() === username ||
                 (w.email || '').toLowerCase() === String(email).toLowerCase()
             );
 
-            // Provo edhe drivers
             if (!user) {
-                user = DB.drivers.find(d =>
-                    (d.username || '').toLowerCase() === username
-                );
+                user = DB.drivers.find(d => (d.username || '').toLowerCase() === username);
             }
 
             if (!user || user.password !== password) {
@@ -165,37 +116,42 @@
 
             localStorage.setItem('taxi_user', JSON.stringify(currentUser));
 
-            // Ruaj në hours_log
-            addHoursLog(user.id);
+            // Hours log
+            const today = new Date().toISOString().slice(0, 10);
+            if (!DB.hours_log) DB.hours_log = [];
+            const existing = DB.hours_log.find(h => h.user_id === user.id && h.date === today && !h.logout_at);
+            if (!existing) {
+                DB.hours_log.push({
+                    id: newId(),
+                    user_id: user.id,
+                    login_at: new Date().toISOString(),
+                    logout_at: null,
+                    date: today
+                });
+                saveDB(DB);
+            }
 
-            authListeners.forEach(cb => {
-                try { cb(currentUser); } catch (e) {}
-            });
-
+            authListeners.forEach(cb => { try { cb(currentUser); } catch (e) {} });
             return { user: currentUser };
         },
 
         async createUserWithEmailAndPassword(email, password) {
             const username = String(email).split('@')[0].toLowerCase();
-            const exists = DB.workers.find(w => w.username === username);
-            if (exists) throw new Error('Username ekziston');
-
-            const user = {
-                id: newId(),
-                username,
-                password,
-                name: username,
-                role: 'operator',
-                active: true,
-                online: false
-            };
+            if (DB.workers.find(w => w.username === username)) throw new Error('Username ekziston');
+            const user = { id: newId(), username, password, name: username, role: 'operator', active: true, online: false };
             DB.workers.push(user);
             saveDB(DB);
-
             return { user: { uid: user.id, email } };
         },
 
         async signOut() {
+            // Update hours log
+            if (currentUser && DB.hours_log) {
+                const today = new Date().toISOString().slice(0, 10);
+                const log = DB.hours_log.find(h => h.user_id === currentUser.uid && h.date === today && !h.logout_at);
+                if (log) log.logout_at = new Date().toISOString();
+                saveDB(DB);
+            }
             currentUser = null;
             localStorage.removeItem('taxi_user');
             authListeners.forEach(cb => { try { cb(null); } catch (e) {} });
@@ -203,8 +159,6 @@
 
         onAuthStateChanged(cb) {
             authListeners.push(cb);
-
-            // Provo sesion
             const cached = localStorage.getItem('taxi_user');
             if (cached) {
                 try {
@@ -214,7 +168,6 @@
             } else {
                 setTimeout(() => cb(null), 10);
             }
-
             return () => {
                 const i = authListeners.indexOf(cb);
                 if (i >= 0) authListeners.splice(i, 1);
@@ -222,35 +175,16 @@
         },
 
         async getIdToken() { return 'local-token'; },
-        async getIdTokenResult() {
-            return { token: 'local-token', claims: currentUser || {} };
-        }
+        async getIdTokenResult() { return { token: 'local-token', claims: currentUser || {} }; }
     };
 
-    function addHoursLog(userId) {
-        const today = new Date().toISOString().slice(0, 10);
-        if (!DB.hours_log) DB.hours_log = [];
-        const existing = DB.hours_log.find(h => h.user_id === userId && h.date === today && !h.logout_at);
-        if (!existing) {
-            DB.hours_log.push({
-                id: newId(),
-                user_id: userId,
-                login_at: new Date().toISOString(),
-                logout_at: null,
-                date: today
-            });
-            saveDB(DB);
-        }
-    }
-
     // ═══════════════════════════════════════════════════════
-    // FIRESTORE — Document Ref
+    // FIRESTORE
     // ═══════════════════════════════════════════════════════
     function createDocRef(collectionName, docId) {
         return {
             id: docId,
             path: `${collectionName}/${docId}`,
-
             async get() {
                 const list = DB[collectionName] || [];
                 const item = list.find(i => String(i.id) === String(docId));
@@ -261,13 +195,11 @@
                     get: (f) => item ? item[f] : undefined
                 };
             },
-
             async set(newData, options = {}) {
                 const clean = resolveFieldValues(newData);
                 if (!DB[collectionName]) DB[collectionName] = [];
                 const list = DB[collectionName];
                 const idx = list.findIndex(i => String(i.id) === String(docId));
-
                 if (idx >= 0) {
                     list[idx] = options.merge ? { ...list[idx], ...clean } : { id: docId, ...clean };
                 } else {
@@ -276,27 +208,21 @@
                 saveDB(DB);
                 return { id: docId };
             },
-
             async update(newData) {
                 const clean = resolveFieldValues(newData);
                 if (!DB[collectionName]) DB[collectionName] = [];
                 const list = DB[collectionName];
                 const idx = list.findIndex(i => String(i.id) === String(docId));
-                if (idx >= 0) {
-                    list[idx] = { ...list[idx], ...clean };
-                } else {
-                    list.push({ id: docId, ...clean });
-                }
+                if (idx >= 0) list[idx] = { ...list[idx], ...clean };
+                else list.push({ id: docId, ...clean });
                 saveDB(DB);
                 return { id: docId };
             },
-
             async delete() {
                 if (!DB[collectionName]) return;
                 DB[collectionName] = DB[collectionName].filter(i => String(i.id) !== String(docId));
                 saveDB(DB);
             },
-
             onSnapshot(cb) {
                 this.get().then(snap => {
                     cb({ ...snap, docChanges: () => [{ type: 'added', doc: snap }] });
@@ -306,32 +232,15 @@
         };
     }
 
-    // ═══════════════════════════════════════════════════════
-    // FIRESTORE — Query
-    // ═══════════════════════════════════════════════════════
     function createQuery(collectionName) {
         const state = { filters: [], orderField: null, orderDir: 'asc', limitNum: null };
-
         const q = {
-            where(field, op, value) {
-                state.filters.push({ field, op, value });
-                return this;
-            },
-            orderBy(field, dir = 'asc') {
-                state.orderField = field;
-                state.orderDir = dir;
-                return this;
-            },
-            limit(n) {
-                state.limitNum = n;
-                return this;
-            },
+            where(field, op, value) { state.filters.push({ field, op, value }); return this; },
+            orderBy(field, dir = 'asc') { state.orderField = field; state.orderDir = dir; return this; },
+            limit(n) { state.limitNum = n; return this; },
             doc(id) { return createDocRef(collectionName, id); },
-
             async get() {
                 let items = [...(DB[collectionName] || [])];
-
-                // Filters
                 state.filters.forEach(f => {
                     items = items.filter(i => {
                         const v = i[f.field];
@@ -344,27 +253,20 @@
                             case '<=': return v <= f.value;
                             case 'array-contains': return Array.isArray(v) && v.includes(f.value);
                             case 'in': return Array.isArray(f.value) && f.value.includes(v);
-                            case 'not-in': return Array.isArray(f.value) && !f.value.includes(v);
                             default: return true;
                         }
                     });
                 });
-
-                // Order
                 if (state.orderField) {
                     const dir = state.orderDir === 'desc' ? -1 : 1;
                     items.sort((a, b) => {
-                        const av = a[state.orderField];
-                        const bv = b[state.orderField];
+                        const av = a[state.orderField], bv = b[state.orderField];
                         if (av < bv) return -1 * dir;
                         if (av > bv) return 1 * dir;
                         return 0;
                     });
                 }
-
-                // Limit
                 if (state.limitNum) items = items.slice(0, state.limitNum);
-
                 const docs = items.map(item => ({
                     id: item.id,
                     exists: true,
@@ -372,51 +274,36 @@
                     data: () => item,
                     get: (f) => item[f]
                 }));
-
-                return {
-                    docs,
-                    size: docs.length,
-                    empty: docs.length === 0,
-                    forEach: (cb) => docs.forEach(cb)
-                };
+                return { docs, size: docs.length, empty: docs.length === 0, forEach: (cb) => docs.forEach(cb) };
             },
-
             async add(newData) {
                 const clean = resolveFieldValues(newData);
                 if (!DB[collectionName]) DB[collectionName] = [];
                 const id = newId();
                 DB[collectionName].push({
-                    id,
-                    ...clean,
+                    id, ...clean,
                     created_at: new Date().toISOString(),
                     createdAtLocal: Date.now()
                 });
                 saveDB(DB);
                 return { id };
             },
-
             onSnapshot(cb) {
                 this.get().then(snap => {
-                    cb({
-                        ...snap,
-                        docChanges: () => snap.docs.map(d => ({ type: 'added', doc: d }))
-                    });
+                    cb({ ...snap, docChanges: () => snap.docs.map(d => ({ type: 'added', doc: d })) });
                 });
                 return () => {};
             },
-
             startAt() { return this; },
             endAt() { return this; },
             startAfter() { return this; },
             endBefore() { return this; }
         };
-
         return q;
     }
 
     const firestore = {
         collection(name) { return createQuery(name); },
-
         FieldValue: {
             serverTimestamp() { return { __isFieldValue: 'serverTimestamp' }; },
             increment(n) { return { __isFieldValue: 'increment', value: n }; },
@@ -424,13 +311,11 @@
             arrayRemove(...items) { return { __isFieldValue: 'arrayRemove', value: items }; },
             delete() { return { __isFieldValue: 'delete' }; }
         },
-
         Timestamp: {
             now: () => ({ seconds: Math.floor(Date.now() / 1000), toDate: () => new Date() }),
             fromDate: (d) => ({ seconds: Math.floor(d.getTime() / 1000), toDate: () => d }),
             fromMillis: (ms) => ({ seconds: Math.floor(ms / 1000), toDate: () => new Date(ms) })
         },
-
         batch() {
             const ops = [];
             return {
@@ -448,7 +333,6 @@
                 }
             };
         },
-
         runTransaction(fn) {
             return fn({
                 get: (ref) => ref.get(),
@@ -457,27 +341,20 @@
                 delete: (ref) => ref.delete()
             });
         },
-
         settings() {},
         enablePersistence() { return Promise.resolve(); }
     };
 
-    // ═══════════════════════════════════════════════════════
-    // FUNCTIONS / STORAGE / MESSAGING
-    // ═══════════════════════════════════════════════════════
     const functions = {
         httpsCallable(name) {
-            return async (data) => {
-                console.log('📞 Function call (local):', name, data);
-                return { data: { success: true } };
-            };
+            return async (data) => ({ data: { success: true } });
         }
     };
 
     const storage = {
-        ref(path) {
+        ref() {
             return {
-                async put(file) { return { ref: { getDownloadURL: async () => '' } }; },
+                async put() { return { ref: { getDownloadURL: async () => '' } }; },
                 async getDownloadURL() { return ''; },
                 async delete() {}
             };
@@ -491,9 +368,6 @@
         async requestPermission() { return 'granted'; }
     };
 
-    // ═══════════════════════════════════════════════════════
-    // EXPORT
-    // ═══════════════════════════════════════════════════════
     window.firebase = {
         apps: [],
         initializeApp: () => ({ name: '[DEFAULT]' }),
@@ -509,8 +383,12 @@
 
     window.__taxiData = DB;
     window.__taxiSave = () => saveDB(DB);
-    window.__taxiReload = () => { DB = loadDB(); };
+    window.__taxiReset = () => {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('taxi_user');
+        location.reload();
+    };
 
-    console.log('✅ Firebase SHIM — localStorage mode aktiv');
-    console.log('📊 Demo users: G/1, operator1/1, manager1/1, shofer1/1');
+    console.log('✅ Firebase SHIM — localStorage aktiv');
+    console.log('📊 Users: G/1, operator1/1, manager1/1, shofer1/1');
 })();
