@@ -1,1 +1,504 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Taxi Admin | Menagjer Panel</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a855f7">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-extra.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👔</text></svg>">
 
+    <script>
+        window.TAXI_CONFIG = {
+            API_URL: window.location.origin.includes('localhost')
+                ? 'http://localhost:3000'
+                : window.location.origin
+        };
+    </script>
+</head>
+<body class="theme-2">
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner-ring"></div>
+            <div class="loading-text">Duke ngarkuar...</div>
+        </div>
+    </div>
+
+    <div class="screen login-screen active" id="screen-login">
+        <div class="login-box">
+            <div class="login-logo">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <h1>Admin Panel</h1>
+            <p class="login-sub">Hyr me llogarinë e menagjerit</p>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label><i class="fa-solid fa-user"></i> Username</label>
+                    <input type="text" id="login-email" class="input-field" placeholder="G" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••">
+                </div>
+                <div id="login-error" class="login-error" style="display:none;"></div>
+                <button class="btn-primary big" id="btn-login">
+                    <i class="fa-solid fa-sign-in-alt"></i>
+                    <span>HYR</span>
+                </button>
+            </div>
+
+            <div class="login-footer">
+                <p>Version 3.0 · TaxiDispatch Pro</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen main-screen" id="screen-main">
+
+        <aside class="admin-sidebar" id="admin-sidebar">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-user-tie"></i>
+                <span>Admin</span>
+            </div>
+
+            <nav class="sidebar-nav">
+
+                <a href="#" class="sidebar-item active" data-page="dashboard" onclick="AdminApp.switchPage('dashboard'); return false;">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="operators" onclick="AdminApp.switchPage('operators'); return false;">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Operatorët</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="drivers" onclick="AdminApp.switchPage('drivers'); return false;">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Shoferët</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="vehicles" onclick="AdminApp.switchPage('vehicles'); return false;">
+                    <i class="fa-solid fa-car-side"></i>
+                    <span>Veturat</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="orders" onclick="AdminApp.switchPage('orders'); return false;">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>Porositë</span>
+                </a>
+
+                <div class="sidebar-section-title">Marketing</div>
+                <a href="#" class="sidebar-item" data-page="targets" onclick="AdminApp.switchPage('targets'); return false;">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Targets</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="loyalty" onclick="AdminApp.switchPage('loyalty'); return false;">
+                    <i class="fa-solid fa-id-card"></i>
+                    <span>Loyalty Cards</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="mobile-users" onclick="AdminApp.switchPage('mobile-users'); return false;">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                    <span>Mobile Users</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="sms-templates" onclick="AdminApp.switchPage('sms-templates'); return false;">
+                    <i class="fa-solid fa-comment-sms"></i>
+                    <span>SMS Templates</span>
+                </a>
+
+                <div class="sidebar-section-title">Operacione</div>
+                <a href="#" class="sidebar-item" data-page="auto-dispatch" onclick="AdminApp.switchPage('auto-dispatch'); return false;">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>Auto-Dispatch</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="fixed-routes" onclick="AdminApp.switchPage('fixed-routes'); return false;">
+                    <i class="fa-solid fa-route"></i>
+                    <span>Fixed Routes</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="streets" onclick="AdminApp.switchPage('streets'); return false;">
+                    <i class="fa-solid fa-road"></i>
+                    <span>Streets & Stands</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="trackers" onclick="AdminApp.switchPage('trackers'); return false;">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Trackers</span>
+                </a>
+
+                <div class="sidebar-section-title">Financa</div>
+                <a href="#" class="sidebar-item" data-page="salaries" onclick="AdminApp.switchPage('salaries'); return false;">
+                    <i class="fa-solid fa-money-bill-wave"></i>
+                    <span>Salaries</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="reports" onclick="AdminApp.switchPage('reports'); return false;">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Raporte</span>
+                </a>
+
+                <div class="sidebar-section-title">Sistemi</div>
+                <a href="#" class="sidebar-item" data-page="integrations" onclick="AdminApp.switchPage('integrations'); return false;">
+                    <i class="fa-solid fa-plug"></i>
+                    <span>Integrations</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="import" onclick="AdminApp.switchPage('import'); return false;">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Import</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="audit" onclick="AdminApp.switchPage('audit'); return false;">
+                    <i class="fa-solid fa-history"></i>
+                    <span>Audit Log</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="vacations" onclick="AdminApp.switchPage('vacations'); return false;">
+                    <i class="fa-solid fa-umbrella-beach"></i>
+                    <span>Pushimet</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="blacklist" onclick="AdminApp.switchPage('blacklist'); return false;">
+                    <i class="fa-solid fa-ban"></i>
+                    <span>Blacklist</span>
+                </a>
+                <a href="#" class="sidebar-item" data-page="administration" onclick="AdminApp.switchPage('administration'); return false;">
+                    <i class="fa-solid fa-cogs"></i>
+                    <span>Administration</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-bottom">
+                <div class="sidebar-user" id="sidebar-user">
+                    <div class="su-avatar" id="su-avatar">?</div>
+                    <div class="su-info">
+                        <div class="su-name" id="su-name">Menagjer</div>
+                        <div class="su-role" id="su-role">Manager</div>
+                    </div>
+                </div>
+                <button class="sidebar-logout" onclick="AdminApp.logout()" title="Dil">
+                    <i class="fa-solid fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </aside>
+
+        <main class="admin-content" id="admin-content">
+            <header class="admin-topbar">
+                <button class="topbar-toggle" onclick="AdminApp.toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div class="topbar-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Pamja e përgjithshme</p>
+                </div>
+
+                <div class="topbar-actions">
+                    <button class="topbar-toggle" id="btn-theme-toggle" title="Dark/Light">
+                        <i class="fa-solid fa-sun"></i>
+                    </button>
+                    <button class="topbar-toggle" id="btn-voice-toggle" title="Komanda me zë">
+                        <i class="fa-solid fa-microphone-slash"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiApiKeys) TaxiApiKeys.open()" title="API Keys">
+                        <i class="fa-solid fa-key"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiFeedback) TaxiFeedback.open()" title="Feedback">
+                        <i class="fa-solid fa-comment-dots"></i>
+                    </button>
+                    <button class="topbar-toggle" onclick="if(window.TaxiHelp) TaxiHelp.open()" title="Ndihmë">
+                        <i class="fa-solid fa-circle-question"></i>
+                    </button>
+                    <div class="topbar-time">
+                        <div class="time-clock" id="clock-time">--:--:--</div>
+                        <div class="time-date" id="clock-date">--/--/----</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="admin-page active" data-page="dashboard">
+                <div class="kpi-grid">
+                    <div class="kpi-card green">
+                        <div class="kpi-label"><i class="fa-solid fa-euro-sign"></i> Të ardhura sot</div>
+                        <div class="kpi-value green" id="kpi-revenue">€0.00</div>
+                        <div class="kpi-sub" id="kpi-revenue-sub">0 porosi</div>
+                    </div>
+                    <div class="kpi-card blue">
+                        <div class="kpi-label"><i class="fa-solid fa-route"></i> Udhëtime sot</div>
+                        <div class="kpi-value blue" id="kpi-trips">0</div>
+                        <div class="kpi-sub" id="kpi-trips-sub">0 të realizuara</div>
+                    </div>
+                    <div class="kpi-card pink">
+                        <div class="kpi-label"><i class="fa-solid fa-headset"></i> Operatorë aktivë</div>
+                        <div class="kpi-value pink" id="kpi-operators">0</div>
+                        <div class="kpi-sub">Tani në punë</div>
+                    </div>
+                    <div class="kpi-card yellow">
+                        <div class="kpi-label"><i class="fa-solid fa-car"></i> Shoferë aktivë</div>
+                        <div class="kpi-value yellow" id="kpi-drivers">0</div>
+                        <div class="kpi-sub" id="kpi-drivers-sub">0 online</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-trophy"></i>
+                            <h3>Top Operatorët (Sot)</h3>
+                        </div>
+                        <div class="db-panel-body" id="top-operators-list">
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                        </div>
+                    </div>
+                    <div class="db-panel">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-car-side"></i>
+                            <h3>Top Shoferët (Sot)</h3>
+                        </div>
+                        <div class="db-panel-body" id="top-drivers-list">
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                        </div>
+                    </div>
+                    <div class="db-panel full">
+                        <div class="db-panel-header">
+                            <i class="fa-solid fa-clock"></i>
+                            <h3>Aktiviteti i fundit</h3>
+                        </div>
+                        <div class="db-panel-body" id="recent-activity-list">
+                            <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="operators">
+                <div class="page-actions">
+                    <div class="filter-bar">
+                        <button class="filter-btn active" onclick="AdminOperators.filter('today', this)">Sot</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('week', this)">Kjo javë</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('month', this)">Ky muaj</button>
+                        <button class="filter-btn" onclick="AdminOperators.filter('year', this)">Ky vit</button>
+                    </div>
+                </div>
+                <div id="operators-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="drivers">
+                <div id="drivers-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="vehicles">
+                <div id="vehicles-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="orders">
+                <div id="orders-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="reports">
+                <div id="reports-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="targets"></div>
+            <div class="admin-page" data-page="loyalty"></div>
+            <div class="admin-page" data-page="salaries"></div>
+            <div class="admin-page" data-page="auto-dispatch"></div>
+            <div class="admin-page" data-page="sms-templates"></div>
+            <div class="admin-page" data-page="fixed-routes"></div>
+            <div class="admin-page" data-page="import"></div>
+            <div class="admin-page" data-page="integrations"></div>
+            <div class="admin-page" data-page="trackers"></div>
+            <div class="admin-page" data-page="streets"></div>
+            <div class="admin-page" data-page="mobile-users"></div>
+            <div class="admin-page" data-page="audit"></div>
+
+            <div class="admin-page" data-page="vacations">
+                <div id="vacations-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="blacklist">
+                <div id="blacklist-content">
+                    <div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Duke ngarkuar...</p></div>
+                </div>
+            </div>
+
+            <div class="admin-page" data-page="administration">
+                <div id="administration-content"></div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         FIREBASE SHIM — Të dhënat shkojnë në server lokal
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/firebase-shim.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         EXTERNAL
+    ═══════════════════════════════════════════════════════ -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         CORE
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/core/config.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/permissions.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         DATA
+    ═══════════════════════════════════════════════════════ -->
+    <script src="data.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         SERVICES
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/services/auth.js"></script>
+    <script src="js/services/orders.js"></script>
+    <script src="js/services/operators.js"></script>
+    <script src="js/services/drivers.js"></script>
+    <script src="js/services/messages.js"></script>
+    <script src="js/services/sound.js"></script>
+    <script src="js/services/logger.js"></script>
+    <script src="js/services/audit-log.js"></script>
+    <script src="js/services/blacklist.js"></script>
+    <script src="js/services/reports.js"></script>
+    <script src="js/services/analytics.js"></script>
+    <script src="js/services/export.js"></script>
+    <script src="js/services/history.js"></script>
+    <script src="js/services/session.js"></script>
+    <script src="js/services/maps.js"></script>
+    <script src="js/services/control-unit.js"></script>
+    <script src="js/services/geocoding.js"></script>
+    <script src="js/services/pricing.js"></script>
+    <script src="js/services/shifts.js"></script>
+    <script src="js/services/zones.js"></script>
+    <script src="js/services/sms.js"></script>
+    <script src="js/services/notifications.js"></script>
+    <script src="js/services/chat.js"></script>
+    <script src="js/services/emergency.js"></script>
+    <script src="js/services/dark-mode.js"></script>
+    <script src="js/services/responsive.js"></script>
+    <script src="js/services/shortcuts.js"></script>
+    <script src="js/services/pwa.js"></script>
+    <script src="js/services/offline.js"></script>
+    <script src="js/services/voice-commands.js"></script>
+    <script src="js/services/email-notifications.js"></script>
+    <script src="js/services/two-factor.js"></script>
+    <script src="js/services/validation.js"></script>
+    <script src="js/services/cache.js"></script>
+    <script src="js/services/backup.js"></script>
+    <script src="js/services/sync.js"></script>
+    <script src="js/services/system-health.js"></script>
+    <script src="js/services/help-center.js"></script>
+    <script src="js/services/feedback.js"></script>
+    <script src="js/services/print.js"></script>
+    <script src="js/services/api-keys.js"></script>
+    <script src="js/services/search-global.js"></script>
+    <script src="js/services/print-utils.js"></script>
+    <script src="js/services/trackers-map.js"></script>
+    <script src="js/services/notifications-realtime.js"></script>
+    <script src="js/services/export-excel.js"></script>
+    <script src="js/services/reminders.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ADMIN CORE
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/admin/login.js"></script>
+    <script src="js/admin/app.js"></script>
+    <script src="js/admin/dashboard.js"></script>
+    <script src="js/admin/operators.js"></script>
+    <script src="js/admin/drivers.js"></script>
+    <script src="js/admin/vehicles.js"></script>
+    <script src="js/admin/orders.js"></script>
+    <script src="js/admin/reports.js"></script>
+    <script src="js/admin/vacations.js"></script>
+    <script src="js/admin/blacklist.js"></script>
+    <script src="js/admin/administration.js"></script>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ADMIN MODULES
+    ═══════════════════════════════════════════════════════ -->
+    <script src="js/admin/targets.js"></script>
+    <script src="js/admin/loyalty.js"></script>
+    <script src="js/admin/salaries.js"></script>
+    <script src="js/admin/auto-dispatch.js"></script>
+    <script src="js/admin/sms-templates.js"></script>
+    <script src="js/admin/fixed-routes.js"></script>
+    <script src="js/admin/import.js"></script>
+    <script src="js/admin/integrations.js"></script>
+    <script src="js/admin/trackers.js"></script>
+    <script src="js/admin/streets.js"></script>
+    <script src="js/admin/mobile-users.js"></script>
+    <script src="js/admin/audit-viewer.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fshih loading
+            setTimeout(() => {
+                document.getElementById('loading-overlay')?.classList.add('hidden');
+            }, 600);
+
+            // Init admin
+            if (window.AdminApp) AdminApp.init();
+
+            // Init modules bazë
+            if (window.TaxiPWA) TaxiPWA.init();
+            if (window.TaxiResponsive) TaxiResponsive.init();
+            if (window.TaxiShortcuts) TaxiShortcuts.init();
+            if (window.TaxiDarkMode) TaxiDarkMode.init();
+            if (window.TaxiVoice) {
+                TaxiVoice.init();
+                document.getElementById('btn-voice-toggle')?.addEventListener('click', () => TaxiVoice.toggle());
+            }
+            document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+                if (window.TaxiDarkMode) TaxiDarkMode.toggle();
+            });
+            if (window.TaxiEmergency) TaxiEmergency.init();
+            if (window.TaxiHealth) TaxiHealth.start();
+            if (window.TaxiApiKeys) TaxiApiKeys.init();
+
+            // Modulet e reja
+            if (window.AdminTargets)       try { AdminTargets.init(); }       catch(e){ console.error('AdminTargets:', e); }
+            if (window.AdminLoyalty)       try { AdminLoyalty.init(); }       catch(e){ console.error('AdminLoyalty:', e); }
+            if (window.AdminSalaries)      try { AdminSalaries.init(); }      catch(e){ console.error('AdminSalaries:', e); }
+            if (window.AdminAutoDispatch)  try { AdminAutoDispatch.init(); }  catch(e){ console.error('AdminAutoDispatch:', e); }
+            if (window.AdminSmsTemplates)  try { AdminSmsTemplates.init(); }  catch(e){ console.error('AdminSmsTemplates:', e); }
+            if (window.AdminFixedRoutes)   try { AdminFixedRoutes.init(); }   catch(e){ console.error('AdminFixedRoutes:', e); }
+            if (window.AdminImport)        try { AdminImport.init(); }        catch(e){ console.error('AdminImport:', e); }
+            if (window.AdminIntegrations)  try { AdminIntegrations.init(); }  catch(e){ console.error('AdminIntegrations:', e); }
+            if (window.AdminTrackers)      try { AdminTrackers.init(); }      catch(e){ console.error('AdminTrackers:', e); }
+            if (window.AdminStreets)       try { AdminStreets.init(); }       catch(e){ console.error('AdminStreets:', e); }
+            if (window.AdminMobileUsers)   try { AdminMobileUsers.init(); }   catch(e){ console.error('AdminMobileUsers:', e); }
+            if (window.AdminAuditViewer)   try { AdminAuditViewer.init(); }   catch(e){ console.error('AdminAuditViewer:', e); }
+
+            // Shtesat
+            if (window.TaxiSearchGlobal)          try { TaxiSearchGlobal.init(); }          catch(e){}
+            if (window.TaxiPrint)                 try { TaxiPrint.init(); }                 catch(e){}
+            if (window.TaxiTrackersMap)           try { TaxiTrackersMap.init(); }           catch(e){}
+            if (window.TaxiNotificationsRealtime) try { TaxiNotificationsRealtime.init(); } catch(e){}
+            if (window.TaxiExportExcel)           try { TaxiExportExcel.init(); }           catch(e){}
+            if (window.TaxiReminders)             try { TaxiReminders.init(); }             catch(e){}
+
+            console.log('👔 Admin Panel v3.0 gati');
+        });
+    </script>
+</body>
+</html>
