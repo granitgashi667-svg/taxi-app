@@ -13,6 +13,7 @@ const auth = require('./auth');
 const { tenantMiddleware } = require('./tenant');
 const { authMiddleware, requireRole, errorHandler } = require('./middleware');
 const { initSocket } = require('./socket');
+const apiRoutes = require('./routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -122,7 +123,7 @@ app.get('/api/hours/today', authMiddleware, tenantMiddleware, (req, res) => {
     res.json({ hours });
 });
 
-// ═══ ORËT E PUNËS — sipas datës ═══
+// ═══ ORËT E PUNËS — sipas userit ═══
 app.get('/api/hours/:userId', authMiddleware, tenantMiddleware, (req, res) => {
     const { from, to } = req.query;
     let query = `SELECT * FROM hours_log WHERE user_id = ? AND tenant_id = ?`;
@@ -167,6 +168,11 @@ app.get('/api/stats/daily', authMiddleware, tenantMiddleware, (req, res) => {
 
     res.json({ stats });
 });
+
+// ═══════════════════════════════════════════════════════
+// ROUTES MODULARE
+// ═══════════════════════════════════════════════════════
+app.use('/api', apiRoutes);
 
 // ═══════════════════════════════════════════════════════
 // ERROR HANDLER
