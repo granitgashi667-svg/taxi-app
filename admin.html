@@ -15,13 +15,6 @@
     <link rel="stylesheet" href="css/admin.css">
     <link rel="stylesheet" href="css/admin-extra.css">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👔</text></svg>">
-
-    <script>
-        window.TAXI_CONFIG = {
-            MODE: 'local',
-            API_URL: ''
-        };
-    </script>
 </head>
 <body class="theme-2">
 
@@ -42,8 +35,8 @@
 
             <div class="login-form">
                 <div class="form-group">
-                    <label><i class="fa-solid fa-user"></i> Username</label>
-                    <input type="text" id="login-email" class="input-field" placeholder="G" autocomplete="off">
+                    <label><i class="fa-solid fa-envelope"></i> Email</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="manager@taxi.com" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label><i class="fa-solid fa-lock"></i> Fjalëkalimi</label>
@@ -230,21 +223,27 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ FIREBASE SHIM ═══ -->
-    <script src="js/firebase-shim.js"></script>
-
+    <!-- ═══ FIREBASE + EXTERNAL ═══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="firebase-config.js"></script>
 
+    <!-- ═══ CORE ═══ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
+    <script src="js/core/firebase.js"></script>
     <script src="js/core/permissions.js"></script>
 
+    <!-- ═══ DATA ═══ -->
     <script src="data.js"></script>
 
+    <!-- ═══ SERVICES ═══ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/operators.js"></script>
@@ -287,6 +286,7 @@
     <script src="js/services/print.js"></script>
     <script src="js/services/api-keys.js"></script>
 
+    <!-- ═══ ADMIN CORE ═══ -->
     <script src="js/admin/login.js"></script>
     <script src="js/admin/app.js"></script>
     <script src="js/admin/dashboard.js"></script>
@@ -299,6 +299,7 @@
     <script src="js/admin/blacklist.js"></script>
     <script src="js/admin/administration.js"></script>
 
+    <!-- ═══ ADMIN MODULES ═══ -->
     <script src="js/admin/targets.js"></script>
     <script src="js/admin/loyalty.js"></script>
     <script src="js/admin/salaries.js"></script>
