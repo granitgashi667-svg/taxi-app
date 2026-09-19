@@ -49,7 +49,7 @@
             </div>
 
             <div class="login-footer">
-                <p>Version 2.0 · Powered by TaxiDispatch</p>
+                <p>Version 3.0 · Powered by TaxiDispatch</p>
             </div>
         </div>
     </div>
@@ -101,9 +101,6 @@
                     <button class="ao-call" onclick="DriverApp.callClient()">
                         <i class="fa-solid fa-phone"></i>
                     </button>
-                    <button class="ao-chat" onclick="DriverApp.openChat()" title="Chat">
-                        <i class="fa-solid fa-comments"></i>
-                    </button>
                 </div>
                 <div class="ao-row">
                     <i class="fa-solid fa-location-dot"></i>
@@ -118,10 +115,6 @@
                         <div class="ao-label">Destinacioni</div>
                         <div class="ao-value" id="ao-destination">—</div>
                     </div>
-                </div>
-                <div class="ao-remark" id="ao-remark" style="display:none;">
-                    <i class="fa-solid fa-note-sticky"></i>
-                    <span id="ao-remark-text"></span>
                 </div>
             </div>
             <div class="ao-actions">
@@ -192,7 +185,6 @@
     <div class="order-modal" id="modal-new-order">
         <div class="order-modal-content">
             <div class="order-modal-header">
-                <div class="pulse-ring"></div>
                 <i class="fa-solid fa-bell"></i>
                 <h2>POROSI E RE!</h2>
             </div>
@@ -217,10 +209,6 @@
                         <div class="om-label">Destinacioni</div>
                         <div class="om-value" id="om-destination">—</div>
                     </div>
-                </div>
-                <div class="om-remark" id="om-remark" style="display:none;">
-                    <i class="fa-solid fa-note-sticky"></i>
-                    <span id="om-remark-text"></span>
                 </div>
                 <div class="om-timer">
                     <div class="om-timer-text">Kohë për pranim:</div>
@@ -272,6 +260,7 @@
 
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -280,62 +269,71 @@
 
     <!-- CORE -->
     <script src="js/core/config.js"></script>
-    <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/firebase.js"></script>
-    <script src="js/core/permissions.js"></script>
-
-    <!-- DATA -->
-    <script src="data.js"></script>
 
     <!-- SERVICES -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
-    <script src="js/services/operators.js"></script>
-    <script src="js/services/messages.js"></script>
     <script src="js/services/sound.js"></script>
-    <script src="js/services/sms.js"></script>
-    <script src="js/services/navigation.js"></script>
-    <script src="js/services/drivers.js"></script>
     <script src="js/services/logger.js"></script>
-    <script src="js/services/audit-log.js"></script>
     <script src="js/services/chat.js"></script>
     <script src="js/services/emergency.js"></script>
-    <script src="js/services/dark-mode.js"></script>
-    <script src="js/services/responsive.js"></script>
-    <script src="js/services/pwa.js"></script>
-    <script src="js/services/offline.js"></script>
     <script src="js/services/maps.js"></script>
-    <script src="js/services/validation.js"></script>
-    <script src="js/services/cache.js"></script>
-    <script src="js/services/session.js"></script>
-    <script src="js/services/geofencing.js"></script>
+    <script src="js/services/navigation.js"></script>
     <script src="js/services/geocoding.js"></script>
-    <script src="js/services/system-health.js"></script>
-    <script src="js/services/onboarding.js"></script>
-    <script src="js/services/help-center.js"></script>
-    <script src="js/services/feedback.js"></script>
-    <script src="js/services/qr-generator.js"></script>
 
-    <!-- DRIVER APP -->
+    <!-- DRIVER -->
     <script src="js/driver/login.js"></script>
     <script src="js/driver/app.js"></script>
     <script src="js/driver/queue.js"></script>
     <script src="js/driver/navigation.js"></script>
 
     <script>
+        // ═══ FSHIH LOADING MENJËHERË — para çdo gjëje ═══
+        setTimeout(() => {
+            const loader = document.getElementById('loading-overlay');
+            if (loader) loader.classList.add('hidden');
+        }, 800);
+
+        // ═══ INIT ME TRY/CATCH ═══
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.DriverApp) DriverApp.init();
-            if (window.TaxiPWA) TaxiPWA.init();
-            if (window.TaxiResponsive) TaxiResponsive.init();
-            if (window.TaxiDarkMode) TaxiDarkMode.init();
-            if (window.TaxiHealth) TaxiHealth.start();
-            if (window.TaxiOnboarding) {
-                setTimeout(() => TaxiOnboarding.start('driver'), 4000);
+            console.log('🚗 Driver App — Duke u nisur...');
+
+            try {
+                if (window.DriverLogin) DriverLogin.init();
+                console.log('✅ DriverLogin init OK');
+            } catch (e) {
+                console.error('❌ DriverLogin:', e.message);
             }
+
+            try {
+                if (window.DriverApp) DriverApp.init();
+                console.log('✅ DriverApp init OK');
+            } catch (e) {
+                console.error('❌ DriverApp:', e.message);
+            }
+
+            try {
+                if (window.DriverNavigation) DriverNavigation.init();
+            } catch (e) {
+                console.error('❌ DriverNavigation:', e.message);
+            }
+
+            try {
+                if (window.DriverQueue) DriverQueue.init();
+            } catch (e) {
+                console.error('❌ DriverQueue:', e.message);
+            }
+
             console.log('🚗 Driver App gati');
+        });
+
+        // ═══ GLOBAL ERROR HANDLER ═══
+        window.addEventListener('error', (e) => {
+            console.error('❌ GLOBAL ERROR:', e.message, 'në', e.filename, 'rreshti', e.lineno);
         });
     </script>
 </body>
