@@ -2,106 +2,108 @@
 
 /**
  * js/firebase-shim.js
- * Zëvendëson Firebase me API lokale (Node.js + SQLite)
- * NUK ndryshon asgjë në kodin ekzistues — thjesht ridrejton kërkesat
+ * Firebase i zëvendësuar me localStorage — punon pa server
+ * Punon në Cloudflare, GitHub Pages, çdo host
  */
 
 (function() {
-    const API_URL = (window.TAXI_CONFIG?.API_URL) || 'http://localhost:3000';
-    let authToken = localStorage.getItem('taxi_token') || null;
+    console.log('🔥 Firebase SHIM — localStorage mode');
+
+    const STORAGE_KEY = 'taxi_data';
     let currentUser = null;
     const authListeners = [];
 
     // ═══════════════════════════════════════════════════════
-    // HELPER: FETCH API
+    // DB — localStorage
     // ═══════════════════════════════════════════════════════
-    async function apiCall(path, method = 'GET', body = null) {
-        const options = {
-            method,
-            headers: { 'Content-Type': 'application/json' }
-        };
-        if (authToken) options.headers['Authorization'] = `Bearer ${authToken}`;
-        if (body) options.body = JSON.stringify(body);
-
+    function loadDB() {
         try {
-            const res = await fetch(`${API_URL}/api${path}`, options);
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                const err = new Error(data.error || `HTTP ${res.status}`);
-                err.status = res.status;
-                err.code = data.error || 'api-error';
-                throw err;
-            }
-            return data;
-        } catch (e) {
-            if (e.message && (e.message.includes('fetch') || e.message.includes('Failed'))) {
-                console.warn('⚠️ Serveri nuk përgjigjet:', path);
-                return {};
-            }
-            throw e;
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // MAP: Collection name → API route
-    // ═══════════════════════════════════════════════════════
-    function routeFor(collection) {
-        const map = {
-            'orders': 'orders',
-            'drivers': 'drivers',
-            'vehicles': 'vehicles',
-            'clients': 'clients',
-            'zones': 'zones',
-            'stands': 'stands',
-            'custom_locations': 'locations',
-            'locations': 'locations',
-            'tariffs': 'tariffs',
-            'workers': 'workers',
-            'users': 'workers',
-            'operators': 'workers',
-            'messages': 'messages',
-            'driver_messages': 'messages/threads',
-            'predefined_messages': 'messages/predefined',
-            'remarks': 'messages/remarks',
-            'tenants': 'tenants',
-            'settings': 'workers'
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return {
+            orders: [],
+            drivers: [],
+            vehicles: [],
+            clients: [],
+            zones: [],
+            stands: [],
+            locations: [],
+            tariffs: [],
+            workers: [],
+            operators: [],
+            messages: [],
+            remarks: [],
+            tenants: [],
+            driver_messages: [],
+            loyalty_cards: [],
+            mobile_users: [],
+            fuel_refills: [],
+            fuel_prices: [],
+            salaries: [],
+            sms_templates: [],
+            fixed_price_routes: [],
+            trackers: [],
+            streets: [],
+            stands_list: [],
+            target_history: [],
+            preorders: [],
+            ipay: [],
+            mobile: [],
+            audit_log: [],
+            blacklist: [],
+            vacations: []
         };
-        return map[collection] || collection;
     }
 
-    // ═══════════════════════════════════════════════════════
-    // EXTRACT: Nxjerr array/item nga response
-    // ═══════════════════════════════════════════════════════
-    function extractArray(data) {
-        if (!data) return [];
-        if (Array.isArray(data)) return data;
-        const keys = ['orders', 'drivers', 'vehicles', 'clients', 'zones',
-                      'stands', 'locations', 'tariffs', 'workers', 'users',
-                      'messages', 'threads', 'remarks', 'tenants', 'data'];
-        for (const k of keys) {
-            if (Array.isArray(data[k])) return data[k];
+    function saveDB(db) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        } catch (e) {
+            console.error('localStorage save error:', e);
         }
-        return [];
     }
 
-    function extractItem(data) {
-        if (!data) return null;
-        if (data.id) return data;
-        const keys = ['order', 'driver', 'vehicle', 'client', 'zone',
-                      'stand', 'location', 'tariff', 'worker', 'user',
-                      'message', 'thread', 'tenant', 'data'];
-        for (const k of keys) {
-            if (data[k] && typeof data[k] === 'object') return data[k];
+    let DB = loadDB();
+
+    // Seed me demo data nëse është herë e parë
+    function seedDemo() {
+        if (DB.workers.length === 0) {
+            DB.workers = [
+                { id: 1, username: 'G', password: '1', name: 'Granit Gashi', surname: '', role: 'admin', active: true, online: true, phone: '+383 44 123 456' },
+                { id: 2, username: 'operator1', password: '1', name: 'Ardit Krasniqi', surname: '', role: 'operator', active: true, online: true, phone: '+383 44 234 567' },
+                { id: 3, username: 'operator2', password: '1', name: 'Blerim Hoxha', surname: '', role: 'operator', active: false, online: false, phone: '+383 44 345 678' },
+                { id: 4, username: 'manager1', password: '1', name: 'Driton Berisha', surname: '', role: 'manager', active: true, online: true, phone: '+383 44 456 789' }
+            ];
+            DB.drivers = [
+                { id: 10, username: 'shofer1', password: '1', name: 'Fatos Kelmendi', surname: '', role: 'driver', active: true, online: true, vehicle_number: 5, phone: '+383 44 555 111' },
+                { id: 11, username: 'shofer2', password: '1', name: 'Besnik Rexha', surname: '', role: 'driver', active: true, online: true, vehicle_number: 12, phone: '+383 44 666 222' },
+                { id: 12, username: 'shofer3', password: '1', name: 'Endrit Aliu', surname: '', role: 'driver', active: true, online: false, vehicle_number: 23, phone: '+383 44 777 333' }
+            ];
+            DB.clients = [
+                { id: 100, name: 'Ardit Krasniqi', phone: '+383 44 111 222', orders_count: 5 },
+                { id: 101, name: 'Blerim Hoxha', phone: '+383 44 333 444', orders_count: 3 }
+            ];
+            saveDB(DB);
+            console.log('✅ Demo data u krijua');
         }
-        return data;
+    }
+
+    seedDemo();
+
+    // ═══════════════════════════════════════════════════════
+    // HELPER: Gjenero ID
+    // ═══════════════════════════════════════════════════════
+    function newId() {
+        return Date.now() + Math.floor(Math.random() * 1000);
     }
 
     // ═══════════════════════════════════════════════════════
-    // CLEAN: Heq FieldValue objects para dërgimit në server
+    // CLEAN: FieldValue handling
     // ═══════════════════════════════════════════════════════
-    function cleanForAPI(data) {
+    function resolveFieldValues(data) {
         if (!data || typeof data !== 'object') return data;
-        if (Array.isArray(data)) return data.map(cleanForAPI);
+        if (Array.isArray(data)) return data.map(resolveFieldValues);
 
         const out = {};
         Object.keys(data).forEach(k => {
@@ -113,14 +115,10 @@
                     out[k] = v.value;
                 } else if (v.__isFieldValue === 'arrayUnion') {
                     out[k] = v.value;
-                } else if (v.__isFieldValue === 'arrayRemove') {
-                    out[k] = v.value;
                 } else if (v.__isFieldValue === 'delete') {
                     out[k] = null;
-                } else if (v instanceof Date) {
-                    out[k] = v.toISOString();
                 } else {
-                    out[k] = cleanForAPI(v);
+                    out[k] = resolveFieldValues(v);
                 }
             } else {
                 out[k] = v;
@@ -130,52 +128,45 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // TIMESTAMP (Firestore.Timestamp kompatibilitet)
-    // ═══════════════════════════════════════════════════════
-    function makeTimestamp(date) {
-        const d = date instanceof Date ? date : new Date(date);
-        return {
-            seconds: Math.floor(d.getTime() / 1000),
-            nanoseconds: 0,
-            toDate: () => d,
-            toMillis: () => d.getTime(),
-            isEqual: (o) => o?.seconds === Math.floor(d.getTime() / 1000)
-        };
-    }
-
-    // ═══════════════════════════════════════════════════════
-    // AUTH SHIM
+    // AUTH
     // ═══════════════════════════════════════════════════════
     const auth = {
-        get currentUser() {
-            return currentUser;
-        },
+        get currentUser() { return currentUser; },
 
-        // Login me email (pranon edhe username direkt)
         async signInWithEmailAndPassword(email, password) {
-            const username = String(email).includes('@taxiapp.local')
-                ? String(email).replace('@taxiapp.local', '')
-                : String(email).split('@')[0];
+            const username = String(email).split('@')[0].toLowerCase();
 
-            const data = await apiCall('/auth/login', 'POST', { username, password });
+            // Gjej user me username ose email
+            let user = DB.workers.find(w =>
+                (w.username || '').toLowerCase() === username ||
+                (w.email || '').toLowerCase() === String(email).toLowerCase()
+            );
 
-            if (data.error) {
-                const e = new Error(data.error);
+            // Provo edhe drivers
+            if (!user) {
+                user = DB.drivers.find(d =>
+                    (d.username || '').toLowerCase() === username
+                );
+            }
+
+            if (!user || user.password !== password) {
+                const e = new Error('Username ose password i gabuar');
                 e.code = 'auth/wrong-password';
                 throw e;
             }
 
-            authToken = data.token;
             currentUser = {
-                uid: data.user.id,
-                email: `${data.user.username}@taxiapp.local`,
-                displayName: data.user.name,
+                uid: user.id,
+                email: `${user.username}@taxiapp.local`,
+                displayName: user.name,
                 emailVerified: true,
-                ...data.user
+                ...user
             };
 
-            localStorage.setItem('taxi_token', authToken);
             localStorage.setItem('taxi_user', JSON.stringify(currentUser));
+
+            // Ruaj në hours_log
+            addHoursLog(user.id);
 
             authListeners.forEach(cb => {
                 try { cb(currentUser); } catch (e) {}
@@ -184,76 +175,42 @@
             return { user: currentUser };
         },
 
-        // Register user të re
         async createUserWithEmailAndPassword(email, password) {
-            const username = String(email).includes('@taxiapp.local')
-                ? String(email).replace('@taxiapp.local', '')
-                : String(email).split('@')[0];
+            const username = String(email).split('@')[0].toLowerCase();
+            const exists = DB.workers.find(w => w.username === username);
+            if (exists) throw new Error('Username ekziston');
 
-            const data = await apiCall('/workers', 'POST', {
+            const user = {
+                id: newId(),
                 username,
                 password,
                 name: username,
-                role: 'operator'
-            });
-
-            if (data.error) {
-                const e = new Error(data.error);
-                e.code = 'auth/email-already-in-use';
-                throw e;
-            }
-
-            return {
-                user: {
-                    uid: data.userId,
-                    email,
-                    displayName: username
-                }
+                role: 'operator',
+                active: true,
+                online: false
             };
+            DB.workers.push(user);
+            saveDB(DB);
+
+            return { user: { uid: user.id, email } };
         },
 
-        // Logout
         async signOut() {
-            try {
-                await apiCall('/auth/logout', 'POST');
-            } catch (e) {}
-
-            authToken = null;
             currentUser = null;
-            localStorage.removeItem('taxi_token');
             localStorage.removeItem('taxi_user');
-
-            authListeners.forEach(cb => {
-                try { cb(null); } catch (e) {}
-            });
+            authListeners.forEach(cb => { try { cb(null); } catch (e) {} });
         },
 
-        // Listener
         onAuthStateChanged(cb) {
             authListeners.push(cb);
 
-            if (authToken) {
-                const cachedUser = localStorage.getItem('taxi_user');
-                if (cachedUser) {
-                    try {
-                        currentUser = JSON.parse(cachedUser);
-                        setTimeout(() => cb(currentUser), 10);
-                    } catch (e) {}
-                }
-
-                apiCall('/auth/me').then(data => {
-                    const user = extractItem(data);
-                    if (user && user.id) {
-                        currentUser = {
-                            uid: user.id,
-                            email: `${user.username}@taxiapp.local`,
-                            displayName: user.name,
-                            ...user
-                        };
-                        localStorage.setItem('taxi_user', JSON.stringify(currentUser));
-                        cb(currentUser);
-                    }
-                }).catch(() => {});
+            // Provo sesion
+            const cached = localStorage.getItem('taxi_user');
+            if (cached) {
+                try {
+                    currentUser = JSON.parse(cached);
+                    setTimeout(() => cb(currentUser), 10);
+                } catch (e) {}
             } else {
                 setTimeout(() => cb(null), 10);
             }
@@ -264,20 +221,30 @@
             };
         },
 
-        async getIdToken() {
-            return authToken;
-        },
-
+        async getIdToken() { return 'local-token'; },
         async getIdTokenResult() {
-            return {
-                token: authToken,
-                claims: currentUser || {}
-            };
+            return { token: 'local-token', claims: currentUser || {} };
         }
     };
 
+    function addHoursLog(userId) {
+        const today = new Date().toISOString().slice(0, 10);
+        if (!DB.hours_log) DB.hours_log = [];
+        const existing = DB.hours_log.find(h => h.user_id === userId && h.date === today && !h.logout_at);
+        if (!existing) {
+            DB.hours_log.push({
+                id: newId(),
+                user_id: userId,
+                login_at: new Date().toISOString(),
+                logout_at: null,
+                date: today
+            });
+            saveDB(DB);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════
-    // FIRESTORE SHIM — Document Reference
+    // FIRESTORE — Document Ref
     // ═══════════════════════════════════════════════════════
     function createDocRef(collectionName, docId) {
         return {
@@ -285,142 +252,147 @@
             path: `${collectionName}/${docId}`,
 
             async get() {
-                if (!docId) return { exists: false, id: null, data: () => ({}) };
-
-                try {
-                    const data = await apiCall(`/${routeFor(collectionName)}/${docId}`);
-                    const item = extractItem(data);
-                    return {
-                        exists: !!item && !!item.id,
-                        id: docId,
-                        data: () => item || {},
-                        get: (field) => item ? item[field] : undefined
-                    };
-                } catch (e) {
-                    return { exists: false, id: docId, data: () => ({}) };
-                }
+                const list = DB[collectionName] || [];
+                const item = list.find(i => String(i.id) === String(docId));
+                return {
+                    exists: !!item,
+                    id: docId,
+                    data: () => item || {},
+                    get: (f) => item ? item[f] : undefined
+                };
             },
 
             async set(newData, options = {}) {
-                const cleanData = cleanForAPI(newData);
-                return apiCall(`/${routeFor(collectionName)}/${docId}`, 'PUT', cleanData);
+                const clean = resolveFieldValues(newData);
+                if (!DB[collectionName]) DB[collectionName] = [];
+                const list = DB[collectionName];
+                const idx = list.findIndex(i => String(i.id) === String(docId));
+
+                if (idx >= 0) {
+                    list[idx] = options.merge ? { ...list[idx], ...clean } : { id: docId, ...clean };
+                } else {
+                    list.push({ id: docId, ...clean, created_at: new Date().toISOString() });
+                }
+                saveDB(DB);
+                return { id: docId };
             },
 
             async update(newData) {
-                const cleanData = cleanForAPI(newData);
-                return apiCall(`/${routeFor(collectionName)}/${docId}`, 'PUT', cleanData);
+                const clean = resolveFieldValues(newData);
+                if (!DB[collectionName]) DB[collectionName] = [];
+                const list = DB[collectionName];
+                const idx = list.findIndex(i => String(i.id) === String(docId));
+                if (idx >= 0) {
+                    list[idx] = { ...list[idx], ...clean };
+                } else {
+                    list.push({ id: docId, ...clean });
+                }
+                saveDB(DB);
+                return { id: docId };
             },
 
             async delete() {
-                return apiCall(`/${routeFor(collectionName)}/${docId}`, 'DELETE');
+                if (!DB[collectionName]) return;
+                DB[collectionName] = DB[collectionName].filter(i => String(i.id) !== String(docId));
+                saveDB(DB);
             },
 
             onSnapshot(cb) {
                 this.get().then(snap => {
-                    cb({
-                        ...snap,
-                        docChanges: () => [{ type: 'added', doc: snap }]
-                    });
-                }).catch(() => {});
+                    cb({ ...snap, docChanges: () => [{ type: 'added', doc: snap }] });
+                });
                 return () => {};
             }
         };
     }
 
     // ═══════════════════════════════════════════════════════
-    // FIRESTORE SHIM — Query
+    // FIRESTORE — Query
     // ═══════════════════════════════════════════════════════
     function createQuery(collectionName) {
-        const state = {
-            filters: [],
-            orderByField: null,
-            orderByDir: 'asc',
-            limitNum: null
-        };
+        const state = { filters: [], orderField: null, orderDir: 'asc', limitNum: null };
 
-        const query = {
+        const q = {
             where(field, op, value) {
                 state.filters.push({ field, op, value });
                 return this;
             },
-
             orderBy(field, dir = 'asc') {
-                state.orderByField = field;
-                state.orderByDir = dir;
+                state.orderField = field;
+                state.orderDir = dir;
                 return this;
             },
-
             limit(n) {
                 state.limitNum = n;
                 return this;
             },
-
-            doc(id) {
-                return createDocRef(collectionName, id);
-            },
+            doc(id) { return createDocRef(collectionName, id); },
 
             async get() {
-                try {
-                    // Dërgo filtra == në query string
-                    const params = new URLSearchParams();
-                    state.filters.forEach(f => {
-                        if (f.op === '==' && f.value !== undefined && f.value !== null) {
-                            params.append(f.field, String(f.value));
+                let items = [...(DB[collectionName] || [])];
+
+                // Filters
+                state.filters.forEach(f => {
+                    items = items.filter(i => {
+                        const v = i[f.field];
+                        switch (f.op) {
+                            case '==': return v === f.value;
+                            case '!=': return v !== f.value;
+                            case '>': return v > f.value;
+                            case '<': return v < f.value;
+                            case '>=': return v >= f.value;
+                            case '<=': return v <= f.value;
+                            case 'array-contains': return Array.isArray(v) && v.includes(f.value);
+                            case 'in': return Array.isArray(f.value) && f.value.includes(v);
+                            case 'not-in': return Array.isArray(f.value) && !f.value.includes(v);
+                            default: return true;
                         }
                     });
-                    if (state.limitNum) params.append('limit', state.limitNum);
+                });
 
-                    const qs = params.toString();
-                    const data = await apiCall(`/${routeFor(collectionName)}${qs ? '?' + qs : ''}`);
-                    let items = extractArray(data);
-
-                    // Filtro lokalisht për operatorë tjerë
-                    state.filters.forEach(f => {
-                        if (f.op === '!=') items = items.filter(i => i[f.field] !== f.value);
-                        else if (f.op === '>') items = items.filter(i => i[f.field] > f.value);
-                        else if (f.op === '<') items = items.filter(i => i[f.field] < f.value);
-                        else if (f.op === '>=') items = items.filter(i => i[f.field] >= f.value);
-                        else if (f.op === '<=') items = items.filter(i => i[f.field] <= f.value);
-                        else if (f.op === 'array-contains') items = items.filter(i => Array.isArray(i[f.field]) && i[f.field].includes(f.value));
-                        else if (f.op === 'in') items = items.filter(i => Array.isArray(f.value) && f.value.includes(i[f.field]));
-                        else if (f.op === 'not-in') items = items.filter(i => !Array.isArray(f.value) || !f.value.includes(i[f.field]));
-                        else if (f.op === 'array-contains-any') items = items.filter(i => Array.isArray(i[f.field]) && Array.isArray(f.value) && i[f.field].some(x => f.value.includes(x)));
+                // Order
+                if (state.orderField) {
+                    const dir = state.orderDir === 'desc' ? -1 : 1;
+                    items.sort((a, b) => {
+                        const av = a[state.orderField];
+                        const bv = b[state.orderField];
+                        if (av < bv) return -1 * dir;
+                        if (av > bv) return 1 * dir;
+                        return 0;
                     });
-
-                    if (state.orderByField) {
-                        const f = state.orderByField;
-                        const dir = state.orderByDir === 'desc' ? -1 : 1;
-                        items.sort((a, b) => {
-                            if (a[f] < b[f]) return -1 * dir;
-                            if (a[f] > b[f]) return 1 * dir;
-                            return 0;
-                        });
-                    }
-
-                    const docs = items.map(item => ({
-                        id: item.id,
-                        exists: true,
-                        ref: createDocRef(collectionName, item.id),
-                        data: () => item,
-                        get: (field) => item[field]
-                    }));
-
-                    return {
-                        docs,
-                        size: docs.length,
-                        empty: docs.length === 0,
-                        forEach(cb) { docs.forEach(cb); }
-                    };
-                } catch (e) {
-                    console.warn(`⚠️ Query ${collectionName}:`, e.message);
-                    return { docs: [], size: 0, empty: true, forEach: () => {} };
                 }
+
+                // Limit
+                if (state.limitNum) items = items.slice(0, state.limitNum);
+
+                const docs = items.map(item => ({
+                    id: item.id,
+                    exists: true,
+                    ref: createDocRef(collectionName, item.id),
+                    data: () => item,
+                    get: (f) => item[f]
+                }));
+
+                return {
+                    docs,
+                    size: docs.length,
+                    empty: docs.length === 0,
+                    forEach: (cb) => docs.forEach(cb)
+                };
             },
 
             async add(newData) {
-                const cleanData = cleanForAPI(newData);
-                const res = await apiCall(`/${routeFor(collectionName)}`, 'POST', cleanData);
-                return { id: res.id || res.orderId || res._id || 'new' };
+                const clean = resolveFieldValues(newData);
+                if (!DB[collectionName]) DB[collectionName] = [];
+                const id = newId();
+                DB[collectionName].push({
+                    id,
+                    ...clean,
+                    created_at: new Date().toISOString(),
+                    createdAtLocal: Date.now()
+                });
+                saveDB(DB);
+                return { id };
             },
 
             onSnapshot(cb) {
@@ -429,52 +401,36 @@
                         ...snap,
                         docChanges: () => snap.docs.map(d => ({ type: 'added', doc: d }))
                     });
-                }).catch(() => {});
+                });
                 return () => {};
             },
 
-            // Për të vazhduar chain
             startAt() { return this; },
             endAt() { return this; },
             startAfter() { return this; },
             endBefore() { return this; }
         };
 
-        return query;
+        return q;
     }
 
     const firestore = {
-        collection(name) {
-            return createQuery(name);
-        },
+        collection(name) { return createQuery(name); },
 
-        // FieldValue
         FieldValue: {
-            serverTimestamp() {
-                return { __isFieldValue: 'serverTimestamp' };
-            },
-            increment(n) {
-                return { __isFieldValue: 'increment', value: n };
-            },
-            arrayUnion(...items) {
-                return { __isFieldValue: 'arrayUnion', value: items };
-            },
-            arrayRemove(...items) {
-                return { __isFieldValue: 'arrayRemove', value: items };
-            },
-            delete() {
-                return { __isFieldValue: 'delete' };
-            }
+            serverTimestamp() { return { __isFieldValue: 'serverTimestamp' }; },
+            increment(n) { return { __isFieldValue: 'increment', value: n }; },
+            arrayUnion(...items) { return { __isFieldValue: 'arrayUnion', value: items }; },
+            arrayRemove(...items) { return { __isFieldValue: 'arrayRemove', value: items }; },
+            delete() { return { __isFieldValue: 'delete' }; }
         },
 
-        // Timestamp
         Timestamp: {
-            now: () => makeTimestamp(new Date()),
-            fromDate: (d) => makeTimestamp(d),
-            fromMillis: (ms) => makeTimestamp(new Date(ms))
+            now: () => ({ seconds: Math.floor(Date.now() / 1000), toDate: () => new Date() }),
+            fromDate: (d) => ({ seconds: Math.floor(d.getTime() / 1000), toDate: () => d }),
+            fromMillis: (ms) => ({ seconds: Math.floor(ms / 1000), toDate: () => new Date(ms) })
         },
 
-        // Batch
         batch() {
             const ops = [];
             return {
@@ -487,13 +443,12 @@
                             if (op.type === 'set') await op.ref.set(op.data, op.opts);
                             else if (op.type === 'update') await op.ref.update(op.data);
                             else if (op.type === 'delete') await op.ref.delete();
-                        } catch (e) { console.warn('Batch:', e); }
+                        } catch (e) {}
                     }
                 }
             };
         },
 
-        // Transaction
         runTransaction(fn) {
             return fn({
                 get: (ref) => ref.get(),
@@ -503,84 +458,59 @@
             });
         },
 
-        // Bulk writer (opsionale)
         settings() {},
         enablePersistence() { return Promise.resolve(); }
     };
 
     // ═══════════════════════════════════════════════════════
-    // FUNCTIONS SHIM
+    // FUNCTIONS / STORAGE / MESSAGING
     // ═══════════════════════════════════════════════════════
     const functions = {
         httpsCallable(name) {
             return async (data) => {
-                try {
-                    const res = await apiCall(`/functions/${name}`, 'POST', data);
-                    return { data: res };
-                } catch (e) {
-                    throw new Error(e.message);
-                }
+                console.log('📞 Function call (local):', name, data);
+                return { data: { success: true } };
             };
-        },
-        useEmulator() {}
+        }
     };
 
-    // ═══════════════════════════════════════════════════════
-    // STORAGE SHIM
-    // ═══════════════════════════════════════════════════════
     const storage = {
         ref(path) {
             return {
-                async put(file) {
-                    return { ref: { getDownloadURL: async () => '' } };
-                },
+                async put(file) { return { ref: { getDownloadURL: async () => '' } }; },
                 async getDownloadURL() { return ''; },
                 async delete() {}
             };
         }
     };
 
-    // ═══════════════════════════════════════════════════════
-    // MESSAGING SHIM
-    // ═══════════════════════════════════════════════════════
     const messaging = {
         async getToken() { return ''; },
         onMessage() {},
         onBackgroundMessage() {},
-        async requestPermission() { return 'granted'; },
-        useServiceWorker() {}
+        async requestPermission() { return 'granted'; }
     };
 
     // ═══════════════════════════════════════════════════════
-    // REPLACE GLOBAL FIREBASE
+    // EXPORT
     // ═══════════════════════════════════════════════════════
     window.firebase = {
         apps: [],
-
-        initializeApp(config, name) {
-            console.log('🔥 Firebase SHIM aktivizuar (lokale)');
-            return { name: name || '[DEFAULT]' };
-        },
-
-        app(name) { return { name: name || '[DEFAULT]' }; },
-        apps: [],
-
-        auth() { return auth; },
-        firestore() { return firestore; },
-        functions() { return functions; },
-        storage() { return storage; },
-        messaging() { return messaging; },
-
-        analytics() {
-            return { logEvent: () => {} };
-        },
-
-        // Version info
-        SDK_VERSION: 'shim-1.0.0'
+        initializeApp: () => ({ name: '[DEFAULT]' }),
+        app: () => ({ name: '[DEFAULT]' }),
+        auth: () => auth,
+        firestore: () => firestore,
+        functions: () => functions,
+        storage: () => storage,
+        messaging: () => messaging,
+        analytics: () => ({ logEvent: () => {} }),
+        SDK_VERSION: 'shim-localStorage-1.0'
     };
 
-    // Ruaj në window për debug
-    window.__taxiFirebaseShim = true;
+    window.__taxiData = DB;
+    window.__taxiSave = () => saveDB(DB);
+    window.__taxiReload = () => { DB = loadDB(); };
 
-    console.log('✅ Firebase SHIM i ngarkuar — të dhënat shkojnë në server lokal:', API_URL);
+    console.log('✅ Firebase SHIM — localStorage mode aktiv');
+    console.log('📊 Demo users: G/1, operator1/1, manager1/1, shofer1/1');
 })();
