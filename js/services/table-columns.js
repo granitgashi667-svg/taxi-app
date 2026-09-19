@@ -127,16 +127,7 @@ window.TaxiTableColumns = (() => {
             });
         });
 
-        // Butoni "Kolona" për të treguar të fshehurat
-        if (!table.parentElement.querySelector('.cols-toggle-btn')) {
-            const btn = document.createElement('button');
-            btn.className = 'cols-toggle-btn';
-            btn.innerHTML = '<i class="fa-solid fa-table-columns"></i> Kolona';
-            btn.onclick = (e) => { e.stopPropagation(); openColumnManager(table, tableId); };
-            table.parentElement.style.position = 'relative';
-            table.parentElement.appendChild(btn);
-        }
-    }
+
 
     function reorderColumn(table, fromIdx, toIdx) {
         const thead = table.querySelector('thead tr');
