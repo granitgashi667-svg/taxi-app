@@ -432,13 +432,93 @@
     <script src="js/app.js"></script>
 
     <script>
+        // ═══════════════════════════════════════════════════════
+        // ORA LIVE
+        // ═══════════════════════════════════════════════════════
+        function startClock() {
+            const updateClock = () => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('sq-AL', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                });
+                const dateStr = now.toLocaleDateString('sq-AL', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+
+                const timeEl = document.getElementById('clock-time');
+                const dateEl = document.getElementById('clock-date');
+                if (timeEl) timeEl.textContent = timeStr;
+                if (dateEl) dateEl.textContent = dateStr;
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // TOP BAR — përditësim
+        // ═══════════════════════════════════════════════════════
+        async function updateTopBarStats() {
+            const user = window.TaxiAuth?.getUser?.();
+            if (!user) return;
+
+            const nameEl = document.getElementById('tp-name');
+            const avatarEl = document.getElementById('rail-user');
+            if (nameEl) nameEl.textContent = user.name || user.username || '—';
+            if (avatarEl) avatarEl.textContent = (user.name || 'G').slice(0, 2).toUpperCase();
+
+            const activeEl = document.getElementById('tp-active');
+            if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
+                activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
+            }
+
+            try {
+                const stats = await window.TaxiAPI.stats.daily();
+                const userStats = stats.stats?.find(s => s.operator_id === user.id);
+
+                const revenueEl = document.getElementById('tp-revenue');
+                const callsEl = document.getElementById('tp-calls');
+                const rateEl = document.getElementById('tp-rate');
+
+                if (revenueEl) revenueEl.textContent = '€' + (userStats?.revenue || 0).toFixed(0);
+                if (callsEl) callsEl.textContent = userStats?.total_orders || 0;
+                if (rateEl) rateEl.textContent = (userStats?.success_rate || 0).toFixed(1) + '%';
+            } catch (e) {}
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // KONTROLLO SERVERIN
+        // ═══════════════════════════════════════════════════════
+        async function checkServerInBackground() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Server OK:', data.version || 'v3.0');
+                }
+            } catch (e) {
+                console.warn('⚠️ Server nuk përgjigjet:', e.message);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // BOOTSTRAP
+        // ═══════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 TaxiApp 3.0 — Operator Console');
 
+            // Fshih loading
             setTimeout(() => {
                 document.getElementById('loading-overlay')?.classList.add('hidden');
             }, 500);
 
+            // Fillo orën
+            startClock();
+
+            // Init modulet
             const modules = [
                 'TaxiSound', 'TaxiPWA', 'TaxiResponsive', 'TaxiShortcuts',
                 'TaxiDarkMode', 'TaxiVoice',
@@ -460,8 +540,10 @@
                 }
             } catch (e) {}
 
+            // Kontrollo serverin në background
             checkServerInBackground();
 
+            // ═══ DEV MODE ═══
             if (window.TAXI_CONFIG?.DEV_MODE) {
                 console.log('🔓 DEV MODE aktiv');
 
@@ -471,22 +553,38 @@
                     try { window.TaxiAuth._setDevUser?.(devUser); } catch (e) {}
                 }
 
-                const nameEl = document.getElementById('tp-name');
-                const avatarEl = document.getElementById('rail-user');
-                if (nameEl) nameEl.textContent = devUser.name;
-                if (avatarEl) avatarEl.textContent = 'GG';
-
                 document.getElementById('modal-login')?.classList.remove('active');
+
+                await updateTopBarStats();
+                setInterval(updateTopBarStats, 30000);
+                setInterval(() => {
+                    const activeEl = document.getElementById('tp-active');
+                    if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
+                        activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
+                    }
+                }, 1000);
 
                 console.log('✅ Dev user aktiv:', devUser.name);
                 console.log('👔 Operator Console v3.0 gati');
                 return;
             }
 
+            // ═══ LOGIN REAL ═══
             try {
                 if (window.TaxiAuth && typeof window.TaxiAuth.init === 'function') {
                     const isAuth = await window.TaxiAuth.init();
-                    if (!isAuth) document.getElementById('modal-login')?.classList.add('active');
+                    if (!isAuth) {
+                        document.getElementById('modal-login')?.classList.add('active');
+                    } else {
+                        await updateTopBarStats();
+                        setInterval(updateTopBarStats, 30000);
+                        setInterval(() => {
+                            const activeEl = document.getElementById('tp-active');
+                            if (activeEl && window.TaxiAuth?.getLoginDurationFormatted) {
+                                activeEl.textContent = window.TaxiAuth.getLoginDurationFormatted();
+                            }
+                        }, 1000);
+                    }
                 }
             } catch (e) {
                 console.error('❌ Auth init:', e);
@@ -495,22 +593,6 @@
 
             console.log('👔 Operator Console v3.0 gati');
         });
-
-        async function checkServerInBackground() {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3000);
-                const url = (window.TAXI_CONFIG?.API_URL || 'http://localhost:3000') + '/api/health';
-                const response = await fetch(url, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ Server OK:', data.version || 'v3.0');
-                }
-            } catch (e) {
-                console.warn('⚠️ Server nuk përgjigjet:', e.message);
-            }
-        }
     </script>
 </body>
 </html>
