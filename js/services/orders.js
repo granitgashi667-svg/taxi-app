@@ -1,25 +1,18 @@
 'use strict';
 
 /**
- * orders.js — Menaxhimi i porosive me Firestore (real-time)
+ * orders.js — Menaxhimi i porosive me TaxiAPI (SQLite)
+ * Zëvendëson Firestore me polling çdo 3 sekonda.
  */
 
 window.TaxiOrders = (() => {
-    const COLLECTION = 'orders';
-    let unsubscribe = null;
+    let pollInterval = null;
+    let lastOrders = new Map();
     const listeners = { added: [], updated: [], removed: [] };
 
-    function db() {
-        return window.TaxiFirebase?.db || null;
-    }
-
-    function serverTime() {
-        return window.TaxiFirebase?.serverTime?.() || new Date();
-    }
-
+    // ═══ CREATE ═══
     async function create(orderData) {
-        const database = db();
-        if (!database) throw new Error('Firebase nuk është gati');
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
 
         const now = new Date();
         const timeStr = window.TaxiUtils.time(now);
@@ -42,7 +35,6 @@ window.TaxiOrders = (() => {
             driverName: orderData.driverName || null,
             dispatchMode: orderData.dispatchMode || 'auto',
 
-            // Të dhënat e termin-it (nëse ka)
             isPreorder: orderData.isPreorder || false,
             terminDate: orderData.terminDate || null,
             terminTime: orderData.terminTime || null,
@@ -50,7 +42,6 @@ window.TaxiOrders = (() => {
             terminRepeat: orderData.terminRepeat || 'none',
             terminDateTime: orderData.terminDateTime || null,
 
-            createdAt: serverTime(),
             createdAtLocal: now.getTime(),
             createdTimeStr: timeStr,
             createdDateStr: dateStr,
@@ -67,23 +58,22 @@ window.TaxiOrders = (() => {
         };
 
         try {
-            const ref = await database.collection(COLLECTION).add(order);
-            console.log('✅ Porosia u ruajt:', ref.id);
-            return { id: ref.id, ...order };
+            const result = await window.TaxiAPI.orders.create(order);
+            console.log('✅ Porosia u ruajt:', result.id || result.orderId);
+            return result;
         } catch (e) {
             console.error('❌ Gabim ruajtje porosie:', e);
             throw e;
         }
     }
 
+    // ═══ UPDATE ═══
     async function update(orderId, changes) {
-        const database = db();
-        if (!database) throw new Error('Firebase nuk është gati');
-
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
         try {
-            await database.collection(COLLECTION).doc(orderId).update({
+            await window.TaxiAPI.orders.update(orderId, {
                 ...changes,
-                updatedAt: serverTime(),
+                updatedAt: Date.now(),
                 updatedBy: window.TaxiAuth?.currentUser()?.email || 'unknown'
             });
             console.log('✅ Porosia u përditësua:', orderId);
@@ -93,12 +83,11 @@ window.TaxiOrders = (() => {
         }
     }
 
+    // ═══ REMOVE ═══
     async function remove(orderId) {
-        const database = db();
-        if (!database) throw new Error('Firebase nuk është gati');
-
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
         try {
-            await database.collection(COLLECTION).doc(orderId).delete();
+            await window.TaxiAPI.orders.delete(orderId);
             console.log('✅ Porosia u fshi:', orderId);
         } catch (e) {
             console.error('❌ Gabim fshirje:', e);
@@ -106,78 +95,93 @@ window.TaxiOrders = (() => {
         }
     }
 
-    function subscribe() {
-        const database = db();
-        if (!database) {
-            console.warn('⚠️ Firestore nuk është gati');
-            return null;
+    // ═══ FETCH ALL ═══
+    async function fetchAll() {
+        try {
+            const result = await window.TaxiAPI.orders.list();
+            return Array.isArray(result) ? result : (result.orders || []);
+        } catch (e) {
+            console.error('❌ Gabim leximi orders:', e);
+            return [];
+        }
+    }
+
+    // ═══ POLLING LOGIC (zëvendësim i onSnapshot) ═══
+    async function pollOnce() {
+        const orders = await fetchAll();
+        const newMap = new Map();
+        const added = [];
+        const updated = [];
+        const removed = [];
+
+        orders.forEach((o) => {
+            const id = o.id || o._id;
+            if (!id) return;
+            newMap.set(id, o);
+
+            if (!lastOrders.has(id)) {
+                added.push(o);
+            } else {
+                const prev = lastOrders.get(id);
+                // Krahasim i thjeshtë JSON për të detektuar ndryshime
+                try {
+                    if (JSON.stringify(prev) !== JSON.stringify(o)) {
+                        updated.push(o);
+                    }
+                } catch (e) {
+                    updated.push(o);
+                }
+            }
+        });
+
+        lastOrders.forEach((o, id) => {
+            if (!newMap.has(id)) removed.push(o);
+        });
+
+        lastOrders = newMap;
+
+        if (added.length) {
+            listeners.added.forEach((fn) => fn(added));
+            window.TaxiEvents?.emit('firestore:order_added', added);
+        }
+        if (updated.length) {
+            listeners.updated.forEach((fn) => fn(updated));
+            window.TaxiEvents?.emit('firestore:order_updated', updated);
+        }
+        if (removed.length) {
+            listeners.removed.forEach((fn) => fn(removed));
+            window.TaxiEvents?.emit('firestore:order_removed', removed);
         }
 
-        if (unsubscribe) unsubscribe();
+        console.log(`📥 SQLite: +${added.length} ~${updated.length} -${removed.length}`);
+    }
 
-        unsubscribe = database.collection(COLLECTION)
-            .orderBy('createdAtLocal', 'desc')
-            .limit(200)
-            .onSnapshot(
-                (snapshot) => {
-                    const added = [];
-                    const updated = [];
-                    const removed = [];
+    // ═══ SUBSCRIBE ═══
+    function subscribe() {
+        if (pollInterval) clearInterval(pollInterval);
 
-                    snapshot.docChanges().forEach((change) => {
-                        const data = { id: change.doc.id, ...change.doc.data() };
-                        if (change.type === 'added') added.push(data);
-                        if (change.type === 'modified') updated.push(data);
-                        if (change.type === 'removed') removed.push(data);
-                    });
+        // Thirrje e menjëhershme
+        pollOnce().catch((e) => console.warn('Poll init:', e));
 
-                    if (added.length) {
-                        listeners.added.forEach(fn => fn(added));
-                        window.TaxiEvents?.emit('firestore:order_added', added);
-                    }
-                    if (updated.length) {
-                        listeners.updated.forEach(fn => fn(updated));
-                        window.TaxiEvents?.emit('firestore:order_updated', updated);
-                    }
-                    if (removed.length) {
-                        listeners.removed.forEach(fn => fn(removed));
-                        window.TaxiEvents?.emit('firestore:order_removed', removed);
-                    }
+        // Pastaj çdo 3 sekonda
+        pollInterval = setInterval(() => {
+            pollOnce().catch((e) => console.warn('Poll:', e));
+        }, 3000);
 
-                    console.log(`📥 Firestore: +${added.length} ~${updated.length} -${removed.length}`);
-                },
-                (error) => {
-                    console.error('❌ Firestore listener error:', error);
-                }
-            );
-
-        console.log('✅ Firestore: Duke dëgjuar porositë...');
-        return unsubscribe;
+        console.log('✅ SQLite: Duke dëgjuar porositë (polling 3s)...');
+        return () => unsubscribeAll();
     }
 
     function unsubscribeAll() {
-        if (unsubscribe) {
-            unsubscribe();
-            unsubscribe = null;
-            console.log('✅ Firestore: Ndaloi dëgjimin');
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            console.log('✅ SQLite: Ndaloi dëgjimin e porosive');
         }
     }
 
     async function getAll() {
-        const database = db();
-        if (!database) return [];
-
-        try {
-            const snapshot = await database.collection(COLLECTION)
-                .orderBy('createdAtLocal', 'desc')
-                .limit(200)
-                .get();
-
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } catch (e) {
-            console.error('❌ Gabim leximi:', e);
-            return [];
-        }
+        return fetchAll();
     }
 
     return {
