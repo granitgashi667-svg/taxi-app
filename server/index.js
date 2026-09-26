@@ -1,170 +1,66 @@
-// ═══════════════════════════════════════════════════════
-// DATA ROUTE (për firebase-shim.js)
-// ═══════════════════════════════════════════════════════
+'use strict';
 
-// LISTO
-app.get('/api/data/:collection', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection } = req.params;
-        const { limit = 500, orderBy, order = 'desc' } = req.query;
+require('dotenv').config();
 
-        let where = 'tenant_id = ? AND coll = ?';
-        const params = [req.tenantId, collection];
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const path = require('path');
+const { initSocket } = require('./socket');
+const { errorHandler } = require('./middleware');
+const db = require('./database');
 
-        // Equality filters
-        Object.entries(req.query).forEach(([k, v]) => {
-            if (k.startsWith('where_')) {
-                const field = k.slice(6);
-                where += ` AND json_extract(data, '$.${field}') = ?`;
-                params.push(v);
-            }
-        });
+const app = express();
+const server = http.createServer(app);
 
-        let sql = `SELECT id, doc_id, data FROM documents WHERE ${where}`;
+// ═══ MIDDLEWARE ═══
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-        const rows = db.prepare(sql).all(...params);
-        let out = rows.map(r => {
-            let obj = {};
-            try { obj = JSON.parse(r.data); } catch(e) {}
-            return { id: r.doc_id || String(r.id), _sqlId: r.id, ...obj };
-        });
+// ═══ STATIC (shërben HTML/CSS/JS nga root-i) ═══
+app.use(express.static(path.join(__dirname, '..')));
 
-        // Sort në memory
-        if (orderBy) {
-            out.sort((a, b) => {
-                let av = a[orderBy], bv = b[orderBy];
-                if (av && av.seconds !== undefined) av = av.seconds * 1000;
-                if (bv && bv.seconds !== undefined) bv = bv.seconds * 1000;
-                if (av === undefined || av === null) return 1;
-                if (bv === undefined || bv === null) return -1;
-                if (av < bv) return order === 'asc' ? -1 : 1;
-                if (av > bv) return order === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        out = out.slice(0, parseInt(limit));
-        res.json({ data: out });
-    } catch (e) {
-        console.error('❌ data GET:', e);
-        res.status(500).json({ error: e.message });
-    }
+// ═══ HEALTH CHECK ═══
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: '3.0.0',
+        db: 'connected',
+        time: new Date().toISOString()
+    });
 });
 
-// NJË DOKUMENT
-app.get('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection, docId } = req.params;
-        const row = db.prepare(
-            `SELECT id, doc_id, data FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
-        ).get(req.tenantId, collection, docId);
+// ═══ ROUTES ═══
+app.use('/api', require('./routes'));
 
-        if (!row) return res.json({ data: null });
-        let obj = {};
-        try { obj = JSON.parse(row.data); } catch(e) {}
-        res.json({ data: { id: row.doc_id, _sqlId: row.id, ...obj } });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+// ═══ ERROR HANDLER ═══
+app.use(errorHandler);
+
+// ═══ SOCKET.IO ═══
+initSocket(server);
+
+// ═══ NIS SERVERIN ═══
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log('');
+    console.log('🚕 TaxiApp 3.0 — Server Lokal');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`🌐 Server:   http://localhost:${PORT}`);
+    console.log(`📊 Health:   http://localhost:${PORT}/api/health`);
+    console.log(`📁 DB:       ${process.env.DB_PATH || './data/taxiapp.db'}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  Hap:  http://localhost:3000/index.html');
+    console.log('');
 });
 
-// KRIJO (auto-id)
-app.post('/api/data/:collection', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection } = req.params;
-        const docId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-        const data = { ...req.body, _createdAt: new Date().toISOString() };
-
-        db.prepare(`
-            INSERT INTO documents (tenant_id, coll, doc_id, data)
-            VALUES (?, ?, ?, ?)
-        `).run(req.tenantId, collection, docId, JSON.stringify(data));
-
-        emitToTenant(req.tenantId, `${collection}_created`, { id: docId, ...data });
-        res.json({ id: docId, data: { id: docId, ...data } });
-    } catch (e) {
-        console.error('❌ data POST:', e);
-        res.status(500).json({ error: e.message });
-    }
+// ═══ GRACEFUL SHUTDOWN ═══
+process.on('SIGINT', () => {
+    console.log('\n🛑 Duke mbyllur serverin...');
+    server.close(() => {
+        try { db.close(); } catch (e) {}
+        process.exit(0);
+    });
 });
 
-// KRIJO (me doc_id specifik — set)
-app.post('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection, docId } = req.params;
-        const data = { ...req.body, _createdAt: new Date().toISOString() };
-
-        const existing = db.prepare(
-            `SELECT id FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
-        ).get(req.tenantId, collection, docId);
-
-        if (existing) {
-            db.prepare(`UPDATE documents SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-                .run(JSON.stringify(data), existing.id);
-        } else {
-            db.prepare(`INSERT INTO documents (tenant_id, coll, doc_id, data) VALUES (?, ?, ?, ?)`)
-                .run(req.tenantId, collection, docId, JSON.stringify(data));
-        }
-
-        res.json({ id: docId, data: { id: docId, ...data } });
-    } catch (e) {
-        console.error('❌ data POST id:', e);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// PËRDITËSO (me markers serverTimestamp/increment)
-app.put('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection, docId } = req.params;
-
-        const existing = db.prepare(
-            `SELECT id, data FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
-        ).get(req.tenantId, collection, docId);
-
-        let current = {};
-        if (existing) {
-            try { current = JSON.parse(existing.data); } catch(e) {}
-        }
-
-        const updates = { ...req.body };
-        Object.entries(updates).forEach(([k, v]) => {
-            if (v && typeof v === 'object' && v._type === 'serverTimestamp') {
-                updates[k] = new Date().toISOString();
-            } else if (v && typeof v === 'object' && v._type === 'increment') {
-                updates[k] = (current[k] || 0) + (v.value || 0);
-            } else if (v && typeof v === 'object' && v._type === 'date') {
-                updates[k] = v.value;
-            }
-        });
-
-        const merged = { ...current, ...updates, _updatedAt: new Date().toISOString() };
-
-        if (existing) {
-            db.prepare(`UPDATE documents SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-                .run(JSON.stringify(merged), existing.id);
-        } else {
-            db.prepare(`INSERT INTO documents (tenant_id, coll, doc_id, data) VALUES (?, ?, ?, ?)`)
-                .run(req.tenantId, collection, docId, JSON.stringify(merged));
-        }
-
-        emitToTenant(req.tenantId, `${collection}_updated`, { id: docId, ...merged });
-        res.json({ success: true, data: { id: docId, ...merged } });
-    } catch (e) {
-        console.error('❌ data PUT:', e);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// FSHIJ
-app.delete('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
-    try {
-        const { collection, docId } = req.params;
-        db.prepare(`DELETE FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`)
-            .run(req.tenantId, collection, docId);
-        emitToTenant(req.tenantId, `${collection}_deleted`, { id: docId });
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
+module.exports = app;
