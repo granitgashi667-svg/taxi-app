@@ -393,17 +393,12 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- ═══ SOCKET.IO CLIENT ═══ -->
+    <!-- ═══ FIREBASE SHIM (SQLite) ═══ -->
     <script src="/socket.io/socket.io.js"></script>
-
-    <!-- ═══ FIREBASE SHIM (imiton Firebase mbi SQLite) ═══ -->
     <script src="js/firebase-shim.js"></script>
 
-    <!-- ═══ API + SOCKET CLIENT ═══ -->
-    <script src="js/api.js"></script>
-    <script src="js/socket-client.js"></script>
-
     <!-- ═══ CORE ═══ -->
+    <script src="js/api.js"></script>
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -496,10 +491,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Init auth (JWT)
-            if (window.TaxiAuth) TaxiAuth.init();
-
-            // Init main app
             if (window.TaxiApp) window.TaxiApp.init();
             if (window.TaxiPWA) TaxiPWA.init();
             if (window.TaxiResponsive) TaxiResponsive.init();
@@ -525,7 +516,7 @@
             try { if (window.TaxiTableColumns) TaxiTableColumns.init(); } catch(e) {}
             try { if (window.TaxiPreorderNotes) TaxiPreorderNotes.init(); } catch(e) {}
 
-            console.log('🚀 Të gjitha modulet u inicializuan (SQLite mode)');
+            console.log('🚀 Të gjitha modulet u inicializuan');
         });
     </script>
 </body>
