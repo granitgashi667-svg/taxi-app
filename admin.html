@@ -223,13 +223,19 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══ FIREBASE + EXTERNAL ═══ -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <!-- ═══ EXTERNAL LIBS ═══ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="firebase-config.js"></script>
+
+    <!-- ═══ SOCKET.IO CLIENT ═══ -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- ═══ FIREBASE SHIM (imiton Firebase mbi SQLite) ═══ -->
+    <script src="js/firebase-shim.js"></script>
+
+    <!-- ═══ API + SOCKET CLIENT ═══ -->
+    <script src="js/api.js"></script>
+    <script src="js/socket-client.js"></script>
 
     <!-- ═══ CORE ═══ -->
     <script src="js/core/config.js"></script>
@@ -237,7 +243,6 @@
     <script src="js/core/storage.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
-    <script src="js/core/firebase.js"></script>
     <script src="js/core/permissions.js"></script>
 
     <!-- ═══ DATA ═══ -->
@@ -348,7 +353,7 @@
             if (window.AdminMobileUsers)   try { AdminMobileUsers.init(); }   catch(e){}
             if (window.AdminAuditViewer)   try { AdminAuditViewer.init(); }   catch(e){}
 
-            console.log('👔 Admin Panel v3.0 gati');
+            console.log('👔 Admin Panel v3.0 gati (SQLite mode)');
         });
     </script>
 </body>
