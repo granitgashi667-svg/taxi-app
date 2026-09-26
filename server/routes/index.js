@@ -3,7 +3,13 @@
 const express = require('express');
 const router = express.Router();
 
-// ═══ ROUTES AKTIVE ═══
+// ═══ AUTH ═══
+router.use('/auth', require('./auth'));
+
+// ═══ DATA (KRITIK për firebase-shim.js) ═══
+router.use('/data', require('./data'));
+
+// ═══ ROUTES SPECIFIKE ═══
 router.use('/orders', require('./orders'));
 router.use('/drivers', require('./drivers'));
 router.use('/vehicles', require('./vehicles'));
