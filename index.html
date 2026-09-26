@@ -395,8 +395,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- ═══ CORE ═══ -->
-    <script src="js/api.js"></script>
+    <!-- ═══ CORE (DB + API LOKALE) ═══ -->
+    <script src="js/core/db.js"></script>
+    <script src="js/core/api.js"></script>
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -407,7 +408,7 @@
     <!-- ═══ DATA ═══ -->
     <script src="data.js"></script>
 
-    <!-- ═══ SERVICES ═══ -->
+    <!-- ═══ SERVICES (të njëjtat) ═══ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
@@ -513,7 +514,7 @@
             try { if (window.TaxiTableColumns) TaxiTableColumns.init(); } catch(e) {}
             try { if (window.TaxiPreorderNotes) TaxiPreorderNotes.init(); } catch(e) {}
 
-            console.log('🚀 Të gjitha modulet u inicializuan');
+            console.log('🚀 Të gjitha modulet u inicializuan (SQLite mode)');
         });
     </script>
 </body>
