@@ -389,15 +389,21 @@
 
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- ═══════════════════════════════════════════════════════
-         EXTERNAL LIBS
-    ═══════════════════════════════════════════════════════ -->
+    <!-- ═══ EXTERNAL LIBS ═══ -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- ═══ CORE (DB + API LOKALE) ═══ -->
-    <script src="js/core/db.js"></script>
-    <script src="js/core/api.js"></script>
+    <!-- ═══ SOCKET.IO CLIENT ═══ -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- ═══ FIREBASE SHIM (imiton Firebase mbi SQLite) ═══ -->
+    <script src="js/firebase-shim.js"></script>
+
+    <!-- ═══ API + SOCKET CLIENT ═══ -->
+    <script src="js/api.js"></script>
+    <script src="js/socket-client.js"></script>
+
+    <!-- ═══ CORE ═══ -->
     <script src="js/core/config.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/storage.js"></script>
@@ -408,7 +414,7 @@
     <!-- ═══ DATA ═══ -->
     <script src="data.js"></script>
 
-    <!-- ═══ SERVICES (të njëjtat) ═══ -->
+    <!-- ═══ SERVICES ═══ -->
     <script src="js/services/auth.js"></script>
     <script src="js/services/orders.js"></script>
     <script src="js/services/orders-bridge.js"></script>
@@ -430,6 +436,7 @@
     <script src="js/services/target-edit.js"></script>
     <script src="js/services/geofencing.js"></script>
     <script src="js/services/notifications.js"></script>
+    <script src="js/services/notifications-realtime.js"></script>
     <script src="js/services/zones.js"></script>
     <script src="js/services/blacklist.js"></script>
     <script src="js/services/history.js"></script>
@@ -489,6 +496,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Init auth (JWT)
+            if (window.TaxiAuth) TaxiAuth.init();
+
+            // Init main app
             if (window.TaxiApp) window.TaxiApp.init();
             if (window.TaxiPWA) TaxiPWA.init();
             if (window.TaxiResponsive) TaxiResponsive.init();
