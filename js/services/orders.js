@@ -2,7 +2,8 @@
 
 /**
  * orders.js — Menaxhimi i porosive me TaxiAPI (SQLite)
- * Zëvendëson Firestore me polling çdo 3 sekonda.
+ * Mapimi Firebase ↔ SQLite bëhet BRENDA këtij file-i.
+ * Frontend-i vazhdon t'i thërrasë njësoj si më parë.
  */
 
 window.TaxiOrders = (() => {
@@ -10,80 +11,136 @@ window.TaxiOrders = (() => {
     let lastOrders = new Map();
     const listeners = { added: [], updated: [], removed: [] };
 
-    // ═══ CREATE ═══
-    async function create(orderData) {
-        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
+    // ═══════════════════════════════════════════════════════
+    // MAPIM: Frontend → Server
+    // ═══════════════════════════════════════════════════════
+    function toServer(front) {
+        // Bashko datën + orën për preorder
+        let preorderDate = null;
+        if (front.terminDateTime) {
+            preorderDate = front.terminDateTime;
+        } else if (front.terminDate && front.terminTime) {
+            preorderDate = `${front.terminDate}T${front.terminTime}:00`;
+        } else if (front.terminDate) {
+            preorderDate = front.terminDate;
+        }
 
-        const now = new Date();
-        const timeStr = window.TaxiUtils.time(now);
-        const dateStr = window.TaxiUtils.date(now);
+        return {
+            phone: front.phone || '',
+            clientName: front.name || 'Klient',
+            pickup: front.pickup || '',
+            destination: front.destination || '',
+            zone: front.zone || 'auto',
+            tariffId: front.tariff || null,     // SQLite ruan edhe string
+            remark: front.remark || '',
+            status: front.status || 'waiting',
+            isPreorder: front.isPreorder ? 1 : 0,
+            preorderDate: preorderDate,
+            preorderNote: front.terminRepeat && front.terminRepeat !== 'none'
+                ? `repeat:${front.terminRepeat};lead:${front.terminLead || 15}`
+                : null
+        };
+    }
 
-        const order = {
-            phone: orderData.phone || '',
-            name: orderData.name || 'Klient',
-            pickup: orderData.pickup || '',
-            destination: orderData.destination || '',
-            zone: orderData.zone || 'auto',
-            tariff: orderData.tariff || 'standard',
-            remark: orderData.remark || '',
+    // ═══════════════════════════════════════════════════════
+    // MAPIM: Server → Frontend (ruan strukturën e vjetër)
+    // ═══════════════════════════════════════════════════════
+    function fromServer(s) {
+        if (!s) return null;
 
-            status: orderData.status || 'waiting',
+        const createdAt = s.created_at ? new Date(s.created_at) : new Date();
+        const preorderAt = s.preorder_date ? new Date(s.preorder_date) : null;
 
-            vehicleId: orderData.vehicleId || null,
-            vehicleNum: orderData.vehicleNum || null,
-            driverId: orderData.driverId || null,
-            driverName: orderData.driverName || null,
-            dispatchMode: orderData.dispatchMode || 'auto',
+        return {
+            id: s.id,
+            orderCode: s.order_code,
+            phone: s.phone,
+            name: s.client_name || 'Klient',
+            pickup: s.pickup || '',
+            destination: s.destination || '',
+            pickupLat: s.pickup_lat,
+            pickupLng: s.pickup_lng,
+            destLat: s.dest_lat,
+            destLng: s.dest_lng,
+            zone: s.zone || 'auto',
+            tariff: s.tariff_id,
+            remark: s.remark || '',
 
-            isPreorder: orderData.isPreorder || false,
-            terminDate: orderData.terminDate || null,
-            terminTime: orderData.terminTime || null,
-            terminLead: orderData.terminLead || 15,
-            terminRepeat: orderData.terminRepeat || 'none',
-            terminDateTime: orderData.terminDateTime || null,
+            status: s.status || 'waiting',
 
-            createdAtLocal: now.getTime(),
-            createdTimeStr: timeStr,
-            createdDateStr: dateStr,
-            assignedAt: null,
-            completedAt: null,
+            vehicleId: s.vehicle_id,
+            vehicleNum: s.vehicle_number || null,
+            driverId: s.driver_id,
+            driverName: s.driver_name || null,
+            dispatchMode: 'auto',
 
-            operatorId: window.TaxiAuth?.currentUser()?.uid || null,
-            operatorName: window.TaxiState?.get('currentOperator')?.name || 'Operator',
+            isPreorder: !!s.is_preorder,
+            terminDate: preorderAt ? preorderAt.toISOString().slice(0, 10) : null,
+            terminTime: preorderAt ? preorderAt.toISOString().slice(11, 16) : null,
+            terminDateTime: s.preorder_date,
+            terminLead: 15,
+            terminRepeat: 'none',
 
-            price: 0,
-            distance: 0,
+            createdAt: s.created_at,
+            createdAtLocal: createdAt.getTime(),
+            createdTimeStr: createdAt.toTimeString().slice(0, 8),
+            createdDateStr: createdAt.toISOString().slice(0, 10),
+            assignedAt: s.assigned_at,
+            completedAt: s.completed_at,
+
+            operatorId: s.created_by,
+            operatorName: s.operator_name || 'Operator',
+
+            price: s.price || 0,
+            distance: s.distance_km || 0,
             duration: 0,
             version: 1
         };
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // CREATE
+    // ═══════════════════════════════════════════════════════
+    async function create(orderData) {
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
 
         try {
-            const result = await window.TaxiAPI.orders.create(order);
-            console.log('✅ Porosia u ruajt:', result.id || result.orderId);
-            return result;
+            const payload = toServer(orderData);
+            const result = await window.TaxiAPI.orders.create(payload);
+            console.log('✅ Porosia u ruajt:', result.order?.id);
+            return fromServer(result.order);
         } catch (e) {
             console.error('❌ Gabim ruajtje porosie:', e);
             throw e;
         }
     }
 
-    // ═══ UPDATE ═══
+    // ═══════════════════════════════════════════════════════
+    // UPDATE
+    // ═══════════════════════════════════════════════════════
     async function update(orderId, changes) {
         if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
+
+        // Vetëm fushat që serveri pranon
+        const allowed = ['status', 'remark', 'price', 'destination', 'pickup'];
+        const serverChanges = {};
+        allowed.forEach(k => {
+            if (changes[k] !== undefined) serverChanges[k] = changes[k];
+        });
+
         try {
-            await window.TaxiAPI.orders.update(orderId, {
-                ...changes,
-                updatedAt: Date.now(),
-                updatedBy: window.TaxiAuth?.currentUser()?.email || 'unknown'
-            });
+            const result = await window.TaxiAPI.orders.update(orderId, serverChanges);
             console.log('✅ Porosia u përditësua:', orderId);
+            return fromServer(result.order);
         } catch (e) {
             console.error('❌ Gabim update:', e);
             throw e;
         }
     }
 
-    // ═══ REMOVE ═══
+    // ═══════════════════════════════════════════════════════
+    // REMOVE
+    // ═══════════════════════════════════════════════════════
     async function remove(orderId) {
         if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
         try {
@@ -95,27 +152,57 @@ window.TaxiOrders = (() => {
         }
     }
 
-    // ═══ FETCH ALL ═══
+    // ═══════════════════════════════════════════════════════
+    // ASSIGN (i ri, por i nevojshëm për dispatch)
+    // ═══════════════════════════════════════════════════════
+    async function assign(orderId, driverId, mode = 'manual') {
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
+        try {
+            const result = await window.TaxiAPI.orders.assign(orderId, driverId, mode);
+            console.log('✅ Porosia u caktua:', orderId, '→', driverId);
+            return fromServer(result.order);
+        } catch (e) {
+            console.error('❌ Gabim assign:', e);
+            throw e;
+        }
+    }
+
+    async function cancel(orderId, reason) {
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
+        try {
+            const result = await window.TaxiAPI.orders.cancel(orderId, reason);
+            console.log('✅ Porosia u anulua:', orderId);
+            return fromServer(result.order);
+        } catch (e) {
+            console.error('❌ Gabim cancel:', e);
+            throw e;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // FETCH ALL
+    // ═══════════════════════════════════════════════════════
     async function fetchAll() {
         try {
-            const result = await window.TaxiAPI.orders.list();
-            return Array.isArray(result) ? result : (result.orders || []);
+            const result = await window.TaxiAPI.orders.list({ limit: 200 });
+            const arr = result.orders || [];
+            return arr.map(fromServer).filter(Boolean);
         } catch (e) {
             console.error('❌ Gabim leximi orders:', e);
             return [];
         }
     }
 
-    // ═══ POLLING LOGIC (zëvendësim i onSnapshot) ═══
+    // ═══════════════════════════════════════════════════════
+    // POLLING (do zëvendësohet me socket.io më vonë)
+    // ═══════════════════════════════════════════════════════
     async function pollOnce() {
         const orders = await fetchAll();
         const newMap = new Map();
-        const added = [];
-        const updated = [];
-        const removed = [];
+        const added = [], updated = [], removed = [];
 
-        orders.forEach((o) => {
-            const id = o.id || o._id;
+        orders.forEach(o => {
+            const id = o.id;
             if (!id) return;
             newMap.set(id, o);
 
@@ -123,14 +210,9 @@ window.TaxiOrders = (() => {
                 added.push(o);
             } else {
                 const prev = lastOrders.get(id);
-                // Krahasim i thjeshtë JSON për të detektuar ndryshime
                 try {
-                    if (JSON.stringify(prev) !== JSON.stringify(o)) {
-                        updated.push(o);
-                    }
-                } catch (e) {
-                    updated.push(o);
-                }
+                    if (JSON.stringify(prev) !== JSON.stringify(o)) updated.push(o);
+                } catch { updated.push(o); }
             }
         });
 
@@ -141,34 +223,40 @@ window.TaxiOrders = (() => {
         lastOrders = newMap;
 
         if (added.length) {
-            listeners.added.forEach((fn) => fn(added));
+            listeners.added.forEach(fn => fn(added));
             window.TaxiEvents?.emit('firestore:order_added', added);
         }
         if (updated.length) {
-            listeners.updated.forEach((fn) => fn(updated));
+            listeners.updated.forEach(fn => fn(updated));
             window.TaxiEvents?.emit('firestore:order_updated', updated);
         }
         if (removed.length) {
-            listeners.removed.forEach((fn) => fn(removed));
+            listeners.removed.forEach(fn => fn(removed));
             window.TaxiEvents?.emit('firestore:order_removed', removed);
         }
-
-        console.log(`📥 SQLite: +${added.length} ~${updated.length} -${removed.length}`);
     }
 
-    // ═══ SUBSCRIBE ═══
+    // ═══════════════════════════════════════════════════════
+    // SUBSCRIBE
+    // ═══════════════════════════════════════════════════════
     function subscribe() {
         if (pollInterval) clearInterval(pollInterval);
 
-        // Thirrje e menjëhershme
-        pollOnce().catch((e) => console.warn('Poll init:', e));
+        // Nëse ka socket-client, mund të regjistrohemi aty
+        if (window.TaxiSocket?.on) {
+            window.TaxiSocket.on('order_created', () => pollOnce());
+            window.TaxiSocket.on('order_updated', () => pollOnce());
+            window.TaxiSocket.on('order_assigned', () => pollOnce());
+            window.TaxiSocket.on('order_cancelled', () => pollOnce());
+        }
 
-        // Pastaj çdo 3 sekonda
+        // Gjithmonë polling si fallback
+        pollOnce().catch(e => console.warn('Poll init:', e));
         pollInterval = setInterval(() => {
-            pollOnce().catch((e) => console.warn('Poll:', e));
+            pollOnce().catch(e => console.warn('Poll:', e));
         }, 3000);
 
-        console.log('✅ SQLite: Duke dëgjuar porositë (polling 3s)...');
+        console.log('✅ orders.js: Duke dëgjuar porositë...');
         return () => unsubscribeAll();
     }
 
@@ -176,7 +264,6 @@ window.TaxiOrders = (() => {
         if (pollInterval) {
             clearInterval(pollInterval);
             pollInterval = null;
-            console.log('✅ SQLite: Ndaloi dëgjimin e porosive');
         }
     }
 
@@ -188,6 +275,8 @@ window.TaxiOrders = (() => {
         create,
         update,
         remove,
+        assign,
+        cancel,
         subscribe,
         unsubscribeAll,
         getAll,
