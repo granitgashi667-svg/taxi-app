@@ -21,12 +21,20 @@ window.TaxiApp = (() => {
             if (window.TaxiSound) window.TaxiSound.init();
         } catch (e) { console.warn('Core init:', e); }
 
-        // ═══ 2. FIREBASE ═══
-        if (!window.TaxiFirebase) {
-            console.error('❌ TaxiFirebase mungon');
+        // ═══ 2. API (SQLite Server) ═══
+        if (!window.TaxiAPI) {
+            console.error('❌ TaxiAPI mungon — js/api.js nuk u ngarkua');
             return;
         }
-        window.TaxiFirebase.init();
+
+        // Verifiko lidhjen me serverin
+        try {
+            await window.TaxiAPI.health();
+            console.log('✅ Lidhja me serverin SQLite OK');
+        } catch (err) {
+            console.error('❌ Serveri lokal nuk përgjigjet. A është ndezur? (npm start në server/)', err);
+            // Vazhdojmë gjithsesi, ndoshta serveri vonon
+        }
 
         // ═══ 3. PERMISSIONS ═══
         if (window.TaxiPermissions) window.TaxiPermissions.init();
@@ -34,7 +42,7 @@ window.TaxiApp = (() => {
         // ═══ 4. ORDER BRIDGE (para subscribe) ═══
         if (window.TaxiOrdersBridge) window.TaxiOrdersBridge.init();
 
-        // ═══ 5. SUBSCRIBE FIRESTORE ═══
+        // ═══ 5. SUBSCRIBE ORDERS & MESSAGES ═══
         if (window.TaxiOrders) window.TaxiOrders.subscribe();
         if (window.TaxiMessages) window.TaxiMessages.subscribe();
 
@@ -58,7 +66,6 @@ window.TaxiApp = (() => {
 
         // ═══ 12. IP WHITELIST ═══
         if (window.TaxiIpWhitelist) {
-            // Bypass në dev mode
             window.TaxiIpWhitelist.setBypass(true);
             window.TaxiIpWhitelist.init();
         }
@@ -106,7 +113,6 @@ window.TaxiApp = (() => {
                                 });
                             }
 
-                            // Set role in permissions
                             if (window.TaxiPermissions) {
                                 window.TaxiPermissions.setRole(operator.role || 'dispatcher');
                                 setTimeout(() => window.TaxiPermissions.applyToUI(), 500);
@@ -337,7 +343,6 @@ window.TaxiApp = (() => {
                 });
             });
 
-            // Kur porosia arrin në 20m → njoftim
             window.TaxiEvents.on('order:arrived', (data) => {
                 console.log('📍 Porosia arriti:', data.orderId);
                 if (typeof showToast === 'function') {
