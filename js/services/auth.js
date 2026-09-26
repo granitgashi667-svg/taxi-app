@@ -2,35 +2,44 @@
 
 /**
  * auth.js — Login/Logout me TaxiAPI (SQLite)
+ * Mapimi bëhet BRENDA këtij file-i.
  */
 
 window.TaxiAuth = (() => {
     let _currentUser = null;
 
-    async function login(email, password) {
-        if (!window.TaxiAPI) {
-            throw new Error('TaxiAPI nuk është gati');
-        }
+    // ═══ MAPIM: Server → Frontend ═══
+    function fromServer(user) {
+        if (!user) return null;
+        return {
+            uid: user.id || user.uid,
+            id: user.id || user.uid,
+            username: user.username,
+            email: user.email || user.username,
+            name: user.name || (user.username || '').replace(/^./, c => c.toUpperCase()),
+            surname: user.surname,
+            role: user.role || 'dispatcher',
+            phone: user.phone,
+            tenantId: user.tenant_id
+        };
+    }
+
+    // ═══ LOGIN ═══
+    async function login(emailOrUsername, password) {
+        if (!window.TaxiAPI) throw new Error('TaxiAPI nuk është gati');
 
         try {
-            const result = await window.TaxiAPI.auth.login(email, password);
+            const result = await window.TaxiAPI.auth.login(emailOrUsername, password);
 
-            // Struktura e përgjigjes: { token, user } ose { token, operator } ose user direkt
-            const user = result.user || result.operator || result;
+            // Serveri mund të kthejë: { token, user } ose { token, operator } ose user direkt
+            const userData = result.user || result.operator || result;
+            _currentUser = fromServer(userData);
 
-            _currentUser = {
-                uid: user.id || user.uid,
-                email: user.email,
-                name: user.name || (user.email || '').split('@')[0] || 'Operator',
-                role: user.role || 'dispatcher'
-            };
-
-            // Ruaj për rifreskim faqe
             try {
                 localStorage.setItem('taxi_current_user', JSON.stringify(_currentUser));
             } catch (e) {}
 
-            console.log('✅ Login i suksesshëm:', _currentUser.email);
+            console.log('✅ Login i suksesshëm:', _currentUser.username);
             return _currentUser;
         } catch (e) {
             console.error('❌ Gabim login:', e.message || e);
@@ -38,6 +47,7 @@ window.TaxiAuth = (() => {
         }
     }
 
+    // ═══ LOGOUT ═══
     async function logout() {
         if (!window.TaxiAPI) return;
         try {
@@ -50,18 +60,15 @@ window.TaxiAuth = (() => {
         console.log('✅ Logout i suksesshëm');
     }
 
+    // ═══ ON AUTH CHANGE ═══
     function onAuthChange(callback) {
-        // Nëse ka token → verifiko me serverin
+        // Nëse ka token, verifiko me serverin
         if (window.TaxiAPI?.isAuthenticated()) {
             window.TaxiAPI.auth.me()
-                .then((result) => {
-                    const user = result.user || result.operator || result;
-                    _currentUser = {
-                        uid: user.id || user.uid,
-                        email: user.email,
-                        name: user.name || (user.email || '').split('@')[0] || 'Operator',
-                        role: user.role || 'dispatcher'
-                    };
+                .then(result => {
+                    const userData = result.user || result.operator || result;
+                    _currentUser = fromServer(userData);
+                    try { localStorage.setItem('taxi_current_user', JSON.stringify(_currentUser)); } catch (e) {}
                     callback(_currentUser);
                 })
                 .catch(() => {
