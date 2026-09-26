@@ -1,10 +1,10 @@
 'use strict';
 
 /**
- * service-worker.js — PWA Offline + Cache
+ * service-worker.js — PWA Offline + Cache (SQLite Edition)
  */
 
-const CACHE_VERSION = 'taxiapp-v2.0.0';
+const CACHE_VERSION = 'taxiapp-v3.0.0';
 const CACHE_URLS = [
     '/',
     '/index.html',
@@ -12,13 +12,22 @@ const CACHE_URLS = [
     '/client.html',
     '/admin.html',
     '/director.html',
+    '/tv.html',
+    '/maps.html',
     '/style.css',
     '/css/admin.css',
     '/css/driver.css',
     '/css/client.css',
+    '/css/tv.css',
+    '/css/maps.css',
+    '/css/operator-extras.css',
+    '/css/admin-extra.css',
     '/data.js',
-    '/firebase-config.js',
-    '/manifest.json'
+    '/manifest.json',
+    '/js/firebase-shim.js',
+    '/js/api.js',
+    '/js/auth.js',
+    '/js/socket-client.js'
 ];
 
 // ═══ INSTALL ═══
@@ -57,15 +66,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Mos cache Firebase, Google APIs
-    if (url.hostname.includes('firebase') ||
-        url.hostname.includes('googleapis') ||
-        url.hostname.includes('gstatic') ||
-        url.hostname.includes('firestore') ||
-        url.hostname.includes('unpkg.com') ||
+    // Mos cache API-n lokal (duhet live)
+    if (url.pathname.startsWith('/api/') ||
+        url.pathname.startsWith('/socket.io/')) {
+        return;
+    }
+
+    // Mos cache CDN (tile, fonts, etj.)
+    if (url.hostname.includes('unpkg.com') ||
         url.hostname.includes('cdn.jsdelivr.net') ||
         url.hostname.includes('cdnjs.cloudflare.com') ||
-        url.hostname.includes('tile')) {
+        url.hostname.includes('tile') ||
+        url.hostname.includes('basemaps')) {
         return;
     }
 
@@ -98,7 +110,6 @@ self.addEventListener('fetch', (event) => {
                 return response;
             });
         }).catch(() => {
-            // Fallback për HTML
             if (event.request.mode === 'navigate') {
                 return caches.match('/index.html');
             }
@@ -116,9 +127,7 @@ self.addEventListener('message', (event) => {
 // ═══ NOTIFICATION ═══
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    event.waitUntil(
-        clients.openWindow('/')
-    );
+    event.waitUntil(clients.openWindow('/'));
 });
 
-console.log('✅ Service Worker ngarkuar');
+console.log('✅ Service Worker ngarkuar (SQLite)');
