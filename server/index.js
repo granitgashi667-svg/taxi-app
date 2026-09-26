@@ -1,213 +1,170 @@
-'use strict';
-
-require('dotenv').config();
-const express = require('express');
-const http = require('http');
-const path = require('path');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-
-const db = require('./database');
-const auth = require('./auth');
-const { tenantMiddleware } = require('./tenant');
-const { authMiddleware, requireRole, errorHandler } = require('./middleware');
-const { initSocket } = require('./socket');
-const apiRoutes = require('./routes');
-
-const app = express();
-const server = http.createServer(app);
-
 // ═══════════════════════════════════════════════════════
-// MIDDLEWARE
-// ═══════════════════════════════════════════════════════
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: (parseInt(process.env.RATE_LIMIT_WINDOW) || 15) * 60 * 1000,
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 100
-});
-app.use('/api/', limiter);
-
-// Uploads static
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
-// Frontend static
-app.use(express.static(path.join(__dirname, '..')));
-
-// ═══════════════════════════════════════════════════════
-// ROUTES PUBLIKE
+// DATA ROUTE (për firebase-shim.js)
 // ═══════════════════════════════════════════════════════
 
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', time: new Date().toISOString(), version: '3.0.0' });
-});
+// LISTO
+app.get('/api/data/:collection', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection } = req.params;
+        const { limit = 500, orderBy, order = 'desc' } = req.query;
 
-// ═══ LOGIN ═══
-app.post('/api/auth/login', tenantMiddleware, (req, res) => {
-    const { username, password, tenantCode } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Username dhe password janë të detyrueshme' });
+        let where = 'tenant_id = ? AND coll = ?';
+        const params = [req.tenantId, collection];
+
+        // Equality filters
+        Object.entries(req.query).forEach(([k, v]) => {
+            if (k.startsWith('where_')) {
+                const field = k.slice(6);
+                where += ` AND json_extract(data, '$.${field}') = ?`;
+                params.push(v);
+            }
+        });
+
+        let sql = `SELECT id, doc_id, data FROM documents WHERE ${where}`;
+
+        const rows = db.prepare(sql).all(...params);
+        let out = rows.map(r => {
+            let obj = {};
+            try { obj = JSON.parse(r.data); } catch(e) {}
+            return { id: r.doc_id || String(r.id), _sqlId: r.id, ...obj };
+        });
+
+        // Sort në memory
+        if (orderBy) {
+            out.sort((a, b) => {
+                let av = a[orderBy], bv = b[orderBy];
+                if (av && av.seconds !== undefined) av = av.seconds * 1000;
+                if (bv && bv.seconds !== undefined) bv = bv.seconds * 1000;
+                if (av === undefined || av === null) return 1;
+                if (bv === undefined || bv === null) return -1;
+                if (av < bv) return order === 'asc' ? -1 : 1;
+                if (av > bv) return order === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        out = out.slice(0, parseInt(limit));
+        res.json({ data: out });
+    } catch (e) {
+        console.error('❌ data GET:', e);
+        res.status(500).json({ error: e.message });
     }
-    const result = auth.login(username, password, tenantCode || 'default');
-    if (result.error) return res.status(401).json({ error: result.error });
-    res.json(result);
 });
 
-// ═══ LOGOUT ═══
-app.post('/api/auth/logout', authMiddleware, (req, res) => {
-    auth.logout(req.user.userId);
-    res.json({ success: true });
+// NJË DOKUMENT
+app.get('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection, docId } = req.params;
+        const row = db.prepare(
+            `SELECT id, doc_id, data FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
+        ).get(req.tenantId, collection, docId);
+
+        if (!row) return res.json({ data: null });
+        let obj = {};
+        try { obj = JSON.parse(row.data); } catch(e) {}
+        res.json({ data: { id: row.doc_id, _sqlId: row.id, ...obj } });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// ═══ ME (info i userit aktual) ═══
-app.get('/api/auth/me', authMiddleware, (req, res) => {
-    const user = db.prepare('SELECT id, username, name, surname, role, phone, email, address, avatar, tenant_id FROM users WHERE id = ?')
-        .get(req.user.userId);
-    if (!user) return res.status(404).json({ error: 'User nuk u gjet' });
-    res.json({ user });
+// KRIJO (auto-id)
+app.post('/api/data/:collection', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection } = req.params;
+        const docId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+        const data = { ...req.body, _createdAt: new Date().toISOString() };
+
+        db.prepare(`
+            INSERT INTO documents (tenant_id, coll, doc_id, data)
+            VALUES (?, ?, ?, ?)
+        `).run(req.tenantId, collection, docId, JSON.stringify(data));
+
+        emitToTenant(req.tenantId, `${collection}_created`, { id: docId, ...data });
+        res.json({ id: docId, data: { id: docId, ...data } });
+    } catch (e) {
+        console.error('❌ data POST:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// ═══ NDRYSHO PASSWORD ═══
-app.post('/api/auth/change-password', authMiddleware, (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    const result = auth.changePassword(req.user.userId, oldPassword, newPassword);
-    if (result.error) return res.status(400).json({ error: result.error });
-    res.json(result);
+// KRIJO (me doc_id specifik — set)
+app.post('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection, docId } = req.params;
+        const data = { ...req.body, _createdAt: new Date().toISOString() };
+
+        const existing = db.prepare(
+            `SELECT id FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
+        ).get(req.tenantId, collection, docId);
+
+        if (existing) {
+            db.prepare(`UPDATE documents SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+                .run(JSON.stringify(data), existing.id);
+        } else {
+            db.prepare(`INSERT INTO documents (tenant_id, coll, doc_id, data) VALUES (?, ?, ?, ?)`)
+                .run(req.tenantId, collection, docId, JSON.stringify(data));
+        }
+
+        res.json({ id: docId, data: { id: docId, ...data } });
+    } catch (e) {
+        console.error('❌ data POST id:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// ═══════════════════════════════════════════════════════
-// ROUTES TË MBROJTURA
-// ═══════════════════════════════════════════════════════
+// PËRDITËSO (me markers serverTimestamp/increment)
+app.put('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection, docId } = req.params;
 
-// ═══ KRIJO PUNËTOR ═══
-app.post('/api/workers', authMiddleware, tenantMiddleware, (req, res) => {
-    const result = auth.registerWorker(req.body, req.user.role, req.tenantId);
-    if (result.error) return res.status(400).json({ error: result.error });
-    res.json(result);
+        const existing = db.prepare(
+            `SELECT id, data FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`
+        ).get(req.tenantId, collection, docId);
+
+        let current = {};
+        if (existing) {
+            try { current = JSON.parse(existing.data); } catch(e) {}
+        }
+
+        const updates = { ...req.body };
+        Object.entries(updates).forEach(([k, v]) => {
+            if (v && typeof v === 'object' && v._type === 'serverTimestamp') {
+                updates[k] = new Date().toISOString();
+            } else if (v && typeof v === 'object' && v._type === 'increment') {
+                updates[k] = (current[k] || 0) + (v.value || 0);
+            } else if (v && typeof v === 'object' && v._type === 'date') {
+                updates[k] = v.value;
+            }
+        });
+
+        const merged = { ...current, ...updates, _updatedAt: new Date().toISOString() };
+
+        if (existing) {
+            db.prepare(`UPDATE documents SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+                .run(JSON.stringify(merged), existing.id);
+        } else {
+            db.prepare(`INSERT INTO documents (tenant_id, coll, doc_id, data) VALUES (?, ?, ?, ?)`)
+                .run(req.tenantId, collection, docId, JSON.stringify(merged));
+        }
+
+        emitToTenant(req.tenantId, `${collection}_updated`, { id: docId, ...merged });
+        res.json({ success: true, data: { id: docId, ...merged } });
+    } catch (e) {
+        console.error('❌ data PUT:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
-// ═══ LISTO PUNËTORËT ═══
-app.get('/api/workers', authMiddleware, tenantMiddleware, requireRole('admin', 'manager', 'director'), (req, res) => {
-    const users = db.prepare(`
-        SELECT id, username, name, surname, role, phone, email, active, blocked, last_login, created_at
-        FROM users WHERE tenant_id = ? ORDER BY role, name
-    `).all(req.tenantId);
-    res.json({ users });
-});
-
-// ═══ STATUSI I PUNËTORËVE (aktive/joaktiv) ═══
-app.get('/api/workers/status', authMiddleware, tenantMiddleware, (req, res) => {
-    const users = db.prepare(`
-        SELECT id, username, name, role, last_login,
-               CASE WHEN last_login > datetime('now', '-5 minutes') THEN 1 ELSE 0 END as online
-        FROM users WHERE tenant_id = ? AND active = 1
-    `).all(req.tenantId);
-    res.json({ users });
-});
-
-// ═══ ORËT E PUNËS — sot ═══
-app.get('/api/hours/today', authMiddleware, tenantMiddleware, (req, res) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const hours = db.prepare(`
-        SELECT h.*, u.name, u.username, u.role
-        FROM hours_log h
-        JOIN users u ON h.user_id = u.id
-        WHERE h.tenant_id = ? AND h.date = ?
-        ORDER BY h.login_at
-    `).all(req.tenantId, today);
-    res.json({ hours });
-});
-
-// ═══ ORËT E PUNËS — sipas userit ═══
-app.get('/api/hours/:userId', authMiddleware, tenantMiddleware, (req, res) => {
-    const { from, to } = req.query;
-    let query = `SELECT * FROM hours_log WHERE user_id = ? AND tenant_id = ?`;
-    const params = [req.params.userId, req.tenantId];
-
-    if (from) { query += ` AND date >= ?`; params.push(from); }
-    if (to) { query += ` AND date <= ?`; params.push(to); }
-    query += ` ORDER BY date DESC LIMIT 90`;
-
-    const hours = db.prepare(query).all(...params);
-    res.json({ hours });
-});
-
-// ═══ KRIJO TENANT (vetëm admin) ═══
-app.post('/api/tenants', authMiddleware, requireRole('admin'), (req, res) => {
-    const { createTenant } = require('./tenant');
-    const result = createTenant(req.body);
-    if (result.error) return res.status(400).json({ error: result.error });
-    res.json(result);
-});
-
-// ═══ LISTO TENANTS (vetëm admin) ═══
-app.get('/api/tenants', authMiddleware, requireRole('admin'), (req, res) => {
-    const { listTenants } = require('./tenant');
-    res.json({ tenants: listTenants() });
-});
-
-// ═══ STATISTIKA DITOR ═══
-app.get('/api/stats/daily', authMiddleware, tenantMiddleware, (req, res) => {
-    const today = new Date().toISOString().slice(0, 10);
-
-    const stats = db.prepare(`
-        SELECT
-            COUNT(*) as total_orders,
-            SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
-            SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) as waiting,
-            SUM(CASE WHEN status = 'completed' THEN price ELSE 0 END) as revenue
-        FROM orders
-        WHERE tenant_id = ? AND DATE(created_at) = ?
-    `).get(req.tenantId, today);
-
-    res.json({ stats });
-});
-
-// ═══════════════════════════════════════════════════════
-// ROUTES MODULARE
-// ═══════════════════════════════════════════════════════
-app.use('/api', apiRoutes);
-
-// ═══════════════════════════════════════════════════════
-// ERROR HANDLER
-// ═══════════════════════════════════════════════════════
-app.use(errorHandler);
-
-// ═══════════════════════════════════════════════════════
-// NISJE
-// ═══════════════════════════════════════════════════════
-const PORT = process.env.PORT || 3000;
-
-initSocket(server);
-
-server.listen(PORT, () => {
-    console.log('');
-    console.log('╔═══════════════════════════════════════════════════╗');
-    console.log('║                                                   ║');
-    console.log('║       🚕 TAXIAPP 3.0 — SERVER LOKAL              ║');
-    console.log('║                                                   ║');
-    console.log('╚═══════════════════════════════════════════════════╝');
-    console.log('');
-    console.log(`✅ Serveri u nis: http://localhost:${PORT}`);
-    console.log(`✅ Database: ${process.env.DB_PATH || './data/taxiapp.db'}`);
-    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('');
-    console.log('📋 Hapat tjerë:');
-    console.log('   1. Hap http://localhost:3000/admin.html');
-    console.log('   2. Login: G / 1');
-    console.log('   3. Regjistro operatorë dhe shoferë');
-    console.log('');
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\n🛑 Duke u mbyllur...');
-    db.close();
-    process.exit(0);
+// FSHIJ
+app.delete('/api/data/:collection/:docId', authMiddleware, tenantMiddleware, (req, res) => {
+    try {
+        const { collection, docId } = req.params;
+        db.prepare(`DELETE FROM documents WHERE tenant_id = ? AND coll = ? AND doc_id = ?`)
+            .run(req.tenantId, collection, docId);
+        emitToTenant(req.tenantId, `${collection}_deleted`, { id: docId });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
